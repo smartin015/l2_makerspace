@@ -5,13 +5,14 @@
 - Uses [godot engine](http://godotengine.org)
 - Oculus Quest compatible VR
 - Multiplayer (shows position)
+- 3D assets as DAE (COLLADA)
 
 
 ## References
 
-![](images/sketch.jpeg)
+![](https://github.com/smartin015/l2_makerspace/raw/master/images/sketch.jpeg)
 
-![](images/floorplan.jpeg)
+![](https://github.com/smartin015/l2_makerspace/raw/master/images/floorplan.png)
 
 
 ## Milestones
