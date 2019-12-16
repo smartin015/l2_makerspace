@@ -1,0 +1,11 @@
+version: '2'
+
+services:
+  talker:
+    image: ros2-test:latest
+    command: ros2 run demo_nodes_cpp talker
+  listener:
+    image: ros2-test:latest
+    command: ros2 topic echo /chatter
+    depends_on:
+      - talker
