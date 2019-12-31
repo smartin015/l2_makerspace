@@ -6,8 +6,8 @@ Create a set of 3 icons that can be used to describe the different stages of mak
 
 **Guidelines**
 
-*    Must include elements of problem identification, solution finding/optimization, and automation in manufacturing. Hexagonal panels for each?
-*    Each icon separately should look incomplete/attachable.
+*  The icons must be separate files, but can be assembled together into a single icon that could also be used as a menu.
+*  Each icon separately should look incomplete/attachable, i.e. part of a larger set.
 
 ![](https://github.com/smartin015/l2_makerspace/raw/master/images/icon_example1.jpg)
 
