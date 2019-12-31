@@ -13,6 +13,10 @@ Testing example:
 
 `docker run -it -p 2222:2222 --privileged hannseman/raspbian`
 
+Testing example of PXE: 
+
+`docker run -it --rm --net=host ferrarimarco/pxe`
+
 ## References
 
 https://github.com/ferrarimarco/docker-pxe
