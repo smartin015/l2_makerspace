@@ -14,6 +14,9 @@
 
 ![](https://github.com/smartin015/l2_makerspace/raw/master/images/floorplan.png)
 
+## Dimensions
+
+The main area is 32'x14', with a 20'x6' rectangular extension on the bottom right.
 
 ## Milestones
 
