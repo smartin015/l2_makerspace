@@ -1,6 +1,6 @@
 # PXE Rasberry PI simulation environment
 
-## Milestone 1
+## Objective
 
 Create two separate docker containers:
 
@@ -13,7 +13,20 @@ With the following behaviors:
 2. Start virtual raspi container
 3. raspi container connects to PXE server container and boots from the image
 
-## Resources
+## Details
 
-https://github.com/smartin015/l2_makerspace/tree/master/rpi
+Testing example for running a raspbian emulator in a docker container: 
 
+`docker run -it -p 2222:2222 --privileged hannseman/raspbian`
+
+Testing example of running a PXE server in a docker container: 
+
+`docker run -it --rm --net=host ferrarimarco/pxe`
+
+The difficult part so far has been tweaking the raspbian container to not require the raspbian image, while still having viable networking and starting with network boot.
+
+## References
+
+https://github.com/ferrarimarco/docker-pxe
+
+https://github.com/hannseman/docker-raspbian
