@@ -37,8 +37,10 @@ RUN export uid=1000 gid=1000 && \
 RUN mkdir -p /android-studio && cd /tmp && wget https://dl.google.com/dl/android/studio/ide-zips/3.5.3.0/android-studio-ide-191.6010548-linux.tar.gz && \
      tar -xvf android-studio-ide-191.6010548-linux.tar.gz -C /android-studio && rm android-studio-ide-191.6010548-linux.tar.gz
 
+RUN cd /tmp && wget https://dl.google.com/android/repository/platform-tools-latest-linux.zip && unzip platform-tools-latest-linux.zip && rm platform-tools-latest-linux.zip && mv platform-tools /
+
 USER developer
 ENV HOME /home/developer		
 
 COPY README.md /
-CMD ["./Godot_v3.2-beta3_x11.64"]
+CMD ["./Godot_v3.2-beta3_x11.64", "--editor", "/projects/test_vr/project.godot"]
