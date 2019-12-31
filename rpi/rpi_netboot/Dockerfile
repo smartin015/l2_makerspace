@@ -30,14 +30,16 @@ RUN set -x \
 
 # Convert image to qcow2, resize it and enable SSH
 RUN set -x \
-     && qemu-img convert -f raw -O qcow2 $RASPBIAN_IMAGE.img raspbian-lite.qcow2 \
-     && rm $RASPBIAN_IMAGE.img \
-     && qemu-img resize raspbian-lite.qcow2 +2G \
-     && guestfish --rw -m /dev/sda1 -a raspbian-lite.qcow2 write /ssh ""
-# RUN qemu-img create -f qcow2 raspbian-lite.qcow2 10
+    && qemu-img convert -f raw -O qcow2 $RASPBIAN_IMAGE.img raspbian-lite.qcow2 \
+    && rm $RASPBIAN_IMAGE.img \
+    && qemu-img resize raspbian-lite.qcow2 +2G \
+    && guestfish --rw -m /dev/sda1 -a raspbian-lite.qcow2 write /ssh ""
+RUN qemu-img create -f qcow2 testpxe.qcow2 10
 
 EXPOSE 2222
 
 HEALTHCHECK CMD ["nc", "-z", "-w5", "localhost", "2222"]
 
-CMD ["qemu-system-arm", "-kernel", "kernel-qemu-stretch", "-append", "root=/dev/sda2 rootfstype=ext4 rw'", "-hda", "raspbian-lite.qcow2", "-cpu", "arm1176", "-m", "256", "-machine", "versatilepb", "-no-reboot", "-dtb", "versatile-pb.dtb", "-nographic", "-net", "user,hostfwd=tcp::2222-:22", "-net", "nic", "-boot", "n"]
+CMD ["qemu-system-arm", "-cpu", "arm1176", "-m", "256", "-machine", "versatilepb", "-no-reboot", "-dtb", "versatile-pb.dtb", "-nographic", "-net", "user,hostfwd=tcp::2222-:22", "-net", "nic", "-boot", "n"]
+# "-append", "root=/dev/sda2 rootfstype=ext4 rw"
+# "-kernel", "kernel-qemu-stretch", 
