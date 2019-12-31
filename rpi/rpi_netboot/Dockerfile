@@ -36,10 +36,13 @@ RUN set -x \
     && guestfish --rw -m /dev/sda1 -a raspbian-lite.qcow2 write /ssh ""
 RUN qemu-img create -f qcow2 testpxe.qcow2 10
 
+# RUN export uid=1000 gid=1000 && mkdir -p /home/developer && echo "developer:x:${uid}:${gid}:Developer,,,:/home/developer:/bin/bash" >> /etc/passwd && echo "developer:x:${uid}:" >> /etc/group && mkdir -p /etc/sudoers.d && echo "developer ALL=(AL) NOPASSWD: ALL" > /etc/sudoers.d/developer && chmod 0440 /etc/sudoers.d/developer && chown ${uid}:${gid} -R /home/developer
+
 EXPOSE 2222
 
 HEALTHCHECK CMD ["nc", "-z", "-w5", "localhost", "2222"]
 
-CMD ["qemu-system-arm", "-cpu", "arm1176", "-m", "256", "-machine", "versatilepb", "-no-reboot", "-dtb", "versatile-pb.dtb", "-nographic", "-net", "user,hostfwd=tcp::2222-:22", "-net", "nic", "-boot", "n"]
-# "-append", "root=/dev/sda2 rootfstype=ext4 rw"
-# "-kernel", "kernel-qemu-stretch", 
+# USER developer
+# ENV HOME /home/developer
+
+CMD ["qemu-system-arm", "-cpu", "arm1176", "-m", "256", "-machine", "versatilepb", "-no-reboot", "-dtb", "versatile-pb.dtb", "-net", "user,hostfwd=tcp::2222-:22", "-net", "nic", "-append", "root=/dev/sda2 rootfstype=ext4 rw", "-kernel", "kernel-qemu-stretch"]
