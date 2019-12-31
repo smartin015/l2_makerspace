@@ -34,11 +34,11 @@ RUN export uid=1000 gid=1000 && \
     chmod 0440 /etc/sudoers.d/developer && \
     chown ${uid}:${gid} -R /home/developer
 
+RUN mkdir -p /android-studio && cd /tmp && wget https://dl.google.com/dl/android/studio/ide-zips/3.5.3.0/android-studio-ide-191.6010548-linux.tar.gz && \
+     tar -xvf android-studio-ide-191.6010548-linux.tar.gz -C /android-studio && rm android-studio-ide-191.6010548-linux.tar.gz
+
 USER developer
 ENV HOME /home/developer		
-
-RUN wget https://dl.google.com/dl/android/studio/ide-zips/3.5.3.0/android-studio-ide-191.6010548-linux.tar.gz && \
-     tar -xvf android-studio-ide-191.6010548-linux.tar.gz && rm android-studio-ide-191.6010548-linux.tar.gz
 
 COPY README.md /
 CMD ["./Godot_v3.2-beta3_x11.64"]
