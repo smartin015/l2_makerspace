@@ -10,13 +10,15 @@
 
 ## References
 
-![](https://github.com/smartin015/l2_makerspace/raw/master/images/sketch.jpeg)
+![concept sketch](https://github.com/smartin015/l2_makerspace/raw/master/images/sketch.jpeg)
 
-![](https://github.com/smartin015/l2_makerspace/raw/master/images/floorplan.png)
+![3d render](https://github.com/smartin015/l2_makerspace/raw/master/images/makerspace_3d.png)
+
+![floor plan](https://github.com/smartin015/l2_makerspace/raw/master/images/floorplan.png)
 
 ## Dimensions
 
-The main area is 32'x14', with a 20'x6' rectangular extension on the bottom right.
+The main area is 32'x14', with a 20'x6' rectangular extension on the bottom right of the floor plan.
 
 ## Milestones
 
