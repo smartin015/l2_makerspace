@@ -23,4 +23,5 @@ You may additionally need to populate the version templates if this is your firs
 
 ## Resources
 
+https://gitlab.com/menip/godot-multiplayer-tutorials/tree/master
 https://godotengine.org/article/godot-oculus-quest-support
