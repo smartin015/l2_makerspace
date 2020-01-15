@@ -8,4 +8,4 @@ This includes CNC milling and plasma cutting, but also extends to e.g. fabric cu
 
 ## Ideas
 
-TODO
+Automate toolpath generation to cut out a part. This would borrow strongly from the "reverse engineering" work in ../optimize.
