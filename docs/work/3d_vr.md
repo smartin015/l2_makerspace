@@ -10,11 +10,11 @@
 
 ## References
 
-![concept sketch](https://github.com/smartin015/l2_makerspace/raw/master/images/sketch.jpeg)
+![concept sketch](https://github.com/smartin015/l2_makerspace/raw/master/docs/images/sketch.jpeg)
 
-![3d render](https://github.com/smartin015/l2_makerspace/raw/master/images/makerspace_3d.png)
+![3d render](https://github.com/smartin015/l2_makerspace/raw/master/docs/images/makerspace_3d.png)
 
-![floor plan](https://github.com/smartin015/l2_makerspace/raw/master/images/floorplan.png)
+![floor plan](https://github.com/smartin015/l2_makerspace/raw/master/docs/images/floorplan.png)
 
 ## Dimensions
 
