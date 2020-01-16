@@ -60,7 +60,13 @@ func _input(event):
 # ===================== Networked Multiplayer ==========================
 
 var last_transform = Transform()
-var vel = Vector3()
+var last_head = Transform()
+var last_lhand = Transform()
+var last_rhand = Transform()
+
+onready var head = $ARVROrigin
+onready var lhand = $ARVROrigin/LeftHand
+onready var rhand = $ARVROrigin/RightHand
 
 # Called when the node enters the scene tree for the first time.
 func multiplayerReady():
@@ -68,10 +74,16 @@ func multiplayerReady():
 	last_transform = transform
 
 func multiplayerProcess(_delta):
-	if gamestate.is_initialized && (vel != Vector3.ZERO || last_transform != transform):
+	print(gamestate.is_initialized, head != null, lhand != null, rhand != null)
+	if gamestate.is_initialized && head != null && lhand != null && rhand != null:
 		rset_unreliable("puppet_transform", transform)
-		vel =  (transform.origin - last_transform.origin)/_delta
-		rset_unreliable("puppet_vel", vel)
+		rset_unreliable("puppet_vel", (transform.origin - last_transform.origin)/_delta)
+		rset_unreliable("transform_head", head.transform)
+		#rset_unreliable("velocity_head", (head.transform..origin - last_head.origin)/_delta)
+		rset_unreliable("transform_lhand", lhand.transform)
+		#rset_unreliable("velocity_lhand", (lhand.origin - last_lhand.origin)/_delta)
+		rset_unreliable("transform_rhand", rhand.transform)
+		#rset_unreliable("velocity_rhand", (rhand.origin - last_rhand.origin)/_delta)
 	last_transform = transform
 
 # ===================== Main functions ================================

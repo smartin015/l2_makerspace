@@ -26,3 +26,12 @@ material/0 = null
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -2.01591, 0, 1.34878 )
 mesh = SubResource( 1 )
 material/0 = null
+
+[node name="Viewport" type="Viewport" parent="."]
+
+[node name="Camera2D" type="Camera2D" parent="Viewport"]
+
+[node name="Label" type="Label" parent="Viewport"]
+margin_right = 40.0
+margin_bottom = 14.0
+text = "This is a test label!"

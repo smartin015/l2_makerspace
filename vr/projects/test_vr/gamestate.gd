@@ -1,7 +1,7 @@
 extends Node
 
 # Game port and ip
-const ip = "127.0.0.1"
+const ip = "35.245.131.136" #"35.245.173.195"
 const DEFAULT_PORT = 44444
 
 # Signal to let GUI know whats up
