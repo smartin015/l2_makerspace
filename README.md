@@ -34,3 +34,10 @@ in a physical makerspace. Details at [./rpi/README.md]
 
 The `app/` folder hosts a native and web compatible app for managing makerspace projects that plugs into the other capabilities
 in the space. Details at [./app/README.md]
+
+
+## Docker
+
+This repo relies heavily on Docker containers to keep everything modular and self-contained.
+
+See ./base for base image (available publicly for download at gcr.io/l2-making/base)

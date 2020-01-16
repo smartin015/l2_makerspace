@@ -6,5 +6,3 @@ Both images are available publicly at:
 
 ```
 gcr.io/l2-making/base
-gcr.io/l2-making/quickstart-image
-```
