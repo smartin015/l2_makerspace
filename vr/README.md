@@ -1,9 +1,9 @@
 # Title
 
-## Objective
+## Purpose
 
 Run a lightweight 3d game environment that allows build and upload to
-an Oculus Quest.
+an Oculus Quest. This environment simulates a virtual makerspace, but is also connected to a physical one.
 
 ## Example Steps
 
@@ -25,3 +25,9 @@ You may additionally need to populate the version templates if this is your firs
 
 https://gitlab.com/menip/godot-multiplayer-tutorials/tree/master
 https://godotengine.org/article/godot-oculus-quest-support
+
+## Future work
+
+Try ImmediateGeometry based streaming of triangle meshes over UDP. Can use [this paper](https://www.researchgate.net/publication/27521282_3D_Mesh_Compression) as a start when researching compression techniques. This would be useful for streaming and displaying the results of generated/optimized models.
+
+Create a mixed reality whiteboard that can be written on in real life and VR and updates in both.
