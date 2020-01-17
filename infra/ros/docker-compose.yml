@@ -2,10 +2,10 @@ version: '2'
 
 services:
   talker:
-    image: ros2-test:latest
+    image: l2base:latest
     command: ros2 run demo_nodes_cpp talker
   listener:
-    image: ros2-test:latest
-    command: ros2 topic echo /chatter
+    image: l2base:latest
+    command: /bin/bash -c "echo 'herp' && sleep 5 && ros2 topic echo /chatter"
     depends_on:
       - talker

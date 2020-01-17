@@ -10,3 +10,4 @@ Optimize designs of outfits / fabric projects - reducing the materials used, tim
 - Find ways to derive common optimization metrics (see "Purpose")
 - Expose API hooks that can be driven by automation (e.g. tensorflow)
 - Pull example patterns from https://my-pattern.cloud/ and build a "mixer" that mixes existing patterns
+- Is there a FreeCAD module for cloth/sewing?

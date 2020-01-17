@@ -69,4 +69,4 @@ RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y ros-$ROS_DISTRO-
 # Install android studio
 RUN echo "source /opt/ros/crystal/setup.bash" > /root/.bashrc
 
-CMD ["/Godot_v3.2-beta5_x11.64", "--editor", "/projects/test_vr/project.godot"]
+CMD ["/Godot_v3.2-beta5_x11.64", "--editor", "/projects/client/project.godot"]

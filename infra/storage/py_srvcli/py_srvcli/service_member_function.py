@@ -1,4 +1,4 @@
-from l2_msgs.msg import GetProject
+from l2_msgs.srv import GetProject
 
 import rclpy
 from rclpy.node import Node

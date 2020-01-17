@@ -68,13 +68,15 @@ onready var head = $ARVROrigin
 onready var lhand = $ARVROrigin/LeftHand
 onready var rhand = $ARVROrigin/RightHand
 
+signal playerprocess()
+
 # Called when the node enters the scene tree for the first time.
 func multiplayerReady():
 	# $NameLabel.text = "You"
 	last_transform = transform
 
 func multiplayerProcess(_delta):
-	print(gamestate.is_initialized, head != null, lhand != null, rhand != null)
+	emit_signal('playerprocess', gamestate.is_initialized, head != null, lhand != null, rhand != null)
 	if gamestate.is_initialized && head != null && lhand != null && rhand != null:
 		rset_unreliable("puppet_transform", transform)
 		rset_unreliable("puppet_vel", (transform.origin - last_transform.origin)/_delta)
