@@ -1,7 +1,7 @@
 extends Node
 
 # Game port and ip
-const ip = "35.245.131.136" #"35.245.173.195"
+const ip = "127.0.0.1" # "35.245.131.136" #"35.245.173.195"
 const DEFAULT_PORT = 44444
 
 # Signal to let GUI know whats up
@@ -66,3 +66,9 @@ puppet func pre_start_game():
 	rpc_id(1, "register_player", my_name)
 	# Tell Server we ready to roll
 	rpc_id(1, "populate_world")
+	
+func remote_log(text):
+	rpc_id(1, "remote_log", text)
+
+remote func recv_remote_log(text):
+	print(text)

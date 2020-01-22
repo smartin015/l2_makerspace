@@ -61,3 +61,11 @@ remote func populate_world():
 		world.rpc_id(caller_id, "spawn_player", player.get_network_master())	
 	# Spawn new player everywhere
 	world.rpc("spawn_player", caller_id)
+
+remote func remote_log(text):
+	var caller_id = get_tree().get_rpc_sender_id()
+	for p_id in players:
+		if p_id == caller_id:
+			continue
+		rpc_id(p_id, "recv_remote_log", "%d: %s" % [caller_id, text])
+	

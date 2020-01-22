@@ -37,23 +37,32 @@ func EncodeVLE(value):
     word |= nibble
     print("%x %x" % [nibble, word])
     nibblesWritten += 1
-    if nibblesWritten == 2: # output word
+    if nibblesWritten == 2:
       flushByte()
 
-func DecodeVLE(buffer: PoolIntArray, bPtr: int) -> int:
+# Decodes the variable length encoding scheme described above.
+# 0010, 1101 --> 0000000000101010 = 42
+# 42 = 0000000000101010 → 0010, 1101
+# 010 --> 1010 -> a
+# 101 --> 0101 -> 5
+func DecodeVLE(buffer: PoolByteArray, bPtr: int) -> int:
+  var result = 0
   var nibble = 0
-  var value = 0
+  var value16 = 0
   var bits = 29
-  while (nibble & 0x80000000):  # TODO this was a do while
+  while true:
     if (!nibblesWritten):
-      # word = *pBuffer++; # load word
-      nibblesWritten = 8
-    nibble = word & 0xf0000000
-    value |= (nibble << 1) >> bits
+      word = buffer[bPtr]
+      bPtr += 1
+      nibblesWritten = 2
+    nibble = word & 0xf0
+    result |= (nibble << 25) >> bits
     word <<= 4
     nibblesWritten -= 1
     bits -= 3
-  return value
+    if !(nibble & 0x80):
+      break
+  return result
 
 """
 func CompressRVL(short* input, char* output, int numPixels) --> int:

@@ -28,7 +28,7 @@ func _ready():
 	err = gamestate.connect("server_disconnected", self, "_on_server_disconnect")
 	if err != OK:
 		print("error %d registering server_disconnected")
-	err = $Players/Player.connect("playerprocess", self, "_on_player_process")
+	# err = $Players/Player.connect("playerprocess", self, "_on_player_process")
 	
 func _on_connection_success():
 	randomize() # Reset seed
