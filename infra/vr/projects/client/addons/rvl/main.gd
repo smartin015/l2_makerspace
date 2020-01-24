@@ -1,16 +1,26 @@
+var plain = PoolIntArray()
+var encoded = PoolByteArray()
+var nibs = 0
+var byte = 0
+var decodeIdx = 0
 
-var buffer = PoolIntArray()
-var pBuffer = PoolByteArray()
-var bIdx = 0
-var word = 0
-var nibblesWritten = 0
+func Clear():
+  plain = PoolIntArray()
+  encoded = PoolByteArray()
+  nibs = 0
+  byte = 0
+  decodeIdx = 0
 
-func flushByte():
-  print("%x" % word)
-  pBuffer.push_back(word)
-  print("%x" % pBuffer[0])
-  nibblesWritten = 0
-  word = 0
+func Flush():
+  if nibs == 0:
+    return
+  elif nibs == 2:
+    print("flushed x%02x" % byte)
+    encoded.push_back(byte)
+  elif nibs == 1:
+    encoded.push_back((byte << 4) & 0xff)
+  nibs = 0
+  byte = 0
 
 # The number of zeros and non-zeros are positive integers
 # written to the compressed bitstream with a base-8 variable
@@ -22,102 +32,100 @@ func flushByte():
 # 42 = 0000000000101010 → 0010, 1101
 # 010 --> 1010 -> a
 # 101 --> 0101 -> 5
-func EncodeVLE(value):
-  # print("enc %x" % value)
-  if value == 0 && nibblesWritten == 2:
-    flushByte()
-    return
+# Precondition: value must be positive or zero
+func EncodeVLE(value: int):
+  if value == 0 && nibs == 2:
+    Flush()
 
-  while value != 0:
+  var ct = true
+  while ct:
     var nibble = value & 0x7 # lower 3 bits
     value >>= 3
     if value:
       nibble |= 0x8 # more to come
-    word <<= 4
-    word |= nibble
-    # print("%x %x" % [nibble, word])
-    nibblesWritten += 1
-    if nibblesWritten == 2:
-      flushByte()
+    byte = (byte << 4) | nibble
+    nibs += 1
+    if nibs == 2:
+      Flush()
+    ct = (value != 0)
 
 # Decodes the variable length encoding scheme described above.
 # 0010, 1101 --> 0000000000101010 = 42
 # 42 = 0000000000101010 → 0010, 1101
 # 010 --> 1010 -> a
 # 101 --> 0101 -> 5
-func DecodeVLE(buffer: PoolByteArray) -> int:
+# Returns [result value, nibbles consumed]
+func DecodeVLE():
   var result = 0
-  var nibble = 0
-  var value16 = 0
   var bits = 29
   while true:
-    if (!nibblesWritten):
-      word = buffer[bIdx]
-      bIdx += 1
-      nibblesWritten = 2
-    nibble = word & 0xf0
+    if nibs <= 0:
+      if decodeIdx >= len(encoded):
+        return result
+      byte = encoded[decodeIdx]
+      decodeIdx += 1
+      nibs = 2
+    var nibble = byte & 0x70
+    var ct = byte & 0x80
     result |= (nibble << 25) >> bits
-    word <<= 4
-    nibblesWritten -= 1
+    print("byte %02x nibble %02x result %02x ctd %s" % [byte, nibble, result, ct])
+    byte = (byte << 4) & 0xff
+    print("byte now %02x" % byte)
+    nibs -= 1
     bits -= 3
-    if !(nibble & 0x80):
+    if !ct:
       break
   return result
 
 
-func CompressRVL(input: PoolIntArray) -> PoolByteArray:
-  pBuffer = PoolByteArray()
-  nibblesWritten = 0
+func CompressRVL():
   var idx = 0
-  while (idx < len(input)):
+  while (idx < len(plain)):
     var zeros = 0
-    while idx != len(input) && input[idx] == 0:
+    while idx < len(plain) && plain[idx] == 0:
       idx += 1
       zeros += 1
+    print("Encoded %d x 0" % zeros)
     EncodeVLE(zeros);
-    
+
     var nonzeros = 0
-    while idx+nonzeros != len(input) && input[idx+nonzeros] != 0:
+    while idx+nonzeros < len(plain) && plain[idx+nonzeros] != 0:
       nonzeros += 1
+    print("Encoded %d ! 0" % nonzeros)
     EncodeVLE(nonzeros);
-    
+
     var i = 0
     while i < nonzeros:
       # TODO delta = current - previous, update prior frame
-      var delta = input[idx]
+      var delta = plain[idx]
       idx += 1
-      
+
       var zigzag = (delta << 1) ^ (delta >> 31)
+      print("Encoded %02x zigzag (%d)" % [zigzag, delta])
       EncodeVLE(zigzag)
       i += 1
+  
+  #if nibs: # last few values
+  #  encoded[idx] = byte << 4 * (8 - nibs)
+  #  idx += 1
+  Flush()
 
-  if nibblesWritten: # last few values
-    pBuffer[idx] = word << 4 * (8 - nibblesWritten)
-    idx += 1
-  return pBuffer
-
-func DecompressRVL(input: PoolByteArray, numVals: int) -> PoolIntArray:
-  buffer = PoolIntArray()
-  buffer.resize(numVals)
-  pBuffer = input
-  nibblesWritten = 0
-  var current = 0
-  var previous = 0
-  bIdx = 0
+func DecompressRVL(numVals: int):
+  plain.resize(numVals)
   var idx = 0
-  while idx < numVals:
-    var zeros = DecodeVLE(pBuffer)
+  while idx < numVals && decodeIdx < len(encoded):
+    var zeros = DecodeVLE()
     print("Zeros %d" % zeros)
     for i in range(zeros):
-      buffer[idx] = 0
+      plain[idx] = 0
       idx += 1
-    var nonzeros = DecodeVLE(pBuffer)
+    var nonzeros = DecodeVLE()
     print("Nonzeros %d" % nonzeros)
     for i in range(nonzeros):
-      var positive = DecodeVLE(pBuffer)
-      var delta = (positive >> 1) ^ -(positive & 1)
+      var zigzag = DecodeVLE()
+      var delta = (zigzag >> 1) ^ -(zigzag & 1)
+      print("Got %02x zigzag (%d)" % [zigzag, delta])
       # TODO current = previous + delta
-      buffer[idx] = delta
+      plain[idx] = delta
       idx += 1
       # previous = current
-  return buffer
