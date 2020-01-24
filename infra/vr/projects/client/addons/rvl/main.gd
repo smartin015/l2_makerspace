@@ -15,7 +15,7 @@ func Flush():
   if nibs == 0:
     return
   elif nibs == 2:
-    print("flushed x%02x" % byte)
+    # print("flushed x%02x" % byte)
     encoded.push_back(byte)
   elif nibs == 1:
     encoded.push_back((byte << 4) & 0xff)
@@ -68,9 +68,9 @@ func DecodeVLE():
     var nibble = byte & 0x70
     var ct = byte & 0x80
     result |= (nibble << 25) >> bits
-    print("byte %02x nibble %02x result %02x ctd %s" % [byte, nibble, result, ct])
+    # print("byte %02x nibble %02x result %02x ctd %s" % [byte, nibble, result, ct])
     byte = (byte << 4) & 0xff
-    print("byte now %02x" % byte)
+    # print("byte now %02x" % byte)
     nibs -= 1
     bits -= 3
     if !ct:
@@ -85,13 +85,13 @@ func CompressRVL():
     while idx < len(plain) && plain[idx] == 0:
       idx += 1
       zeros += 1
-    print("Encoded %d x 0" % zeros)
+    # print("Encoded %d x 0" % zeros)
     EncodeVLE(zeros);
 
     var nonzeros = 0
     while idx+nonzeros < len(plain) && plain[idx+nonzeros] != 0:
       nonzeros += 1
-    print("Encoded %d ! 0" % nonzeros)
+    # print("Encoded %d ! 0" % nonzeros)
     EncodeVLE(nonzeros);
 
     var i = 0
@@ -101,7 +101,7 @@ func CompressRVL():
       idx += 1
 
       var zigzag = (delta << 1) ^ (delta >> 31)
-      print("Encoded %02x zigzag (%d)" % [zigzag, delta])
+      # print("Encoded %02x zigzag (%d)" % [zigzag, delta])
       EncodeVLE(zigzag)
       i += 1
   
@@ -115,16 +115,16 @@ func DecompressRVL(numVals: int):
   var idx = 0
   while idx < numVals && decodeIdx < len(encoded):
     var zeros = DecodeVLE()
-    print("Zeros %d" % zeros)
+    # print("Zeros %d" % zeros)
     for i in range(zeros):
       plain[idx] = 0
       idx += 1
     var nonzeros = DecodeVLE()
-    print("Nonzeros %d" % nonzeros)
+    # print("Nonzeros %d" % nonzeros)
     for i in range(nonzeros):
       var zigzag = DecodeVLE()
       var delta = (zigzag >> 1) ^ -(zigzag & 1)
-      print("Got %02x zigzag (%d)" % [zigzag, delta])
+      # print("Got %02x zigzag (%d)" % [zigzag, delta])
       # TODO current = previous + delta
       plain[idx] = delta
       idx += 1
