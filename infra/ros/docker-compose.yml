@@ -6,6 +6,8 @@ services:
     command: ros2 run demo_nodes_cpp talker
   listener:
     image: l2base:latest
-    command: /bin/bash -c "echo 'herp' && sleep 5 && ros2 topic echo /chatter"
+    command: /bin/bash -c "ros2 topic echo /chatter"
+    environment: 
+      PYTHONUNBUFFERED: 1
     depends_on:
       - talker
