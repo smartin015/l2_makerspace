@@ -90,15 +90,8 @@ func multiplayerReady():
   last_transform = transform
   rpc_id(1, "remote_log", "hello from player")
 
-var ctr = 0
-
 func multiplayerProcess(_delta):
-  ctr += _delta
-  if ctr > 1.0:
-    ctr = 0
-    gamestate.remote_log("%s %s %s %s" % [gamestate.is_initialized, head != null, lhand != null, rhand != null])
-    print("Beep boop %s %s %s %s" % [gamestate.is_initialized, head != null, lhand != null, rhand != null])
-  
+  # gamestate.remote_log("%s %s %s %s" % [gamestate.is_initialized, head != null, lhand != null, rhand != null])
   if gamestate.is_initialized && head != null && lhand != null && rhand != null:
     rset_unreliable("puppet_transform", transform)
     rset_unreliable("puppet_vel", (transform.origin - last_transform.origin)/_delta)

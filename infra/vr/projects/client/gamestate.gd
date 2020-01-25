@@ -7,6 +7,7 @@ const DEFAULT_SETTINGS = {
   "server_port": 44444,
 }
 var settings = DEFAULT_SETTINGS
+const POLY_API_KEY = "AIzaSyDxj27BQYsrrMFZg1MJDs17iUN1roPdifc"
 
 # Signal to let GUI know whats up
 signal connection_failed()
@@ -16,6 +17,8 @@ signal server_disconnected()
 var my_name = "Client"
 var players = {} # Players dict stored as id:name
 var is_initialized = false # We have been registered to the server.
+
+var outbound
 
 func _ready():
   var err = get_tree().connect("connected_to_server", self, "_connected_ok")
@@ -33,20 +36,49 @@ func _ready():
   if err != OK:
     print("error %s self-registering for http requests" % err)
     
-  print("Fetching remote settings...")
-  self.request(SETTINGS_URI)
+  outbound = SETTINGS_URI
+  # print("Fetching remote settings...")
+  # self.request(SETTINGS_URI)
 
-func _on_HTTPRequest_request_completed( result, response_code, headers, body ):
+func _on_HTTPRequest_request_completed(result, response_code, headers, body):
+  if outbound == SETTINGS_URI:
     if response_code != 200:
       print("Got code %d requesting online settings, using defaults instead" % response_code)
     else:
       var json = JSON.parse(body.get_string_from_utf8())
       if json.error == OK:
-        print("Got settings from remote: %s" % json.result)
-        settings = json.result
+        if typeof(json.result.get("server_ip")) != TYPE_STRING || typeof(json.result.get("server_port")) == TYPE_NIL:
+          print("Missing/wrong type settings in result %s" % json.result)
+        else:
+          print("Got settings from remote: %s" % json.result)
+          settings = json.result
       else:
         print("JSON parse error: %s " % json.error_string)
     connect_to_server() # Try to connect
+    asset_search("piano")
+  elif outbound == "poly_list":
+    var json = JSON.parse(body.get_string_from_utf8())
+    print(json.result.assets[0])
+    for fmt in json.result.assets[0].formats:
+      if fmt.formatType == "GLTF2":
+        print("%s %s" % [fmt.formatType, fmt.resources])
+        outbound = "poly_download"
+        self.request(fmt.resources[0].url)
+  elif outbound == "poly_download":
+    print(response_code)
+    var dat_out = File.new()
+    dat_out.open('user://thing.bin', File.WRITE)
+    dat_out.store_buffer(body)
+    dat_out.close()
+    var mesh=load('user://thing.bin')
+    print(mesh)
+    if mesh != null:
+      get_node('/root/World').add_child(mesh.instance())
+
+
+func asset_search(params):
+  outbound = "poly_list"
+  self.request("https://poly.googleapis.com/v1/assets?keywords=%s&key=%s" % [params, POLY_API_KEY])
 
 func connect_to_server():
   print("Attempting to connect to server %s port %d" % [settings.server_ip, settings.server_port])
