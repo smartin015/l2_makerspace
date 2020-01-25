@@ -96,10 +96,11 @@ func multiplayerProcess(_delta):
     rset_unreliable("puppet_transform", transform)
     rset_unreliable("puppet_vel", (transform.origin - last_transform.origin)/_delta)
     rset_unreliable("transform_head", head.transform)
-    #rset_unreliable("velocity_head", (head.transform..origin - last_head.origin)/_delta)
     rset_unreliable("transform_lhand", lhand.transform)
-    #rset_unreliable("velocity_lhand", (lhand.origin - last_lhand.origin)/_delta)
     rset_unreliable("transform_rhand", rhand.transform)
+    
+    #rset_unreliable("velocity_head", (head.transform..origin - last_head.origin)/_delta)
+    #rset_unreliable("velocity_lhand", (lhand.origin - last_lhand.origin)/_delta)
     #rset_unreliable("velocity_rhand", (rhand.origin - last_rhand.origin)/_delta)
   last_transform = transform
 

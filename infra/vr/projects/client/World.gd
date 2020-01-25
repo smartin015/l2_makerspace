@@ -3,6 +3,9 @@ extends Spatial
 onready var PuppetPlayer = load("res://PuppetPlayer.tscn")
 
 puppet func spawn_player(id):
+  if gamestate.players.get(id) == null:
+    print("unregistered player %s spawn attempted; ignoring" % id)
+    return
   # Don't sppawn self; already spawned
   if gamestate.players[id] == gamestate.my_name:
     print("self-spawned; starting to send position")
@@ -18,7 +21,7 @@ puppet func spawn_player(id):
 puppet func remove_player(id):
   var node = $Players.get_node(String(id))
   if node != null:
-      node.queue_free()
+    node.queue_free()
 
 func _ready():
   var err = gamestate.connect("connection_failed", self, "_on_connection_failed")

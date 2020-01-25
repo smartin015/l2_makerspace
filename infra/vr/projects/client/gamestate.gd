@@ -37,8 +37,9 @@ func _ready():
     print("error %s self-registering for http requests" % err)
     
   outbound = SETTINGS_URI
-  # print("Fetching remote settings...")
-  # self.request(SETTINGS_URI)
+  print("Fetching remote settings...")
+  self.request(SETTINGS_URI)
+  #connect_to_server()
 
 func _on_HTTPRequest_request_completed(result, response_code, headers, body):
   if outbound == SETTINGS_URI:
@@ -55,7 +56,7 @@ func _on_HTTPRequest_request_completed(result, response_code, headers, body):
       else:
         print("JSON parse error: %s " % json.error_string)
     connect_to_server() # Try to connect
-    asset_search("piano")
+    # asset_search("piano")
   elif outbound == "poly_list":
     var json = JSON.parse(body.get_string_from_utf8())
     print(json.result.assets[0])
@@ -108,6 +109,7 @@ func _connected_fail():
 
 puppet func register_player(id, new_player_data):
   players[id] = new_player_data
+  print("registered player %s: %s" % [id, new_player_data])
 
 puppet func unregister_player(id):
   players.erase(id)
