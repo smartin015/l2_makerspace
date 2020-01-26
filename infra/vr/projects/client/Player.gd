@@ -1,7 +1,5 @@
 extends Spatial
 
-# Node references 
-
 onready var origin = $ARVROrigin
 onready var head = $ARVROrigin/ARVRCamera
 onready var left = $ARVROrigin/LeftHand
@@ -35,6 +33,8 @@ onready var camera = $ARVROrigin/ARVRCamera
 var pitch = 0.0
 var yaw = 0.0
 
+signal spawn_cube_request()
+
 var NAV_MAP = {
   "movement_forward":  Vector3.FORWARD,
   "movement_backward": Vector3.BACK,
@@ -52,6 +52,9 @@ func keyboardProcess(_delta):
   for k in NAV_MAP.keys():
     if Input.is_action_pressed(k):
       move += NAV_MAP[k]
+  if Input.is_action_just_pressed("spawn_cube"):
+    emit_signal("spawn_cube_request")
+  
   move = move.normalized() * MAX_SPEED * _delta
   camera.transform.origin += move.rotated(Vector3.UP, yaw)
   left.transform = camera.transform.translated(Vector3.FORWARD * ARM_LEN)
@@ -65,14 +68,10 @@ func _input(event):
     camera.global_rotate(Vector3.UP, yaw)
 
 # ===================== Networked Multiplayer ==========================
-
 var last_head = Transform()
 var last_left = Transform()
 var last_right = Transform()
 
-signal playerprocess()
-
-# Called when the node enters the scene tree for the first time.
 func multiplayerReady():
   last_head = head.transform
   last_left = left.transform

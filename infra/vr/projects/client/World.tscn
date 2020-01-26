@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=2]
+[gd_scene load_steps=9 format=2]
 
 [ext_resource path="res://World.gd" type="Script" id=1]
 [ext_resource path="res://Player.tscn" type="PackedScene" id=2]
@@ -14,6 +14,8 @@ viewport_path = NodePath("Viewport")
 [sub_resource type="SpatialMaterial" id=4]
 resource_local_to_scene = true
 albedo_texture = SubResource( 3 )
+
+[sub_resource type="PlaneMesh" id=5]
 
 [node name="World" type="Spatial"]
 script = ExtResource( 1 )
@@ -39,17 +41,17 @@ script = ExtResource( 3 )
 
 [node name="Player" parent="Players" instance=ExtResource( 2 )]
 
-[node name="MeshInstance" type="MeshInstance" parent="."]
+[node name="Triangle1" type="MeshInstance" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4.49778 )
 mesh = SubResource( 1 )
 material/0 = null
 
-[node name="MeshInstance2" type="MeshInstance" parent="."]
+[node name="Triangle2" type="MeshInstance" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 4.32444, 0, 1.34878 )
 mesh = SubResource( 1 )
 material/0 = null
 
-[node name="MeshInstance3" type="MeshInstance" parent="."]
+[node name="Triangle3" type="MeshInstance" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -2.01591, 0, 1.34878 )
 mesh = SubResource( 1 )
 material/0 = null
@@ -58,3 +60,10 @@ material/0 = null
 transform = Transform( 1, -8.74228e-08, 8.74228e-08, 8.74228e-08, 4.37114e-08, -1, 8.74228e-08, 1, 4.37114e-08, 0, 0, -2.71329 )
 mesh = SubResource( 2 )
 material/0 = SubResource( 4 )
+
+[node name="Cubes" type="Node" parent="."]
+
+[node name="Floor" type="MeshInstance" parent="."]
+transform = Transform( 10, 0, 0, 0, 1, 0, 0, 0, 10, 0, -0.966742, 0 )
+mesh = SubResource( 5 )
+material/0 = null

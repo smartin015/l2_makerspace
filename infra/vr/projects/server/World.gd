@@ -9,5 +9,13 @@ puppetsync func spawn_player(id):
   $Players.add_child(player)
   print("Initialized player, node %s id %d" % [player.name, id])
 
+puppetsync func spawn_cube(origin):
+  var cube = MeshInstance.new()
+  cube.mesh = CubeMesh.new()
+  cube.scale = Vector3(0.1,0.1,0.1)
+  cube.transform.origin = origin
+  $Cubes.add_child(cube)
+  print("Added cube at %s" % origin)
+
 puppetsync func remove_player(id):
   $Players.get_node(gamestate.players[id]).queue_free()

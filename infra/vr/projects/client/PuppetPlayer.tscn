@@ -21,16 +21,16 @@ __meta__ = {
 "_editor_description_": "	"
 }
 
-[node name="LeftHand" type="Spatial" parent="Head"]
+[node name="LeftHand" type="Spatial" parent="."]
 
-[node name="LeftHandMesh" type="MeshInstance" parent="Head/LeftHand"]
+[node name="LeftHandMesh" type="MeshInstance" parent="LeftHand"]
 transform = Transform( 0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 0, 0 )
 mesh = SubResource( 2 )
 material/0 = null
 
-[node name="RightHand" type="Spatial" parent="Head"]
+[node name="RightHand" type="Spatial" parent="."]
 
-[node name="RightHandMesh" type="MeshInstance" parent="Head/RightHand"]
+[node name="RightHandMesh" type="MeshInstance" parent="RightHand"]
 transform = Transform( 0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 0, 0 )
 mesh = SubResource( 3 )
 material/0 = null

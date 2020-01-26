@@ -2,8 +2,8 @@ extends Spatial
 
 puppet var puppet_motion
 
-onready var left = $Head/LeftHand
-onready var right = $Head/RightHand
+onready var left = $LeftHand
+onready var right = $RightHand
 onready var head = $Head 
 
 const PM_HEAD = 0

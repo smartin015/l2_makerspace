@@ -8,7 +8,7 @@ const MAX_PLAYERS = 12
 
 # Players dict stored as id:name
 var players = {}
-
+onready var world = get_node("/root/World")
 
 func _ready():
   get_tree().connect("network_peer_connected", self, "_player_connected")
@@ -55,12 +55,16 @@ puppetsync func unregister_player(id):
 remote func populate_world():
   var caller_id = get_tree().get_rpc_sender_id()
   print("populate_world called by %d" % caller_id)
-  var world = get_node("/root/World")
   # Spawn all current players on new client
   for player in world.get_node("Players").get_children():
-    world.rpc_id(caller_id, "spawn_player", player.get_network_master())	
+    world.rpc_id(caller_id, "spawn_player", player.get_network_master())
+  for cube in world.get_node("Cubes").get_children():
+    world.rpc_id(caller_id, "spawn_cube", cube.transform.origin)
   # Spawn new player everywhere
   world.rpc("spawn_player", caller_id)
+
+remote func spawn_cube(origin):
+  world.rpc("spawn_cube", origin)
 
 remote func remote_log(text):
   var caller_id = get_tree().get_rpc_sender_id()
