@@ -2,9 +2,10 @@ extends Spatial
 
 # Node references 
 
-onready var head = $ARVROrigin
-onready var lhand = $ARVROrigin/LeftHand
-onready var rhand = $ARVROrigin/RightHand
+onready var origin = $ARVROrigin
+onready var head = $ARVROrigin/ARVRCamera
+onready var left = $ARVROrigin/LeftHand
+onready var right = $ARVROrigin/RightHand
 
 # ===================== VR Control / Initialization ====================
 
@@ -30,79 +31,82 @@ func ovrProcess(_delta):
 
 var dir = Vector3()
 const MAX_SPEED = 5
-var MOUSE_SENSITIVITY = 0.15
+var MOUSE_SENSITIVITY = 0.005
 onready var camera = $ARVROrigin/ARVRCamera
-
-onready var controlled_node = self
+var controlled_node
+var pitch = 0.0
+var yaw = 0.0
 
 func keyboardReady():
   Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+  controlled_node = camera
 
 func keyboardProcess(_delta):	
   dir = Vector3()
-  var cam_xform = camera.get_global_transform()
-  var input_movement_vector = Vector3()
+  var move = Vector3()
   if Input.is_action_just_pressed("switch_control"):
-    if controlled_node == self:
-      controlled_node = lhand
-    elif controlled_node == lhand:
-      controlled_node = rhand
-    elif controlled_node == rhand:
-      controlled_node = head
+    if controlled_node == camera:
+      controlled_node = left
+    elif controlled_node == left:
+      controlled_node = right
+    elif controlled_node == right:
+      controlled_node = camera
     else:
-      controlled_node = self
+      controlled_node = camera
     print("Switched control to %s" % controlled_node.get_name())
   if Input.is_action_pressed("movement_forward"):
-    input_movement_vector.y += 1
+    move.z -= 1
   if Input.is_action_pressed("movement_backward"):
-    input_movement_vector.y -= 1
+    move.z += 1
   if Input.is_action_pressed("movement_left"):
-    input_movement_vector.x -= 1
+    move.x -= 1
   if Input.is_action_pressed("movement_right"):
-    input_movement_vector.x += 1
+    move.x += 1
   if Input.is_action_pressed("movement_up"):
-    input_movement_vector.z += 1
+    move.y += 1
   if Input.is_action_pressed("movement_down"):
-    input_movement_vector.z -= 1
-  input_movement_vector = input_movement_vector.normalized()
-  dir += -cam_xform.basis.z * input_movement_vector.y
-  dir += cam_xform.basis.x * input_movement_vector.x
-  dir += cam_xform.basis.y * input_movement_vector.z
-  controlled_node.transform = controlled_node.transform.translated(dir * MAX_SPEED * _delta)
+    move.y -= 1
+  move = move.normalized() * MAX_SPEED * _delta
+  controlled_node.transform.origin += move.rotated(Vector3(0,1,0), yaw)
   
 func _input(event):
   if !interface and event is InputEventMouseMotion and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED: 
-    self.rotate_x(deg2rad(event.relative.y * MOUSE_SENSITIVITY))
-    self.rotate_y(deg2rad(event.relative.x * MOUSE_SENSITIVITY * -1))
+    pitch = clamp(pitch - (event.relative.y * MOUSE_SENSITIVITY), -PI, PI)
+    yaw = yaw - (event.relative.x * MOUSE_SENSITIVITY)
+    camera.set_rotation(Vector3(pitch, 0, 0))
+    camera.global_rotate(Vector3(0, 1, 0), yaw)
 
 # ===================== Networked Multiplayer ==========================
 
-var last_transform = Transform()
 var last_head = Transform()
-var last_lhand = Transform()
-var last_rhand = Transform()
+var last_left = Transform()
+var last_right = Transform()
 
 signal playerprocess()
 
 # Called when the node enters the scene tree for the first time.
 func multiplayerReady():
-  # $NameLabel.text = "You"
-  last_transform = transform
-  rpc_id(1, "remote_log", "hello from player")
+  last_head = head.transform
+  last_left = left.transform
+  last_right = right.transform
+  rpc_id(1, "remote_log", "player ready")
 
-func multiplayerProcess(_delta):
-  # gamestate.remote_log("%s %s %s %s" % [gamestate.is_initialized, head != null, lhand != null, rhand != null])
-  if gamestate.is_initialized && head != null && lhand != null && rhand != null:
-    rset_unreliable("puppet_transform", transform)
-    rset_unreliable("puppet_vel", (transform.origin - last_transform.origin)/_delta)
-    rset_unreliable("transform_head", head.transform)
-    rset_unreliable("transform_lhand", lhand.transform)
-    rset_unreliable("transform_rhand", rhand.transform)
-    
-    #rset_unreliable("velocity_head", (head.transform..origin - last_head.origin)/_delta)
-    #rset_unreliable("velocity_lhand", (lhand.origin - last_lhand.origin)/_delta)
-    #rset_unreliable("velocity_rhand", (rhand.origin - last_rhand.origin)/_delta)
-  last_transform = transform
+func multiplayerProcess(delta):
+  if gamestate.is_initialized && head != null && left != null && right != null:
+    rset_unreliable("puppet_motion", [
+      head.transform.origin,
+      head.transform.basis.get_rotation_quat(),
+      (head.transform.origin - last_head.origin) / delta,
+      left.transform.origin,
+      left.transform.basis.get_rotation_quat(),
+      (left.transform.origin - last_left.origin) / delta,
+      right.transform.origin,
+      right.transform.basis.get_rotation_quat(),
+      (right.transform.origin - last_right.origin) / delta,
+     ])
+  last_head = head.transform
+  last_left = left.transform
+  last_right = right.transform
 
 # ===================== Main functions ================================
 

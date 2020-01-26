@@ -36,13 +36,9 @@ func _ready():
   # err = $Players/Player.connect("playerprocess", self, "_on_player_process")
   
 func _on_connection_success():
-  randomize() # Reset seed
-  
-  print("Connected successfully!")
-  # TODO Something a bit more permanent / useful. 
-  gamestate.my_name = str(int(rand_range(0,10000000)))
+  gamestate.my_name = str(get_tree().get_network_unique_id())
   $Players/Player.name = gamestate.my_name
-  print("Set player name to %s" % gamestate.my_name)
+  print("Connected; player name now %s" % gamestate.my_name)
   gamestate.pre_start_game()
   
 func _on_connection_failed():

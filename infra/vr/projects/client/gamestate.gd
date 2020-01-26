@@ -7,6 +7,7 @@ const DEFAULT_SETTINGS = {
   "server_port": 44444,
 }
 var settings = DEFAULT_SETTINGS
+var host = NetworkedMultiplayerENet.new()
 const POLY_API_KEY = "AIzaSyDxj27BQYsrrMFZg1MJDs17iUN1roPdifc"
 
 # Signal to let GUI know whats up
@@ -17,6 +18,7 @@ signal server_disconnected()
 var my_name = "Client"
 var players = {} # Players dict stored as id:name
 var is_initialized = false # We have been registered to the server.
+var default_connect_timer = null
 
 var outbound
 
@@ -37,10 +39,16 @@ func _ready():
     print("error %s self-registering for http requests" % err)
     
   outbound = SETTINGS_URI
-  print("Fetching remote settings...")
-  self.request(SETTINGS_URI)
-  #connect_to_server()
-
+  
+  # Try briefly connecting to localhost first
+  default_connect_timer = Timer.new()
+  default_connect_timer.set_one_shot(true)
+  default_connect_timer.connect("timeout", self, "_default_connect_timeout")
+  add_child(default_connect_timer)
+  
+  connect_to_server(DEFAULT_SETTINGS.server_ip, DEFAULT_SETTINGS.server_port) # Try to connect
+  default_connect_timer.start(0.5)
+  
 func _on_HTTPRequest_request_completed(result, response_code, headers, body):
   if outbound == SETTINGS_URI:
     if response_code != 200:
@@ -55,7 +63,7 @@ func _on_HTTPRequest_request_completed(result, response_code, headers, body):
           settings = json.result
       else:
         print("JSON parse error: %s " % json.error_string)
-    connect_to_server() # Try to connect
+    connect_to_server(settings.server_ip, settings.server_port)
     # asset_search("piano")
   elif outbound == "poly_list":
     var json = JSON.parse(body.get_string_from_utf8())
@@ -76,15 +84,28 @@ func _on_HTTPRequest_request_completed(result, response_code, headers, body):
     if mesh != null:
       get_node('/root/World').add_child(mesh.instance())
 
+func _default_connect_timeout():
+  if host.get_connection_status() != NetworkedMultiplayerPeer.CONNECTION_CONNECTED:
+    host.close_connection()
+    print("timed out connecting to localhost; fetching remote settings...")
+    self.request(SETTINGS_URI)
+  else: 
+    print("localhost is connected")
 
 func asset_search(params):
   outbound = "poly_list"
   self.request("https://poly.googleapis.com/v1/assets?keywords=%s&key=%s" % [params, POLY_API_KEY])
 
-func connect_to_server():
-  print("Attempting to connect to server %s port %d" % [settings.server_ip, settings.server_port])
-  var host = NetworkedMultiplayerENet.new()
-  host.create_client(settings.server_ip, settings.server_port)
+func connect_to_server(ip, port):
+  print("Attempting to connect to server %s port %d" % [ip, port])
+  
+  # Disconnect if already connected (no-op if this is first connection)  
+  host.close_connection()
+  var err = host.create_client(ip, port)
+  if err != OK:
+    print("Error %s connecting to server" % err)
+    return
+
   get_tree().set_network_peer(host)
 
 # Callback from SceneTree, called when connect to server
@@ -96,16 +117,14 @@ func _server_disconnected():
   is_initialized = false
   players.clear()
   emit_signal("server_disconnected")
-  # Try to connect again
-  connect_to_server()
+  connect_to_server(settings.server_ip, settings.server_port)
 
 # Callback from SceneTree, called when unabled to connect to server
 func _connected_fail():
   is_initialized = false
-  get_tree().set_network_peer(null) # Remove peer
+  get_tree().set_network_peer(null)
   emit_signal("connection_failed")
-  # Try to connect again
-  connect_to_server()
+  connect_to_server(settings.server_ip, settings.server_port)
 
 puppet func register_player(id, new_player_data):
   players[id] = new_player_data
