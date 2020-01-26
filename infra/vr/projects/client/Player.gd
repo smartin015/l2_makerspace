@@ -28,53 +28,41 @@ func ovrProcess(_delta):
     perform_runtime_config = true
 
 # ===================== Keyboard/Mouse control =========================
-
-var dir = Vector3()
 const MAX_SPEED = 5
-var MOUSE_SENSITIVITY = 0.005
+const MOUSE_SENSITIVITY = 0.005
+const ARM_LEN = 1.0
 onready var camera = $ARVROrigin/ARVRCamera
-var controlled_node
 var pitch = 0.0
 var yaw = 0.0
 
+var NAV_MAP = {
+  "movement_forward":  Vector3.FORWARD,
+  "movement_backward": Vector3.BACK,
+  "movement_left":     Vector3.LEFT,
+  "movement_right":    Vector3.RIGHT,
+  "movement_up":       Vector3.UP,
+  "movement_down":     Vector3.DOWN,
+}
+
 func keyboardReady():
   Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-  controlled_node = camera
 
 func keyboardProcess(_delta):	
-  dir = Vector3()
   var move = Vector3()
-  if Input.is_action_just_pressed("switch_control"):
-    if controlled_node == camera:
-      controlled_node = left
-    elif controlled_node == left:
-      controlled_node = right
-    elif controlled_node == right:
-      controlled_node = camera
-    else:
-      controlled_node = camera
-    print("Switched control to %s" % controlled_node.get_name())
-  if Input.is_action_pressed("movement_forward"):
-    move.z -= 1
-  if Input.is_action_pressed("movement_backward"):
-    move.z += 1
-  if Input.is_action_pressed("movement_left"):
-    move.x -= 1
-  if Input.is_action_pressed("movement_right"):
-    move.x += 1
-  if Input.is_action_pressed("movement_up"):
-    move.y += 1
-  if Input.is_action_pressed("movement_down"):
-    move.y -= 1
+  for k in NAV_MAP.keys():
+    if Input.is_action_pressed(k):
+      move += NAV_MAP[k]
   move = move.normalized() * MAX_SPEED * _delta
-  controlled_node.transform.origin += move.rotated(Vector3(0,1,0), yaw)
+  camera.transform.origin += move.rotated(Vector3.UP, yaw)
+  left.transform = camera.transform.translated(Vector3.FORWARD * ARM_LEN)
+  right.transform = camera.transform
   
 func _input(event):
   if !interface and event is InputEventMouseMotion and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED: 
     pitch = clamp(pitch - (event.relative.y * MOUSE_SENSITIVITY), -PI, PI)
     yaw = yaw - (event.relative.x * MOUSE_SENSITIVITY)
     camera.set_rotation(Vector3(pitch, 0, 0))
-    camera.global_rotate(Vector3(0, 1, 0), yaw)
+    camera.global_rotate(Vector3.UP, yaw)
 
 # ===================== Networked Multiplayer ==========================
 
