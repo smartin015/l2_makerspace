@@ -44,7 +44,7 @@ func test_rvl_compress():
   for v in RVL_TESTS:
     rvl.Clear()
     rvl.plain = PoolIntArray(v[0])
-    var got = rvl.CompressRVL()
+    rvl.CompressRVL()
     assert_eq(len(rvl.encoded), len(v[1]), "RVL compress length for test")
     for i in range(len(v[1])):
       assert_eq("%02x" % rvl.encoded[i], "%02x" % v[1][i], "RVL compression at index %d for test %s" % [i, v[0]])
@@ -53,7 +53,7 @@ func test_rvl_decompress():
   for v in RVL_TESTS:
     rvl.Clear()
     rvl.encoded = PoolByteArray(v[1])
-    var got = rvl.DecompressRVL(len(v[0]))
+    rvl.DecompressRVL(len(v[0]))
     assert_eq(len(rvl.plain), len(v[0]), "RVL compress length for test")
     for i in range(len(v[0])):
       assert_eq(rvl.plain[i], v[0][i], "RVL compression at index %d for test %s" % [i, v[0]])

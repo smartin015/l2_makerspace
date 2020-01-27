@@ -1,33 +1,37 @@
-extends ImmediateGeometry
+extends Spatial
 
-var pts = PoolVector3Array()
-var socket = PacketPeerUDP.new()
-	
+onready var geom = $Geometry
+
+# This doesn't actually get set, it's just a convenient way to stream in data
+puppet var point_data setget point_data_set
+
+var rvl = load("res://addons/rvl/main.gd").new()
+const SCALE = 0.01
+const W = 128
+const H = 128
+const SCALE_FACTOR = 1000.0
+
 func _ready():
-	var point_size = 5
-	var m = SpatialMaterial.new()
-	m.flags_use_point_size = true
-	m.params_point_size = point_size
-	self.set_material_override(m)
-	
-	if(socket.listen(4242,"127.0.0.1") != OK):
-		print("An error occurred listening on port 4242")
-	else:
-		print("Listening on port 4242 on localhost")
-	
-func _process(_delta):
-	if(socket.is_listening() && socket.get_available_packet_count() > 0):
-		pts = socket.get_var()
-		var err = socket.get_packet_error()
-		if err:
-			print(err)
-		else:
-			renderPointCloud()
-	
-func renderPointCloud():
-	self.clear()
-	self.begin(Mesh.PRIMITIVE_POINTS, null)
-	for p in pts: #list of Vector3s
-		self.add_vertex(p)
-	self.end()
-	pass # Replace with function body.
+  self.set_network_master(1) # Server owns us
+
+func point_data_set(data):
+  if typeof(data) != TYPE_RAW_ARRAY:
+    print("Got wrong type:", typeof(rvl.encoded))
+    return
+  rvl.Clear()
+  rvl.encoded = data
+  rvl.DecompressRVL(W*H)
+  geom.clear()
+  geom.begin(Mesh.PRIMITIVE_POINTS, null)
+  var row = 0
+  var col = 0
+  for v in rvl.plain: #list of Vector3s
+    geom.add_vertex(Vector3(row*SCALE, v / SCALE_FACTOR, col*SCALE))
+    row += 1
+    if row >= W:
+      row = 0
+      col += 1
+    if col >= H:
+      break
+  geom.end()
+  pass # Replace with function body.
