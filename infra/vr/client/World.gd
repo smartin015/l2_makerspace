@@ -33,6 +33,7 @@ puppet func remove_player(id):
     node.queue_free()
 
 func _ready():
+  gamestate.init()
   var err = gamestate.connect("connection_failed", self, "_on_connection_failed")
   if err != OK:
     print("error %d registering connection_failed")

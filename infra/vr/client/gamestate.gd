@@ -22,24 +22,22 @@ var default_connect_timer = null
 
 var outbound
 
+var LISTENERS = {
+  "connected_to_server": "_connected_ok",
+  "connection_failed": "_connected_fail",
+  "server_disconnected": "_server_disconnected",
+  "request_completed": "_on_HTTPRequest_request_completed",
+ }
+
 func _ready():
-  var err = get_tree().connect("connected_to_server", self, "_connected_ok")
-  if err != OK:
-    print("error %s registering connected_to_server" % err)
-  err = get_tree().connect("connection_failed", self, "_connected_fail")
-  if err != OK:
-    print("error %s registering connection_failed" % err)
-  err = get_tree().connect("server_disconnected", self, "_server_disconnected")	
-  if err != OK:
-    print("error %s registering server_disconnected" % err)
+  for k in LISTENERS.keys():  
+    var err = get_tree().connect(k, self, LISTENERS[k])
+    if err != OK:
+      print("error registering ", k, ": ", err)
   is_initialized = false
-  
-  err = self.connect("request_completed", self, "_on_HTTPRequest_request_completed")
-  if err != OK:
-    print("error %s self-registering for http requests" % err)
     
+func init():
   outbound = SETTINGS_URI
-  
   # Try briefly connecting to localhost first
   default_connect_timer = Timer.new()
   default_connect_timer.set_one_shot(true)
