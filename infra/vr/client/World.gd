@@ -36,16 +36,20 @@ func _ready():
   gamestate.init()
   var err = gamestate.connect("connection_failed", self, "_on_connection_failed")
   if err != OK:
-    print("error %d registering connection_failed")
+    print("error %d registering connection_failed" % err)
   err = gamestate.connect("connection_succeeded", self, "_on_connection_success")
   if err != OK:
-    print("error %d registering connection_succeeded")
+    print("error %d registering connection_succeeded" % err)
   err = gamestate.connect("server_disconnected", self, "_on_server_disconnect")
   if err != OK:
-    print("error %d registering server_disconnected")
+    print("error %d registering server_disconnected" % err)
   err = player.connect("spawn_cube_request", self, "_on_spawn_cube_request")
   if err != OK:
-    print("error %d registering spawn_cube_request")
+    print("error %d registering spawn_cube_request" % err)
+  err = $MeshStreamer.connect("mesh_loaded", self, "_on_mesh_loaded")
+  if err != OK:
+    print("error %d registering mesh_loaded" % err)
+  
   
 func _on_connection_success():
   gamestate.my_name = str(get_tree().get_network_unique_id())
@@ -61,3 +65,9 @@ func _on_server_disconnect():
   
 func _on_spawn_cube_request():
   gamestate.rpc_id(1, "spawn_cube", player.get_node("ARVROrigin/LeftHand").transform.origin)
+
+func _on_mesh_loaded(mesh):
+  print("Instantiating mesh: ", mesh)
+  var mi = MeshInstance.new()
+  mi.mesh = mesh
+  self.add_child(mi)

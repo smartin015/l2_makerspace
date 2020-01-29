@@ -1,10 +1,11 @@
-[gd_scene load_steps=12 format=2]
+[gd_scene load_steps=13 format=2]
 
 [ext_resource path="res://World.gd" type="Script" id=1]
 [ext_resource path="res://Player.tscn" type="PackedScene" id=2]
 [ext_resource path="res://StatusText.gd" type="Script" id=3]
 [ext_resource path="res://DepthRender.tscn" type="PackedScene" id=4]
 [ext_resource path="res://RobotSpawner.gd" type="Script" id=5]
+[ext_resource path="res://addons/poly/MeshStreamer.gd" type="Script" id=6]
 
 [sub_resource type="PrismMesh" id=1]
 
@@ -79,3 +80,6 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1.32317, 0.721431, -0.865303 
 [node name="RobotSpawner" type="Spatial" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.711052, -1.69066 )
 script = ExtResource( 5 )
+
+[node name="MeshStreamer" type="HTTPRequest" parent="."]
+script = ExtResource( 6 )
