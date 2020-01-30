@@ -4,7 +4,7 @@ var streamer = load("res://addons/poly/MeshStreamer.gd").new()
 
 func _on_mesh_loaded(mesh):
   print("Got mesh %s", mesh)
-  # get_tree().get_node('/root/World').add_child(mesh.instance())
+  get_tree().get_node('/root/World').add_child(mesh)
   quit()
   
 func _init():
@@ -12,7 +12,7 @@ func _init():
   var err = streamer.connect("mesh_loaded", self, "_on_mesh_loaded")
   if err != OK:
     print("Err connecting to mesh_loaded: ", err)
-  streamer.asset_search("piano")
+  streamer.search_and_load("piano")
   
 
 

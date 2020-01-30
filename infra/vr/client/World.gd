@@ -27,6 +27,9 @@ puppet func spawn_cube(origin):
   $Cubes.add_child(cube)
   print("Added cube at %s" % origin)
 
+puppet func spawn_poly(asset_id):
+  $MeshStreamer.stream(asset_id)
+
 puppet func remove_player(id):
   var node = $Players.get_node(String(id))
   if node != null:
@@ -66,8 +69,5 @@ func _on_server_disconnect():
 func _on_spawn_cube_request():
   gamestate.rpc_id(1, "spawn_cube", player.get_node("ARVROrigin/LeftHand").transform.origin)
 
-func _on_mesh_loaded(mesh):
-  print("Instantiating mesh: ", mesh)
-  var mi = MeshInstance.new()
-  mi.mesh = mesh
+func _on_mesh_loaded(mi):
   self.add_child(mi)
