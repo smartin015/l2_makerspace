@@ -25,21 +25,18 @@ func _split_point_idx(part):
   return [int(vi[0])-1, int(vi[1])-1, int(vi[2])-1]
 
 func _parse_face(parts: PoolStringArray):
-  # A face is a vertex, texture, and normal, each defined by indexes into the set of vertices
-  # earlier in the file.
-  # Turn N points defining a face into an array of triangles
-  # by selecting triplets of points fanning out from the first set of points
+  # A "face" line in OBJ is a sequence
   # f v1/vt1/vn1 v2/vt2/vn2 v3/vt3/vn3... v#/vt#/vn#
+  # where v, vt, and vn indexes into the set of vertices, textures, and normals
+  # earlier in the file.
+  # Here we turn the given point index triplets into an array of triangles
+  # by creating triangles of points starting at v1/vt1/vn1.
   var faces = []
   var first = _split_point_idx(parts[1])
   var prev = _split_point_idx(parts[2])
-  for i in range(3, len(parts)) :
+  for i in range(3, len(parts)):
     var cur = _split_point_idx(parts[i])
-    faces.append([
-      first[0], prev[0], cur[0], # Vertex
-      first[1], prev[1], cur[1], # Texture
-      first[2], prev[2], cur[2], # Normal
-    ])
+    faces.append([first, prev, cur])
     prev = cur
   return faces
 
@@ -61,14 +58,15 @@ func parse(obj: String) -> Mesh:
         textures.push_back(Vector2(float(parts[1]), float(parts[2])))
       FACE:
         for f in _parse_face(parts):
+          # f[i][j] is the ith axis of the jth point in the face
           # Y and Z are swapped as OBJ exports Z-up by default (godot is Y-up)
           # We allow empty texture and normal coords if they're empty in OBJ (e.g. "1//")
           st.add_triangle_fan(
-            [verts[f[0]], verts[f[2]], verts[f[1]]],
-            [] if f[3] == -1 else [textures[f[3]], textures[f[5]], textures[f[4]]],
+            [verts[f[0][0]], verts[f[2][0]], verts[f[1][0]]],
+            [] if f[0][1] == -1 else [textures[f[0][1]], textures[f[2][1]], textures[f[1][1]]],
             PoolColorArray(),
             PoolVector2Array(),
-            [] if f[6] == -1 else [norms[f[6]], norms[f[8]], norms[f[7]]],
+            [] if f[0][2] == -1 else [norms[f[0][2]], norms[f[2][2]], norms[f[1][2]]],
             [])
   
   var mesh = Mesh.new()

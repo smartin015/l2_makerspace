@@ -4,7 +4,7 @@ var streamer = load("res://addons/poly/MeshStreamer.gd").new()
 
 func _on_mesh_loaded(mesh):
   print("Got mesh %s", mesh)
-  get_tree().get_node('/root/World').add_child(mesh)
+  # get_tree().get_node('/root/World').add_child(mesh)
   quit()
   
 func _init():
