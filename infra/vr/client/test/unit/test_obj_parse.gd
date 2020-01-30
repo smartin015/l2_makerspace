@@ -48,7 +48,7 @@ func do_test(objpath, mesh, surface_area):
   var f = File.new()
   var err = f.open(objpath, File.READ)
   assert_eq(err, OK, "open file")
-  var got = objparse.parse(f.get_as_text())
+  var got = objparse.parse(f.get_as_text(), null)
   assert_mesh_eq(got, mesh, surface_area)
 
 func test_plane():

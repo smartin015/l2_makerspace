@@ -52,6 +52,7 @@ func _ready():
   err = $MeshStreamer.connect("mesh_loaded", self, "_on_mesh_loaded")
   if err != OK:
     print("error %d registering mesh_loaded" % err)
+  spawn_poly("5vbJ5vildOq")
   
   
 func _on_connection_success():

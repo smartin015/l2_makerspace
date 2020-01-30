@@ -1,30 +1,20 @@
 # Made with inspiration by Ezcha's Obj parser
 # at https://github.com/Ezcha/gd-obj
 extends Node
-
-var mat
-
 const VERTEX = "v"
 const NORMAL = "vn"
 const TEXTURE = "vt"
 const FACE = "f"
-
 const LINE_SEP = "\n"
 const PART_SEP = " "
 const INDEX_SEP = "/"
 
-func _ready():
-  mat = SpatialMaterial.new()
-  mat.albedo_color = Color(1, 1, 1)
-  mat.flags_transparent = false
-  mat.depth_enabled = false
-
 func _split_point_idx(part):
   # subtract to get array indexes instead of OBJ (which starts at 1)
   var vi = part.split(INDEX_SEP)
-  return [int(vi[0])-1, int(vi[1])-1, int(vi[2])-1]
+  return [int(vi[0])-1, -1 if len(vi) < 2 else int(vi[1])-1, -1 if len(vi) < 3 else int(vi[2])-1]
 
-func _parse_face(parts: PoolStringArray):
+func _triangulate_face(parts: PoolStringArray):
   # A "face" line in OBJ is a sequence
   # f v1/vt1/vn1 v2/vt2/vn2 v3/vt3/vn3... v#/vt#/vn#
   # where v, vt, and vn indexes into the set of vertices, textures, and normals
@@ -40,7 +30,7 @@ func _parse_face(parts: PoolStringArray):
     prev = cur
   return faces
 
-func parse(obj: String) -> Mesh:
+func parse(obj: String, mat: Material) -> Mesh:
   var verts = PoolVector3Array()
   var norms = PoolVector3Array()
   var textures = PoolVector2Array()
@@ -57,7 +47,7 @@ func parse(obj: String) -> Mesh:
       TEXTURE:
         textures.push_back(Vector2(float(parts[1]), float(parts[2])))
       FACE:
-        for f in _parse_face(parts):
+        for f in _triangulate_face(parts):
           # f[i][j] is the ith axis of the jth point in the face
           # Y and Z are swapped as OBJ exports Z-up by default (godot is Y-up)
           # We allow empty texture and normal coords if they're empty in OBJ (e.g. "1//")
@@ -68,7 +58,6 @@ func parse(obj: String) -> Mesh:
             PoolVector2Array(),
             [] if f[0][2] == -1 else [norms[f[0][2]], norms[f[2][2]], norms[f[1][2]]],
             [])
-  
   var mesh = Mesh.new()
   st.commit(mesh)
   return mesh
