@@ -1,9 +1,9 @@
 import { h, FunctionalComponent } from '/web_modules/preact.js'
-import Project from '../Project/index.js'
+import Terminal from '../Terminal/index.js'
 
 const App: FunctionalComponent = () => (
   <div>
-    <Project />
+    <Terminal />
   </div>
 )
 

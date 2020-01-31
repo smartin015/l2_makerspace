@@ -1,28 +1,35 @@
-# L2 Makerspace App
+# 🖥️ create-pika-app
 
-## Purpose
+#### 🎉 snowpack + Preact + Typescript Starter
 
-Provide an easy interface and "controller" for the L2 makerspace and a user's projects.
+![screenshot1](terminal.gif)
 
-## Instructions
+## 🚀 Getting Started
 
 ```bash
 npm install
 npm run dev
 ```
 
-It will then be available at `localhost:5000`. For production-optimized builds, get your server to run:
+It will then be available at `localhost:5000`.
+
+## Production builds
+
+For production-optimized builds, get your server to run:
 
 ```bash
 npm run build
 npm start
 ```
 
-## Ideas
+_Note: this will work on some hosts like [ZEIT Now](https://zeit.co) automatically._
 
-- Add cordova support to have native app
-- Detect nearest bluetooth beacon to give an idea of location
-- Talk via websocket bridge to ROS2 network
-- Send active project & whether in the makerspace
+### 🙏 Special Thanks
 
-License: [`MIT`](https://opensource.org/licenses/MIT)
+[snowpack](https://github.com/pikapkg/snowpack)
+[preact](https://github.com/preactjs/preact)
+[dangodev/snowpack-preact-ts](https://github.com/dangodev/snowpack-preact-ts)
+
+---
+
+📝 `License:` [`MIT`](https://opensource.org/licenses/MIT)

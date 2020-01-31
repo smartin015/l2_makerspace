@@ -1,24 +1,16 @@
-declare namespace JSX {
-    type Element = preact.JSX.Element;
-    type HTMLAttributes = preact.JSX.HTMLAttributes;
-}
-import App from './components/App/index.js'
 import { h, render } from '/web_modules/preact.js'
-import { configureStore } from '@reduxjs/toolkit'
-import { Provider } from 'preact-redux'
-import rootReducer from './reducers'
+import App from './components/App/index.js'
+import { configureStore } from '/web_modules/@reduxjs/toolkit.js'
+// import { Provider } from '/web_modules/preact-redux.js'
+import {combineReducers} from '/web_modules/redux.js'
+import Moment from '/web_modules/moment.js'
+console.log(Moment().format());
 
 const store = configureStore({
-  reducer: rootReducer
+  reducer: combineReducers({}),
 })
 
-const elem = document.getElementById('app')
-if (elem !== null) {
-  render(
-    <Provider store={store}>
-      <App />
-    </Provider>,
-    elem
-  )
-}
+const appMount = document.querySelector('#app')
+if (appMount) render(<App />, appMount)
+
 export default App

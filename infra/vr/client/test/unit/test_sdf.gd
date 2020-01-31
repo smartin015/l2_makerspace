@@ -48,7 +48,7 @@ func test_basic():
   assert_eq(len(models.keys()), 1, "exactly one model returned")
   assert_node_deep_eq(models["test_model"], want)
 
-func test_shapes():
+func notest_shapes():
   var f = File.new()
   f.open("res://test/unit/shapes.sdf", File.READ)
   var t = f.get_as_text()
@@ -83,3 +83,9 @@ func test_shapes():
 
   assert_eq(len(models.keys()), 1, "exactly one model returned")
   assert_node_deep_eq(models["test_model"], want)
+
+func test_dolly():
+  var f = File.new()
+  f.open("res://test/unit/dolly.sdf", File.READ)
+  var t = f.get_as_text()
+  var models = sdf.ParseAttrs(t)
