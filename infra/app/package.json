@@ -1,0 +1,47 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "npm run build:ts && npm run build:esm && npm run copy",
+    "build:esm": "npx snowpack --dest dist/web_modules --optimize",
+    "build:ts": "rm -rf dist && tsc",
+    "build:ts:watch": "tsc -w",
+    "copy": "copyfiles 'src/*.html' 'src/**/*.gif' 'src/*.css' dist -u 1",
+    "dev": "npm run build && concurrently 'npm run build:ts:watch' 'serve -s dist'",
+    "lint": "eslint --ext .ts,.tsx src --ignore 'web_modules/**/*.js'",
+    "prestart": "npm run build",
+    "start": "serve -s dist"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "snowpack": {
+    "webDependencies": [
+      "preact"
+    ]
+  },
+  "dependencies": {
+    "@reduxjs/toolkit": "^1.2.3",
+    "preact": "^10.2.1",
+    "preact-redux": "^2.1.0",
+    "redux": "^4.0.5"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^2.16.0",
+    "@typescript-eslint/parser": "^2.16.0",
+    "concurrently": "^5.0.2",
+    "copyfiles": "^2.2.0",
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb-typescript": "^6.3.1",
+    "eslint-config-prettier": "^6.9.0",
+    "eslint-plugin-import": "^2.20.0",
+    "eslint-plugin-jsx-a11y": "^6.2.3",
+    "eslint-plugin-prettier": "^3.1.2",
+    "eslint-plugin-react": "^7.18.0",
+    "prettier": "^1.19.1",
+    "serve": "^11.3.0",
+    "typescript": "^3.7.5"
+  }
+}

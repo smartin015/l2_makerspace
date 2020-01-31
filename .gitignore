@@ -2,3 +2,15 @@
 *.apk
 *.secret
 *.keystore
+*.swp
+*.import
+docker-compose-api-token.yml
+infra/app/dist/
+infra/app/node_modules
+.eslintrc
+.npmignore
+.config
+.local
+.android
+.bash_history
+.cache
