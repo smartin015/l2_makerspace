@@ -1,6 +1,9 @@
 FROM l2base:latest
 
-CMD ["bash", "-c", "source /node/install/setup.bash && source /node/install/setup.bash && ros2 run l2_example node"]
+ENV L2NAME=l2_example
+
+CMD ["bash", "-c", "source /node/install/setup.bash && source /node/install/setup.bash && ros2 run ${L2NAME} main"]
 
 COPY . /node
-RUN cd /node && colcon build --symlink-install
+
+RUN /templates/setup_boilerplate.sh
