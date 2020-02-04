@@ -92,6 +92,7 @@ func ParseAttrs(xmlstr: String):
   var models = {}
   var model
   var link
+  # TODO switch to named spatials for all nodes
   while err == OK:
     if xml.get_node_type() == XMLParser.NODE_ELEMENT:
       if xml.has_attribute("name"):

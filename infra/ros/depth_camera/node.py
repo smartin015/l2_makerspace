@@ -1,53 +1,28 @@
-# from l2_msgs.srv import GetProject
-#from l2_msgs.msg import ProjectsUpdate
-from todoist.api import TodoistAPI
-
-import os
+from sensor_msgs.msg import Image
 import rclpy
-from rclpy.node import Node
+import rvl
+import socket
+import struct
 
-class Server(Node):
-    PUBLISH_PD = 60  # seconds
+class Server(rclpy.Node):
+    PACK_FMT = "ii%dB"
+    DEFAULT_UDP_DEST = ("127.0.0.1", 4242)
 
     def __init__(self):
-        super().__init__('server')
+        super().__init__('rvl_streamer')
         self.get_logger().info("Init")
-        self.get_logger().info("Setting up service")
-        self.setup_todoist()
-        #self.pub = self.create_publisher(ProjectsUpdate, 'project', 10)
-        self.timer = self.create_timer(self.PUBLISH_PD, self.timer_callback)
-        self.ticks = 0
+        self.dest = self.DEFAULT_UDP_DEST # TODO make configurable/fetch from github
+        self.sock = socket.socket(socket.AF_INIT, socket.SOCK_DGRAM)
+        self.sub = self.create_subscription(Image, 'depth_raw', self.handle_image)
 
-    def setup_todoist(self):
-        self.todoist = TodoistAPI(os.getenv("TODOIST_API_TOKEN"))
-        self.root_project_id = int(os.getenv("TODOIST_ROOT_PROJECT_ID") or "-1") 
-        self.get_logger().info("Root project id: %d" % self.root_project_id)
-
-    def timer_callback(self):
-    if self.ticks % 5 == 0:
-        self.publish_tasks_full()
-        else:
-            self.publish_tasks_delta()
-    self.ticks++
-
-    def publish_tasks_delta(self):
-        # TODO diff against last_publish, then publish
-    # TODO Replace with push updates 
-    self.get_logger().info("publishing delta")
-        # delta = ProjectsUpdate()
-        self.todoist.sync()
-        # self.pub.publish(delta)
-
-    def publish_tasks_full(self):
-        # TODO get all details and publish
-    self.get_logger().info("publishing full")
-        # full = ProjectsUpdate()
-        # self.todoist.sync()
-        print(self.todoist.state)
-        # print([item['content'] for item in self.todoist.state['items'] if item['project_id'] == self.root_project_id])
-        self.todoist.sync()
-        # self.pub.publish(full)
-
+    def handle_imagee(self, img):
+        rvl.Clear() # TODO don't clear all, instead do delta
+        rvl.plain = img.data
+        rvl.CompressRVL()
+        packed = struct.pack(self.PACK_FMT % (len(rvl.encoded), 20, nvecs, *rvl.encoded))
+        self.sock.sendto(packed, self.dest)
+        self.get_logger().info(str(len(packed)
+        
 def main(args=None):
     rclpy.init(args=args)
     server = Server()

@@ -13,20 +13,27 @@ _global_script_classes=[ {
 "class": "OQClass_GrabbableRigidBody",
 "language": "GDScript",
 "path": "res://OQ_Toolkit/OQ_Classes/OQClass_GrabbableRigidBody.gd"
+}, {
+"base": "Spatial",
+"class": "OQClass_GrabbableStaticBody",
+"language": "GDScript",
+"path": "res://OQ_Toolkit/OQ_Classes/OQClass_GrabbableStaticBody.gd"
 } ]
 _global_script_class_icons={
-"OQClass_GrabbableRigidBody": ""
+"OQClass_GrabbableRigidBody": "",
+"OQClass_GrabbableStaticBody": ""
 }
 
 [application]
 
-config/name="Test VR"
+config/name="L2 Makerspace VR"
 run/main_scene="res://World.tscn"
 config/icon="res://icon.png"
 
 [autoload]
 
 gamestate="*res://gamestate.gd"
+vr="*res://OQ_Toolkit/vr_autoload.gd"
 
 [editor_plugins]
 

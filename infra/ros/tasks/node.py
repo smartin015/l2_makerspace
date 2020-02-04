@@ -1,5 +1,5 @@
 # from l2_msgs.srv import GetProject
-#from l2_msgs.msg import ProjectsUpdate
+import l2_msgs.msg as l2
 from todoist.api import TodoistAPI
 
 import os
@@ -14,9 +14,10 @@ class Server(Node):
         self.get_logger().info("Init")
         self.get_logger().info("Setting up service")
         self.setup_todoist()
-        #self.pub = self.create_publisher(ProjectsUpdate, 'project', 10)
+        self.pub = self.create_publisher(l2.Projects, 'projects', 10)
         self.timer = self.create_timer(self.PUBLISH_PD, self.timer_callback)
         self.ticks = 0
+        self.timer_callback()
 
     def setup_todoist(self):
         self.todoist = TodoistAPI(os.getenv("TODOIST_API_TOKEN"))
@@ -24,29 +25,23 @@ class Server(Node):
         self.get_logger().info("Root project id: %d" % self.root_project_id)
 
     def timer_callback(self):
-    if self.ticks % 5 == 0:
-        self.publish_tasks_full()
-        else:
-            self.publish_tasks_delta()
-    self.ticks++
-
-    def publish_tasks_delta(self):
-        # TODO diff against last_publish, then publish
-    # TODO Replace with push updates 
-    self.get_logger().info("publishing delta")
-        # delta = ProjectsUpdate()
-        self.todoist.sync()
-        # self.pub.publish(delta)
-
-    def publish_tasks_full(self):
         # TODO get all details and publish
-    self.get_logger().info("publishing full")
+        self.get_logger().info("publishing full")
         # full = ProjectsUpdate()
-        # self.todoist.sync()
-        print(self.todoist.state)
-        # print([item['content'] for item in self.todoist.state['items'] if item['project_id'] == self.root_project_id])
         self.todoist.sync()
-        # self.pub.publish(full)
+        proj = l2.Project()
+        for ti in self.todoist.state['items']:
+            if ti['project_id'] == self.root_project_id:
+                item = l2.Item()
+                item.id = ti['id']
+                item.content = ti['content']
+                proj.items.append(item)
+        msg = l2.Projects()
+        msg.projects.append(proj)
+        print(msg)
+        # print([item['content'] for item in self.todoist.state['items'] if item['project_id'] == self.root_project_id])
+        #self.todoist.sync()
+        self.pub.publish(msg)
 
 def main(args=None):
     rclpy.init(args=args)
