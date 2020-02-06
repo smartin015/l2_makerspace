@@ -53,8 +53,7 @@ func _ready():
   if err != OK:
     print("error %d registering mesh_loaded" % err)
   spawn_poly("5vbJ5vildOq")
-  
-  
+
 func _on_connection_success():
   gamestate.my_name = str(get_tree().get_network_unique_id())
   $Players/Player.name = gamestate.my_name
@@ -72,3 +71,14 @@ func _on_spawn_cube_request():
 
 func _on_mesh_loaded(mi):
   self.add_child(mi)
+
+# ==================== Grab logic =====================================
+onready var lgrab = $Players/Player/OQ_ARVROrigin/OQ_LeftController/Feature_StaticGrab
+onready var rgrab = $Players/Player/OQ_ARVROrigin/OQ_RightController/Feature_StaticGrab
+var grabStart
+
+func _process(_delta):
+  if lgrab.is_just_grabbing:
+    grabStart = lgrab.grabbed_object.translation
+  elif lgrab.is_grabbing:
+    lgrab.grabbed_object.get_parent().set_pos(lgrab.delta_position + grabStart)

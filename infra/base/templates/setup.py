@@ -2,6 +2,8 @@ from setuptools import setup
 from os import environ
 
 package_name = environ['L2NAME']
+node_files = "$NODES"
+nodes = [node.split('.')[0] for node in node_files.split(' ')]
 
 setup(
     name=package_name,
@@ -21,7 +23,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'main = %s.node:main' % package_name,
+            '%s = %s.%s:main' % (node, package_name, node)
+            for node in nodes
         ],
     },
 )

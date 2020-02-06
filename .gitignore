@@ -14,3 +14,4 @@ infra/app/node_modules
 .android
 .bash_history
 .cache
+__pycache__

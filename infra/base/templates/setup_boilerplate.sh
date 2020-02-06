@@ -22,6 +22,8 @@ ls ${L2NAME}/
 # Bunch of required files for ros/colcon to correctly
 # find the python module
 cp /templates/setup.py .
+sed -i "s/\$NODES/$(echo $@)/" setup.py 
+
 touch ${L2NAME}/__init__.py
 mkdir -p resource && touch resource/${L2NAME} \
   

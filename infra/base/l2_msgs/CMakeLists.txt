@@ -32,8 +32,13 @@ if(BUILD_TESTING)
 endif()
 
 
-set(msg_files msg/Project.msg msg/Item.msg msg/Projects.msg) 
-set(srv_files srv/GetProject.srv)
+set(msg_files 
+  msg/tasks/Project.msg 
+  msg/tasks/Item.msg 
+  msg/tasks/Projects.msg
+  msg/Object3D.msg) 
+set(srv_files 
+  srv/remote/PushObject3D.srv)
 rosidl_generate_interfaces( ${PROJECT_NAME} ${msg_files} ${srv_files} DEPENDENCIES builtin_interfaces)
 ament_export_dependencies(rosidl_default_runtime)
 

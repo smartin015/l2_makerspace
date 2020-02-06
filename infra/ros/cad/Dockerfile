@@ -1,6 +1,10 @@
 FROM l2base:latest
 
-RUN git clone https://github.com/FreeCAD/FreeCAD && cd FreeCAD && cmake . && make -j$(nproc --ignore=2)
+RUN apt-get update && apt-get install unzip && rm -rf /var/lib/apt/lists/*
+
+RUN wget https://github.com/FreeCAD/FreeCAD/archive/master.zip && unzip master.zip
+
+RUN cd FreeCAD-master && alias python=python3 && cmake . && make -j$(nproc --ignore=2)
 
 ENV L2NAME=l2_example
 

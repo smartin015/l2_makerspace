@@ -9,8 +9,6 @@ import struct
 import time
 import sys
 from os import path
-
-sys.path.append(path.join(path.dirname(__file__), '../addons/rvl/'))
 import rvl
 
 UDP_IP = "127.0.0.1"
@@ -40,8 +38,10 @@ def gen_and_send(ts):
     print(len(packed))
     sock.sendto(packed, (UDP_IP, UDP_PORT))
 
-if __name__ == "__main__":
+def main():
     while True:
         gen_and_send(time.time())
         time.sleep(0.1)
 
+if __name__ == "__main__":
+    main()
