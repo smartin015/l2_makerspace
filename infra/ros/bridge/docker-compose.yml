@@ -2,5 +2,9 @@ version: '3.4'
 
 services:
   main:
-    image: l2web_bridge:latest
-    net: host
+    image: l2bridge:latest
+    network_mode: host
+  client:
+    image: l2bridge:latest
+    network_mode: host
+    command: bash -c "source /opt/ros/dashing/setup.bash && cd /ros2-web-bridge && DEBUG=ros2-web-bridge:index,ros2-web-bridge:Bridge node bin/rosbridge.js --port=4243"
