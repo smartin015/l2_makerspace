@@ -81,4 +81,4 @@ func _process(_delta):
   if lgrab.is_just_grabbing:
     grabStart = lgrab.grabbed_object.translation
   elif lgrab.is_grabbing:
-    lgrab.grabbed_object.get_parent().set_pos(lgrab.delta_position + grabStart)
+    lgrab.grabbed_object.get_parent().set_pos(lgrab.grabbed_object.name, lgrab.delta_position + grabStart)

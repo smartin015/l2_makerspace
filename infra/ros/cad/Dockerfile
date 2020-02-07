@@ -1,15 +1,14 @@
 FROM l2base:latest
 
-RUN apt-get update && apt-get install unzip && rm -rf /var/lib/apt/lists/*
+# RUN wget https://github.com/FreeCAD/FreeCAD/archive/master.zip && unzip master.zip
+RUN wget https://github.com/FreeCAD/FreeCAD/releases/download/0.18.4/FreeCAD_0.18-16146-Linux-Conda_Py3Qt5_glibc2.12-x86_64.AppImage
 
-RUN wget https://github.com/FreeCAD/FreeCAD/archive/master.zip && unzip master.zip
+# RUN cd FreeCAD-master && cmake . && make -j$(nproc --ignore=2)
 
-RUN cd FreeCAD-master && alias python=python3 && cmake . && make -j$(nproc --ignore=2)
+# ENV L2NAME=l2_example
 
-ENV L2NAME=l2_example
+# CMD ["bash", "-c", "source /node/install/setup.bash && source /node/install/setup.bash && ros2 run ${L2NAME} main"]
 
-CMD ["bash", "-c", "source /node/install/setup.bash && source /node/install/setup.bash && ros2 run ${L2NAME} main"]
+# COPY . /node
 
-COPY . /node
-
-RUN /templates/setup_boilerplate.sh
+# RUN /templates/setup_boilerplate.sh

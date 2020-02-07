@@ -16,7 +16,7 @@ var connection_msgs = [
   { 
     "op": "advertise",
     "topic": "/vr/Pendants/Pendant",
-    "type": "geometry_msgs/Vector3D"
+    "type": "geometry_msgs/Vector3"
   },
   {
     "op": "advertise",
@@ -29,7 +29,6 @@ var _server = WebSocketServer.new()
 var _timer
 var peers = {}
 
-
 func _ready():
   _server.connect("client_connected", self, "_connected")
   _server.connect("client_disconnected", self, "_disconnected")
@@ -38,7 +37,7 @@ func _ready():
   if(_server.listen(WS_PORT) != OK):
     print("An error occurred listening on port", WS_PORT)
   else:
-    print("Listening for bridge connections")
+    print("Listening for bridge connections on port ", WS_PORT)
   _timer = Timer.new()
   _timer.wait_time = ALIVE_INTERVAL
   _timer.connect("timeout",self,"_on_timeout") 
@@ -115,13 +114,24 @@ func _on_data(id):
         print("Unhandled service call: ", result.result.service)
     _: print("Unhandled ROS bridge op: ", result.result.op)
 
+
+const PENDANT_MOVE_THRESHOLD_SQUARED = 0.01*0.01
+var lastPos = Vector3.ZERO
+var debounce = 1.0
 func publish_pendant_pos(name: String, pos: Vector3):
+  if debounce < 0:
+    return
+  if (pos-lastPos).length_squared() < PENDANT_MOVE_THRESHOLD_SQUARED:
+    return
   # ROS is Z-up
   _publish('/vr/Pendants/Pendant', {
     "x": pos[0],
     "y": pos[2],
     "z": pos[1]
    })
+  lastPos = pos
+  debounce -= 0.05
 
 func _process(delta):
+  debounce = max(debounce + delta, 5.0)
   _server.poll()
