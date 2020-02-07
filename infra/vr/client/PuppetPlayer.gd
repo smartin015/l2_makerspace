@@ -1,3 +1,7 @@
+# Credit 
+# https://poly.google.com/view/f8iZm3Vvfdm
+# for the headset mesh
+
 extends Spatial
 
 puppet var puppet_motion

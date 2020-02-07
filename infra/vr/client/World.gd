@@ -69,7 +69,8 @@ func _on_server_disconnect():
 func _on_spawn_cube_request():
   gamestate.rpc_id(1, "spawn_cube", player.get_node("ARVROrigin/LeftHand").transform.origin)
 
-func _on_mesh_loaded(mi):
+func _on_mesh_loaded(mi: MeshInstance):
+  mi.transform.origin = Vector3(3, 1, 0)
   self.add_child(mi)
 
 # ==================== Grab logic =====================================
