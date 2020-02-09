@@ -2,10 +2,11 @@ extends Spatial
 
 onready var PuppetPlayer = load("res://PuppetPlayer.tscn")
 
-puppetsync func spawn_player(id):
+puppetsync func spawn_player(id, tf):
   var player = PuppetPlayer.instance()
   player.name = gamestate.players[id] # Important
   player.set_network_master(id) # Important
+  player.puppet_transform = tf
   $Players.add_child(player)
   print("Initialized player, node %s id %d" % [player.name, id])
 

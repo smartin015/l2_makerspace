@@ -107,11 +107,11 @@ puppet func unregister_player(id):
 func get_player_list():
   return players.values()
 
-puppet func pre_start_game():
+puppet func pre_start_game(tf):
   # Register ourselves with the server
   rpc_id(1, "register_player", my_name)
   # Tell Server we ready to roll
-  rpc_id(1, "populate_world")
+  rpc_id(1, "populate_world", tf)
   
 func remote_log(text):
   rpc_id(1, "remote_log", text)

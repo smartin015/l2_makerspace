@@ -3,7 +3,7 @@ extends Spatial
 onready var PuppetPlayer = load("res://PuppetPlayer.tscn")
 onready var player = $Players/Player
 
-puppet func spawn_player(id):
+puppet func spawn_player(id, tf):
   if gamestate.players.get(id) == null:
     print("unregistered player %s spawn attempted; ignoring" % id)
     return
@@ -16,6 +16,7 @@ puppet func spawn_player(id):
   var player = PuppetPlayer.instance()
   player.name = gamestate.players[id] # Important must be same across network
   player.set_network_master(id) # Important
+  player.transform = tf
   $Players.add_child(player)
   print("Created puppet %s (id %d)" % [player.name, id])
 
@@ -56,9 +57,9 @@ func _ready():
 
 func _on_connection_success():
   gamestate.my_name = str(get_tree().get_network_unique_id())
-  $Players/Player.name = gamestate.my_name
+  player.name = gamestate.my_name
   print("Connected; player name now %s" % gamestate.my_name)
-  gamestate.pre_start_game()
+  gamestate.pre_start_game(player.transform)
   
 func _on_connection_failed():
   print("Connection Failed, trying again")

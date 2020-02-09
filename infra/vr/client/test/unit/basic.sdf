@@ -18,6 +18,7 @@
       <material>
         <script>Gazebo/Purple</script>
       </material>
+      <transparency>0.1</transparency>
     </visual>
   </link>
   </model>

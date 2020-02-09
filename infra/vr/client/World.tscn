@@ -16,6 +16,8 @@ viewport_path = NodePath("Viewport")
 
 [sub_resource type="SpatialMaterial" id=3]
 resource_local_to_scene = true
+flags_transparent = true
+albedo_color = Color( 1, 1, 1, 0.768627 )
 albedo_texture = SubResource( 2 )
 
 [sub_resource type="BoxShape" id=4]
@@ -57,14 +59,14 @@ material/0 = SubResource( 3 )
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1.32317, 0.721431, -0.865303 )
 
 [node name="RobotSpawner" type="Spatial" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.711052, -1.69066 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.140349, 1.63966, -1.23603 )
 script = ExtResource( 5 )
 
 [node name="Pendants" type="Spatial" parent="."]
-script = ExtResource( 8 )
 
 [node name="Pendant" type="StaticBody" parent="Pendants"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -0.41, 1.63105, -0.65 )
+script = ExtResource( 8 )
 
 [node name="CollisionShape" type="CollisionShape" parent="Pendants/Pendant"]
 transform = Transform( 0.05, 0, 0, 0, 0.1, 0, 0, 0, 0.05, 0, 0, 0 )

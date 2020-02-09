@@ -52,16 +52,16 @@ puppetsync func unregister_player(id):
   players.erase(id)
   print("Client ", id, " was unregistered")
 
-remote func populate_world():
+remote func populate_world(tf):
   var caller_id = get_tree().get_rpc_sender_id()
   print("populate_world called by %d" % caller_id)
   # Spawn all current players on new client
   for player in world.get_node("Players").get_children():
-    world.rpc_id(caller_id, "spawn_player", player.get_network_master())
+    world.rpc_id(caller_id, "spawn_player", player.get_network_master(), player.transform)
   for cube in world.get_node("Cubes").get_children():
     world.rpc_id(caller_id, "spawn_cube", cube.transform.origin)
   # Spawn new player everywhere
-  world.rpc("spawn_player", caller_id)
+  world.rpc("spawn_player", caller_id, tf)
 
 remote func spawn_cube(origin):
   world.rpc("spawn_cube", origin)

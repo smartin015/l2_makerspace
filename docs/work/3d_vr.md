@@ -29,7 +29,7 @@ Example: Teleoperation: User wants to control an armature to solder a PCB
    - Transparent bounding box is defined in SDF, published to ROS topic
    - Reaches out with controller in semitransparent bounding box
    - Presses "A" button
-   - View switches to 1:3 scale, table surface adjusted to arm height
+   - View scaled so XY of bbox within arm's reach, bottom is arm height
    - Soldering iron on/off button, temperature etc on arm panel
    - Robot arms extend from packed-away state and become compliant
    - Teleop is prevented if nobody is physically in the space (safety)
@@ -41,7 +41,7 @@ Example: Teleoperation: User wants to control an armature to solder a PCB
    - Thumbstick advances solder reel
    - Clicking thumbstick changes function (e.g. soldering iron / tweezers)
 5. User pauses soldering, adjusts headset
-   - Presses "B" button before adjusting headset, then repeat #4
+   - Releases "A" button before adjusting headset, then repeat #4
 6. User accidentally jerks/drops controller
    - Jerk detection kicks in, cancels user control (equivalent of #5)
 7. User exits the workspace

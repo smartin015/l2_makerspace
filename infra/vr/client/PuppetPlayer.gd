@@ -4,6 +4,7 @@
 
 extends Spatial
 
+puppet var puppet_transform
 puppet var puppet_motion
 
 onready var left = $LeftHand
@@ -24,6 +25,7 @@ func _ready():
     Vector3.ZERO, Quat.IDENTITY, Vector3.ZERO, # Left
     Vector3.ZERO, Quat.IDENTITY, Vector3.ZERO, # Right
   ]
+  puppet_transform = transform
 
 func _process(delta):
   head.transform = Transform(puppet_motion[PM_HEAD+PM_QUAT], puppet_motion[PM_HEAD+PM_ORIGIN])
@@ -38,3 +40,5 @@ func _process(delta):
   puppet_motion[PM_HEAD+PM_ORIGIN] = head.transform.origin
   puppet_motion[PM_LEFT+PM_ORIGIN] = left.transform.origin
   puppet_motion[PM_RIGHT+PM_ORIGIN] = right.transform.origin
+  if transform != puppet_transform:
+    transform = puppet_transform
