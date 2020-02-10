@@ -132,6 +132,8 @@ func publish_pendant_pos(name: String, pos: Vector3):
   lastPos = pos
   debounce -= 0.05
 
+  
+
 func _process(delta):
   debounce = max(debounce + delta, 5.0)
   _server.poll()

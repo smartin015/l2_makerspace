@@ -1,0 +1,6 @@
+version: '3.4'
+
+services:
+  main:
+    image: l2app:latest
+    network_mode: host

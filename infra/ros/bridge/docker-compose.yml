@@ -7,4 +7,4 @@ services:
   client:
     image: l2bridge:latest
     network_mode: host
-    command: bash -c "source /opt/ros/dashing/setup.bash && cd /ros2-web-bridge && DEBUG=ros2-web-bridge:index,ros2-web-bridge:Bridge node bin/rosbridge.js --port=4243"
+    command: bash -c "source /opt/ros/dashing/setup.bash && source /l2_msgs/install/setup.bash && cd /ros2-web-bridge && DEBUG=ros2-web-bridge:index,ros2-web-bridge:Bridge node bin/rosbridge.js --port=4243"
