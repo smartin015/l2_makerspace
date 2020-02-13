@@ -34,6 +34,7 @@ func _process(_dt):
       
       if (check_parent_can_static_grab):
         var p = b.get_parent();
+        print("Checking", p)
         if (p && p.has_method("oq_can_static_grab")):
           if (!p.oq_can_static_grab(b, grab_area, controller, overlapping_bodies)): continue;
         else:

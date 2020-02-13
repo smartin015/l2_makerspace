@@ -13,12 +13,13 @@ puppet func spawn_player(id, tf):
     gamestate.is_initialized = true
     return
 
-  var player = PuppetPlayer.instance()
-  player.name = gamestate.players[id] # Important must be same across network
-  player.set_network_master(id) # Important
-  player.transform = tf
-  $Players.add_child(player)
-  print("Created puppet %s (id %d)" % [player.name, id])
+  var inst = PuppetPlayer.instance()
+  inst.name = gamestate.players[id] # Important must be same across network
+  inst.set_network_master(id) # Important
+  inst.transform = tf
+  $Players.add_child(inst)
+  #rpc_id(1, "remote_log", "spawned")
+  print("Created puppet %s (id %d)" % [inst.name, id])
 
 puppet func spawn_cube(origin):
   var cube = MeshInstance.new()
@@ -47,9 +48,9 @@ func _ready():
   err = gamestate.connect("server_disconnected", self, "_on_server_disconnect")
   if err != OK:
     print("error %d registering server_disconnected" % err)
-  err = player.connect("spawn_cube_request", self, "_on_spawn_cube_request")
-  if err != OK:
-    print("error %d registering spawn_cube_request" % err)
+  #  err = player.connect("spawn_cube_request", self, "_on_spawn_cube_request")
+  #  if err != OK:
+  #    print("error %d registering spawn_cube_request" % err)
   err = $MeshStreamer.connect("mesh_loaded", self, "_on_mesh_loaded")
   if err != OK:
     print("error %d registering mesh_loaded" % err)
@@ -83,4 +84,4 @@ func _process(_delta):
   if lgrab.is_just_grabbing:
     grabStart = lgrab.grabbed_object.translation
   elif lgrab.is_grabbing:
-    lgrab.grabbed_object.get_parent().set_pos(lgrab.grabbed_object.name, lgrab.delta_position + grabStart)
+    lgrab.grabbed_object.get_parent().set_pos_and_send(lgrab.grabbed_object.name, lgrab.delta_position + grabStart)

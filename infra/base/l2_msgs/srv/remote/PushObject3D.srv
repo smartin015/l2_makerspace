@@ -1,4 +1,0 @@
-l2_msgs/Object3D object
----
-bool success # did the push succeed
-string message # informational, e.g. for error messages

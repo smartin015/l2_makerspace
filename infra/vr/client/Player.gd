@@ -11,27 +11,26 @@ var last_left = Transform()
 var last_right = Transform()
 
 func _multiplayerReady():
-  last_head = head.global_transform
-  last_left = left.global_transform
-  last_right = right.global_transform
-  rpc_id(1, "remote_log", "player ready")
-
+  last_head = head.transform
+  last_left = left.transform
+  last_right = right.transform
+  
 func _multiplayerProcess(delta):
   if gamestate.is_initialized && head != null && left != null && right != null:
     rset_unreliable("puppet_motion", [
-      head.global_transform.origin,
-      head.global_transform.basis.get_rotation_quat(),
-      (head.global_transform.origin - last_head.origin) / delta,
-      left.global_transform.origin,
-      left.global_transform.basis.get_rotation_quat(),
-      (left.global_transform.origin - last_left.origin) / delta,
-      right.global_transform.origin,
-      right.global_transform.basis.get_rotation_quat(),
-      (right.global_transform.origin - last_right.origin) / delta,
+      head.transform.origin,
+      head.transform.basis.get_rotation_quat(),
+      (head.transform.origin - last_head.origin) / delta,
+      left.transform.origin,
+      left.transform.basis.get_rotation_quat(),
+      (left.transform.origin - last_left.origin) / delta,
+      right.transform.origin,
+      right.transform.basis.get_rotation_quat(),
+      (right.transform.origin - last_right.origin) / delta,
      ])
-  last_head = head.global_transform
-  last_left = left.global_transform
-  last_right = right.global_transform
+  last_head = head.transform
+  last_left = left.transform
+  last_right = right.transform
 
 # ==================== Control Zone ===================================
 

@@ -5,5 +5,5 @@ remote func set_pos(name: String, pos: Vector3):
   get_node(name).translation = pos
   for p_id in gamestate.players:
     if p_id != caller_id:
-      rpc_unreliable_id(caller_id, "set_pos", name, pos)
+      rpc_unreliable_id(p_id, "set_pos", name, pos)
   ROSBridge.publish_pendant_pos(name, pos)

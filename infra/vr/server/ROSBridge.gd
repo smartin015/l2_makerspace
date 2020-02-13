@@ -87,7 +87,7 @@ func _disconnected(id, was_clean = false):
   print("Client %d disconnected, clean: %s" % [id, str(was_clean)])
 
 func _on_timeout():
-  _publish('/vr/alive', true)
+  _publish('/vr/alive', {"data": true})
 
 func _handle_push_object_3d(args):
   print("TODO handle /3d_object parsing, args: ", args)

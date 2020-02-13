@@ -20,8 +20,6 @@ var is_initialized = false # We have been registered to the server.
 var default_connect_timer = null
 
 func _ready():
-  print("load obj")
-  load("res://model.obj")
   var LISTENERS = {
     "connected_to_server": [get_tree(), "_connected_ok"],
     "connection_failed": [get_tree(), "_connected_fail"],
@@ -33,6 +31,8 @@ func _ready():
     if err != OK:
       print("error registering ", k, ": ", err)
   is_initialized = false
+  if !vr.initialize():
+    print("No VR initialized, shrugging and moving on")
     
 func init():
   # Try briefly connecting to localhost first
@@ -48,6 +48,7 @@ func _on_HTTPRequest_request_completed(_result, response_code, _headers, body):
   if response_code != 200:
     print("Got code %d requesting online settings, using defaults instead" % response_code)
   else:
+    print("Got response ", response_code)
     var json = JSON.parse(body.get_string_from_utf8())
     if json.error == OK:
       if typeof(json.result.get("server_ip")) != TYPE_STRING || typeof(json.result.get("server_port")) == TYPE_NIL:
@@ -63,15 +64,15 @@ func _default_connect_timeout():
   if host.get_connection_status() != NetworkedMultiplayerPeer.CONNECTION_CONNECTED:
     host.close_connection()
     print("timed out connecting to localhost; fetching remote settings...")
-    self.request(SETTINGS_URI)
+    var _ignore = self.request(SETTINGS_URI)
   else: 
     print("localhost is connected")
 
 func connect_to_server(ip, port):
   print("Attempting to connect to server %s port %d" % [ip, port])
+  if host.get_connection_status() != host.CONNECTION_DISCONNECTED:
+    host.close_connection()
   
-  # Disconnect if already connected (no-op if this is first connection)  
-  host.close_connection()
   var err = host.create_client(ip, port)
   if err != OK:
     print("Error %s connecting to server" % err)

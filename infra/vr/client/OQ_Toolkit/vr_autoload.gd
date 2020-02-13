@@ -39,16 +39,17 @@ func _append_to_log(type, message):
     _log_buffer_count = min(_log_buffer_count+1, _log_buffer.size());
 
 func log_info(s):
-  _append_to_log(0, s);
   print(s);
+  _append_to_log(0, s);
+  
 
 func log_warning(s):
-  _append_to_log(1, s);
   print("WARNING: ", s);
+  _append_to_log(1, s);
 
 func log_error(s):
-  _append_to_log(2, s);
   print("ERROR: : ", s);
+  _append_to_log(2, s);
   
   
 var _label_scene = null;
