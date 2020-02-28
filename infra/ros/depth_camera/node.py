@@ -15,7 +15,7 @@ class Server(rclpy.Node):
         self.sock = socket.socket(socket.AF_INIT, socket.SOCK_DGRAM)
         self.sub = self.create_subscription(Image, 'depth_raw', self.handle_image)
 
-    def handle_imagee(self, img):
+    def handle_image(self, img):
         rvl.Clear() # TODO don't clear all, instead do delta
         rvl.plain = img.data
         rvl.CompressRVL()

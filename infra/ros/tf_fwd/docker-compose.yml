@@ -1,0 +1,10 @@
+version: '3.4'
+
+services:
+  tf_fwd:
+    image: l2tf_fwd:latest
+    depends_on:
+      - gz
+    network_mode: host
+    environment:
+      PYTHONUNBUFFERED: 1

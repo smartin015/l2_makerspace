@@ -1,0 +1,24 @@
+version: '3.4'
+
+services:
+  sdf2:
+    image: l2sim:latest
+    volumes:
+      - /home/smartin015/Documents/l2_makerspace/infra/ros/sim/sdf:/sdf
+    command: bash -c "PYTHONUNBUFFERED=1 /sdf/publish_sdf.sh control_zone2 /sdf/control_zone.sdf"
+    network_mode: host
+    # depends_on: 
+    #   - gz
+  sdf:
+    image: l2sim:latest
+    volumes:
+      - /home/smartin015/Documents/l2_makerspace/infra/ros/sim/sdf:/sdf
+    command: bash -c "PYTHONUNBUFFERED=1 /sdf/publish_sdf.sh control_zone /sdf/test.sdf"
+    network_mode: host
+    # depends_on:
+    # - gz
+  gz:
+    image: l2sim:latest
+    command: bash -c "source /opt/ros/dashing/setup.bash && source /usr/share/gazebo/setup.sh && gzserver -s libgazebo_ros_factory.so"
+    network_mode: host
+# opt/ros/dashing/share/gazebo_plugins/worlds/

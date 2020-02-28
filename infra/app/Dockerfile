@@ -1,5 +1,5 @@
 FROM l2base:latest
 
-CMD ["bash", "-c", "cd /app && python -m SimpleHTTPServer"]
+CMD ["bash", "-c", "cd /src && python -m SimpleHTTPServer"]
 
-COPY . /app
+COPY ./src /src

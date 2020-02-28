@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<sdf version="1.4">
+  <model name="ExampleControlZone">
+  <link name="L2ControlZone">
+    <pose>0.1 0 0 0.1 0 0</pose>
+    <inertial>
+      <mass>not_read</mass>
+    </inertial>
+    <collision>
+      <geometry>
+        <box><size>0.05 0.05 0.05</size></box>
+      </geometry>
+    </collision>
+    <visual>
+      <geometry>
+        <box><size>0.05 0.05 0.05</size></box>
+      </geometry>
+      <material>
+        <script>Gazebo/Purple</script>
+      </material>
+      <transparency>0.1</transparency>
+    </visual>
+  </link>
+  </model>
+</sdf>

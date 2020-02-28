@@ -13,7 +13,7 @@ from os import path
 sys.path.append(path.join(path.dirname(__file__), '../addons/rvl/'))
 import rvl
 
-UDP_IP = "127.0.0.1"
+UDP_IP = "35.245.27.12"
 UDP_PORT = 4242
 SCALE_FACTOR = 1000
 

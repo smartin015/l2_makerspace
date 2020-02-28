@@ -7,4 +7,5 @@ cd $ROOT/tasks && docker build --tag l2tasks:latest .
 cd $ROOT/storage && docker build --tag l2storage:latest .
 cd $ROOT/bridge && docker build --tag l2bridge:latest .
 cd $ROOT/tensorflow && docker build --tag l2tensorflow:latest .
+cd $ROOT/tf_fwd && docker build --tag l2tf_fwd:latest .
 cd $ROOT

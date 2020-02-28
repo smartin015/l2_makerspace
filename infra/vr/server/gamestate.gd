@@ -1,75 +1,33 @@
 extends Node
 
-# Default game port
 const DEFAULT_PORT = 44444
-
-# Max number of players
 const MAX_PLAYERS = 12
-
-# Players dict stored as id:name
-var players = {}
-onready var world = get_node("/root/World")
+onready var sdf = get_node("/root/World/SDF")
+onready var players = get_node("/root/World/Players")
 
 func _ready():
-  get_tree().connect("network_peer_connected", self, "_player_connected")
-  get_tree().connect("network_peer_disconnected", self,"_player_disconnected")	
-  create_server()
-
-func create_server():
+  var err = get_tree().connect("network_peer_connected", self, "_peer_connected")
+  if err != OK:
+    print("network_peer_connected err: ", err)
+  err = get_tree().connect("network_peer_disconnected", self,"_peer_disconnected")	
+  if err != OK:
+    print("network_peer_disconnected err: ", err)
+  
   var host = NetworkedMultiplayerENet.new()
   host.create_server(DEFAULT_PORT, MAX_PLAYERS)
   get_tree().set_network_peer(host)
 
-# Callback from SceneTree, called when client connects
-func _player_connected(_id):
-  print("Client ", _id, " connected")
-
-# Callback from SceneTree, called when client disconnects
-func _player_disconnected(id):
-  if players.has(id):
-    get_node("/root/World").rpc("remove_player", id)	
-    rpc("unregister_player", id)
-  print("Client ", id, " disconnected")
-
-# Player management functions
-remote func register_player(new_player_name):
-  # We get id this way instead of as parameter, to prevent users from pretending to be other users
-  var caller_id = get_tree().get_rpc_sender_id()
+func _peer_connected(id):
+  print("GDT(%s) connected" % id)
   
-  # Add him to our list
-  players[caller_id] = new_player_name
+  # Spawn all currently active dynamic elements for new r
+  for p in players.get_children():
+    players.rpc_id(id, "spawn", p.get_network_master())
+  for s in sdf.get_children():
+    sdf.rpc_id(id, "spawn", s.name, s.sdf, s.transform)
   
-  # Add everyone to new player:
-  for p_id in players:
-    rpc_id(caller_id, "register_player", p_id, players[p_id]) # Send each player to new dude
-  
-  rpc("register_player", caller_id, players[caller_id]) # Send new dude to all players
-  # NOTE: this means new player's register gets called twice, but fine as same info sent both times
-  
-  print("Client ", caller_id, " registered as ", new_player_name)
+  players.rpc("spawn", id) # Spawn new peer everywhere
 
-puppetsync func unregister_player(id):
-  players.erase(id)
-  print("Client ", id, " was unregistered")
-
-remote func populate_world(tf):
-  var caller_id = get_tree().get_rpc_sender_id()
-  print("populate_world called by %d" % caller_id)
-  # Spawn all current players on new client
-  for player in world.get_node("Players").get_children():
-    world.rpc_id(caller_id, "spawn_player", player.get_network_master(), player.transform)
-  for cube in world.get_node("Cubes").get_children():
-    world.rpc_id(caller_id, "spawn_cube", cube.transform.origin)
-  # Spawn new player everywhere
-  world.rpc("spawn_player", caller_id, tf)
-
-remote func spawn_cube(origin):
-  world.rpc("spawn_cube", origin)
-
-remote func remote_log(text):
-  var caller_id = get_tree().get_rpc_sender_id()
-  for p_id in players:
-    if p_id == caller_id:
-      continue
-    rpc_id(p_id, "recv_remote_log", "%d: %s" % [caller_id, text])
-  
+func _peer_disconnected(id):
+  players.rpc("remove", id) # Remove peer everywhere
+  print("GDT(%s) disconnected" % id)

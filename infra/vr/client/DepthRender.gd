@@ -15,6 +15,7 @@ func _ready():
   self.set_network_master(1) # Server owns us
 
 func point_data_set(data):
+  print(len(data))
   if typeof(data) != TYPE_RAW_ARRAY:
     print("Got wrong type:", typeof(rvl.encoded))
     return

@@ -34,6 +34,8 @@ config/icon="res://icon.png"
 
 gamestate="*res://gamestate.gd"
 vr="*res://OQ_Toolkit/vr_autoload.gd"
+ROSBridge="*res://ROSBridge.gd"
+locks="*res://locks.gd"
 
 [editor_plugins]
 

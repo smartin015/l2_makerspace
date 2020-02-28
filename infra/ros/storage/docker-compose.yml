@@ -1,23 +1,9 @@
-version: '3'
+version: '3.4'
 services:
-  #  rest:
-  #    image: postgrest/postgrest
-  #    ports:
-  #      - "3000:3000"
-  #    links:
-  #      - db:db
-  #    environment:
-  #      PGRST_DB_URI: postgres://app_user:password@db:5432/app_db
-  #      PGRST_DB_SCHEMA: public
-  #      PGRST_DB_ANON_ROLE: app_user #In production this role should not be the same as the one used for the connection
-  #    depends_on:
-  #      - db
-  main:
+  storage:
     image: l2storage:latest
     ports:
       - "8080:8080"
-    links:
-      - db:db
     environment:
       PYTHONUNBUFFERED: 1
       PGRST_DB_URI: postgres://app_user:password@db:5432/app_db
@@ -25,6 +11,7 @@ services:
       PGRST_DB_ANON_ROLE: app_user #In production this role should not be the same as the one used for the connection
     depends_on:
       - db
+    network_mode: host
   db:
     image: postgres
     ports:

@@ -13,10 +13,16 @@ const API_KEY_PATH = "res://poly_api_key.secret"
 var mat
 var objparse = load("res://addons/mesh/ObjParse.gd").new()
 
-signal mesh_loaded
 onready var req = HTTPRequest.new()
 
 var to_load = []
+
+remote func spawn(asset_id):
+  $MeshStreamer.stream(asset_id)
+
+func _on_mesh_loaded(mi: MeshInstance):
+  mi.transform.origin = Vector3(3, 1, 0)
+  add_child(mi)
 
 func _init_poly_api():
   var f = File.new()
@@ -79,7 +85,7 @@ func _on_request_completed(result, response_code, headers, body):
     var mesh = objparse.parse(body.get_string_from_utf8(), mat)
     var mi = MeshInstance.new()
     mi.mesh = mesh
-    emit_signal('mesh_loaded', mi)
+    _on_mesh_loaded(mi)
 
 func search_and_load(params):
   outbound = O_LIST

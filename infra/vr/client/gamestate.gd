@@ -1,21 +1,17 @@
 extends HTTPRequest
 
-# Game port and ip
 const SETTINGS_URI = "https://raw.githubusercontent.com/smartin015/l2_makerspace/master/infra/vr/client.conf"
 const DEFAULT_SETTINGS = {
   "server_ip": "127.0.0.1",
   "server_port": 44444,
 }
+const DEFAULT_CONNECT_TIMEOUT = 0.5
 var settings = DEFAULT_SETTINGS
+
 var host = NetworkedMultiplayerENet.new()
+onready var player = get_node("/root/World/Players/Player")
+onready var players = get_node("/root/World/Players")
 
-# Signal to let GUI know whats up
-signal connection_failed()
-signal connection_succeeded()
-signal server_disconnected()
-
-var my_name = "Client"
-var players = {} # Players dict stored as id:name
 var is_initialized = false # We have been registered to the server.
 var default_connect_timer = null
 
@@ -32,90 +28,60 @@ func _ready():
       print("error registering ", k, ": ", err)
   is_initialized = false
   if !vr.initialize():
-    print("No VR initialized, shrugging and moving on")
-    
-func init():
-  # Try briefly connecting to localhost first
+    print("GDT non-VR demo mode")
+
   default_connect_timer = Timer.new()
   default_connect_timer.set_one_shot(true)
   default_connect_timer.connect("timeout", self, "_default_connect_timeout")
   add_child(default_connect_timer)
-  
-  connect_to_server(DEFAULT_SETTINGS.server_ip, DEFAULT_SETTINGS.server_port) # Try to connect
-  default_connect_timer.start(0.5)
+  connect_to_server(DEFAULT_SETTINGS.server_ip, DEFAULT_SETTINGS.server_port) 
+  default_connect_timer.start(DEFAULT_CONNECT_TIMEOUT)
   
 func _on_HTTPRequest_request_completed(_result, response_code, _headers, body):
   if response_code != 200:
-    print("Got code %d requesting online settings, using defaults instead" % response_code)
-  else:
-    print("Got response ", response_code)
-    var json = JSON.parse(body.get_string_from_utf8())
-    if json.error == OK:
-      if typeof(json.result.get("server_ip")) != TYPE_STRING || typeof(json.result.get("server_port")) == TYPE_NIL:
-        print("Missing/wrong type settings in result %s" % json.result)
-      else:
-        print("Got settings from remote: %s" % json.result)
-        settings = json.result
+    print("GDT settings code %d; cannot start" % response_code)
+    return
+
+  print("GDT settings code ", response_code)
+  var json = JSON.parse(body.get_string_from_utf8())
+  if json.error == OK:
+    if typeof(json.result.get("server_ip")) != TYPE_STRING || typeof(json.result.get("server_port")) == TYPE_NIL:
+      print("GDT settings invalid: %s" % json.result)
     else:
-      print("JSON parse error: %s " % json.error_string)
+      print("Got settings: %s" % json.result)
+      settings = json.result
+  else:
+    print("GDT settings parse err: %s " % json.error_string)
   connect_to_server(settings.server_ip, settings.server_port)
 
 func _default_connect_timeout():
   if host.get_connection_status() != NetworkedMultiplayerPeer.CONNECTION_CONNECTED:
     host.close_connection()
-    print("timed out connecting to localhost; fetching remote settings...")
+    print("GDT no localhost; fetching settings")
     var _ignore = self.request(SETTINGS_URI)
-  else: 
-    print("localhost is connected")
 
 func connect_to_server(ip, port):
-  print("Attempting to connect to server %s port %d" % [ip, port])
+  print("GDT conn %s:%d" % [ip, port])
   if host.get_connection_status() != host.CONNECTION_DISCONNECTED:
     host.close_connection()
   
   var err = host.create_client(ip, port)
   if err != OK:
-    print("Error %s connecting to server" % err)
+    print("GDT conn error %s" % err)
     return
 
   get_tree().set_network_peer(host)
 
-# Callback from SceneTree, called when connect to server
 func _connected_ok():
-  emit_signal("connection_succeeded")
+  player.name = str(get_tree().get_network_unique_id())
+  # $MeshStreamer.spawn("5vbJ5vildOq")
 
-# Callback from SceneTree, called when server disconnect
 func _server_disconnected():
   is_initialized = false
   players.clear()
-  emit_signal("server_disconnected")
   connect_to_server(settings.server_ip, settings.server_port)
 
-# Callback from SceneTree, called when unabled to connect to server
 func _connected_fail():
   is_initialized = false
   get_tree().set_network_peer(null)
-  emit_signal("connection_failed")
   connect_to_server(settings.server_ip, settings.server_port)
-
-puppet func register_player(id, new_player_data):
-  players[id] = new_player_data
-  print("registered player %s: %s" % [id, new_player_data])
-
-puppet func unregister_player(id):
-  players.erase(id)
-# Returns list of player names
-func get_player_list():
-  return players.values()
-
-puppet func pre_start_game(tf):
-  # Register ourselves with the server
-  rpc_id(1, "register_player", my_name)
-  # Tell Server we ready to roll
-  rpc_id(1, "populate_world", tf)
-  
-func remote_log(text):
-  rpc_id(1, "remote_log", text)
-
-remote func recv_remote_log(text):
-  print(text)

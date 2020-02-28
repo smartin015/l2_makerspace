@@ -1,111 +1,17 @@
-
-var xml
-
 const NODE_MODEL = "model"
 const NODE_LINK = "link"
-const MESH_CUBE = "cube"
-const MESH_CYLINDER = "cylinder"
-const MESH_PLANE = "plane"
-const MESH_SPHERE = "sphere"
+const NODE_JOINT = "joint"
 
-func upsertMesh(link: Node, type: String) -> MeshInstance:
-  var n = link.get_node_or_null("meshinstance")
-  if n != null:
-    return n
-  n = MeshInstance.new()
-  n.name = "meshinstance"
-  n.material_override = SpatialMaterial.new()
-  match type:
-    MESH_CUBE:
-      n.mesh = CubeMesh.new()
-    MESH_CYLINDER:
-      n.mesh = CylinderMesh.new()
-    MESH_PLANE:
-      n.mesh = PlaneMesh.new()
-    MESH_SPHERE:
-      n.mesh = SphereMesh.new()
-    _:
-      print("Error: Unknown type ", type)
-  link.add_child(n)
-  return n
-
-func addCollisionShape(link: Node, extents: Vector3):
-  var sb = StaticBody.new()
-  var n = CollisionShape.new()
-  n.name = link.name 
-  n.shape = BoxShape.new()
-  n.shape.extents = extents
-  sb.add_child(n)
-  link.add_child(sb)
-
-func handleAttribute(model: Spatial, link: Spatial, p, data):
-  match p:
-    "/pose":
-      var v = data.split(" ", false)
-      link.transform.origin = Vector3(float(v[0]), float(v[2]), float(v[1]))
-      link.rotate_x(float(v[3]))
-      link.rotate_y(float(v[4]))
-      link.rotate_z(float(v[5]))
-    "/visual/transparency":
-      var mi = link.get_node("meshinstance")
-      mi.material_override.flags_transparent = true
-      mi.material_override.albedo_color.a = float(data)
-    "/visual/material/script":
-      var mi = link.get_node("meshinstance")
-      match data:
-        "Gazebo/Purple":
-          mi.material_override.albedo_color = Color(0.5, 0, 0.5)
-        _:
-          print("Unknown color ", data)
-    "/visual/geometry/box/size":
-      var mi = upsertMesh(link, MESH_CUBE)
-      var v = data.split(" ", false)
-      mi.scale = Vector3(float(v[0]), float(v[2]), float(v[1]))
-    "/collision/geometry/box/size":
-      var v = data.split(" ", false)
-      addCollisionShape(link, Vector3(float(v[0]), float(v[2]), float(v[1])))
-      print("Added collision shape")
-    "/visual/geometry/cylinder/radius":
-      var mi = upsertMesh(link, MESH_CYLINDER)
-      var r = float(data)
-      mi.scale.x = r
-      mi.scale.z = r
-    "/visual/geometry/cylinder/length":
-      var mi = upsertMesh(link, MESH_CYLINDER)
-      var l = float(data)
-      mi.scale.y = l
-    "/visual/geometry/plane/normal":
-      var mi = upsertMesh(link, MESH_PLANE)
-      var v = data.split(" ", false)
-      var n = Vector3(float(v[0]), float(v[2]), float(v[1]))
-      if n.angle_to(Vector3.UP) > 0:
-        var axis = n.cross(Vector3(0,1,0)).normalized()
-        mi.rotate(axis, n.angle_to(Vector3.UP))
-    "/visual/geometry/plane/size":
-      var mi = upsertMesh(link, MESH_PLANE)
-      var v = data.split(" ", false)
-      mi.scale = Vector3(float(v[0]), 1, float(v[1]))
-    "/visual/geometry/sphere/radius":
-      var mi = upsertMesh(link, MESH_SPHERE)
-      var d = 2*float(data)
-      mi.scale = Vector3(d, d, d)
-    _:
-      print(p, " ", data, " (ignored)")
-
-func relPath(path: PoolStringArray) -> String:
-  var p = ""
-  var i = 0
-  var refs = 0
-  while i < len(path):
-    if refs >= 2:
-      p += "/" + path[i]
-    if path[i].begins_with(NODE_MODEL) || path[i].begins_with(NODE_LINK):
-      refs += 1
-    i += 1
-  return p
+# SDFNode is a basic node that contains the XML data for a corresponding SDF element
+class SDFNode extends Spatial:
+  var type = ""
+  var data = ""
+  var attrs = {}
+  func get_class():
+    return "SDFNode"
 
 func ParseAttrs(xmlstr: String):
-  xml = XMLParser.new()
+  var xml = XMLParser.new()
   var err = xml.open_buffer(xmlstr.to_ascii())
   if err != OK:
     return err
@@ -114,49 +20,105 @@ func ParseAttrs(xmlstr: String):
   if xml.get_node_name().begins_with("?xml"):
     err = xml.read()
 
-  var path = PoolStringArray()
-  var models = {}
-  var model
-  var link
-  var joints = {}
-  # TODO switch to named spatials for all nodes
+  # Convert to structured Godot spatial node format
+  var root = SDFNode.new()
+  var cur = root
   while err == OK:
     if xml.get_node_type() == XMLParser.NODE_ELEMENT:
+      var n = SDFNode.new()
+      n.name = xml.get_node_name()
+      n.type = n.name
       if xml.has_attribute("name"):
-        var name = xml.get_named_attribute_value("name")
-        print(name)
-        path.push_back(xml.get_node_name() + ":" + name)
-        match xml.get_node_name():
-          NODE_MODEL:
-            if !models.has(name):
-              model = Spatial.new()
-              model.name = name
-              models[name] = model
-            else:
-              model = models[name]
-          NODE_LINK:
-            if model.find_node(name) == null:
-              link = Spatial.new()
-              link.name = name
-              model.add_child(link)
-            else:
-              link = model.find_node(name)
-      else:
-        path.push_back(xml.get_node_name())
+        n.name = xml.get_named_attribute_value("name")
+      for i in range(xml.get_attribute_count()):
+        n.attrs[xml.get_attribute_name(i)] = xml.get_attribute_value(i)
+      cur.add_child(n)
+      cur = n
     elif xml.get_node_type() == XMLParser.NODE_ELEMENT_END:
-      var rm = path[-1]
-      if rm.begins_with(NODE_MODEL):
-        model = null
-      elif rm.begins_with(NODE_LINK):
-        link = null
-      path.remove(len(path)-1)
+      cur = cur.get_parent()
     elif xml.get_node_type() == XMLParser.NODE_TEXT && xml.get_node_data().lstrip(" \n") != "":
-      var data = xml.get_node_data()
-      handleAttribute(model, link, relPath(path), data)
-      
+      cur.data = xml.get_node_data()   
     err = xml.read()
   
-  if err == ERR_FILE_EOF:
-    return models
-  return err
+  if err != ERR_FILE_EOF:
+    return err
   
+  return _fill_sdf(root)
+
+func _set_collision(link: Node, n: SDFNode):
+  var sb = StaticBody.new()
+  var cs = CollisionShape.new()
+  n.name = link.name 
+  # TODO different shapes
+  cs.shape = BoxShape.new()
+  var v = n.get_node("size").data.split(" ", false)
+  cs.shape.extents = Vector3(float(v[0]), 1, float(v[1]))
+  sb.add_child(cs)
+  link.add_child(sb)
+
+func _set_geometry(link: Spatial, n: SDFNode):
+  var mi = MeshInstance.new()
+  mi.material_override = SpatialMaterial.new()
+  link.add_child(mi)
+  match n.type:
+    "box":
+      mi.mesh = CubeMesh.new()
+      var v = n.get_node("size").data.split(" ", false)
+      mi.scale = Vector3(float(v[0]), float(v[2]), float(v[1]))
+    "plane":
+      mi.mesh = PlaneMesh.new()
+      var v = n.get_node("normal").data.split(" ", false)
+      var norm  = Vector3(float(v[0]), float(v[2]), float(v[1]))
+      if norm.angle_to(Vector3.UP) > 0:
+        var axis = norm.cross(Vector3(0,1,0)).normalized()
+        mi.rotate(axis, n.angle_to(Vector3.UP))
+      
+      v = n.get_node("size").data.split(" ", false)
+      mi.scale = Vector3(float(v[0]), 1, float(v[1]))
+    "cylinder":
+      mi.mesh = CylinderMesh.new()
+      var r = float(n.get_node("radius").data)
+      mi.scale.x = r
+      mi.scale.z = r
+      var l = float(n.get_node("length").data)
+      mi.scale.y = l
+    "sphere":
+      mi.mesh = SphereMesh.new()
+      var d = 2*float(n.get_node("radius").data)
+      mi.scale = Vector3(d, d, d)
+    _:
+      print("Error: Unknown geometry type ", n.type)
+
+# Replace occurrences of particular tags with standard godot primitives
+func _fill_sdf(n: SDFNode):
+  for c in n.get_children():
+        _fill_sdf(c)
+        
+  match n.type:
+    NODE_LINK:
+      var pose = n.get_node("pose")
+      if pose != null:
+        var v = pose.data.split(" ", false)
+        n.transform.origin = Vector3(float(v[0]), float(v[2]), float(v[1]))
+        n.rotate_x(float(v[3]))
+        n.rotate_y(float(v[4]))
+        n.rotate_z(float(v[5]))
+      var geom = n.get_node("visual/geometry")
+      if geom != null:
+        _set_geometry(n, geom.get_child(0))
+      var coll = n.get_node("collision/geometry")
+      if coll != null:
+        _set_collision(n, coll.get_child(0))
+      # TODO transparency & color
+      #    "/visual/transparency":
+      #      var mi = link.get_node("meshinstance")
+      #      mi.material_override.flags_transparent = true
+      #      mi.material_override.albedo_color.a = float(data)
+      #    "/visual/material/script":
+      #      var mi = link.get_node("meshinstance")
+      #      match data:
+      #        "Gazebo/Purple":
+      #          mi.material_override.albedo_color = Color(0.5, 0, 0.5)
+      #        _:
+      #          print("Unknown color ", data)
+  return n

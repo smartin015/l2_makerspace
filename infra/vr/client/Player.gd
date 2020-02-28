@@ -4,6 +4,8 @@ onready var origin = $OQ_ARVROrigin
 onready var head = $OQ_ARVROrigin/OQ_ARVRCamera
 onready var left = $OQ_ARVROrigin/OQ_LeftController
 onready var right = $OQ_ARVROrigin/OQ_RightController
+onready var lgrab = $OQ_ARVROrigin/OQ_LeftController/Feature_StaticGrab
+onready var rgrab = $OQ_ARVROrigin/OQ_RightController/Feature_StaticGrab
 
 # ===================== Networked Multiplayer ==========================
 var last_head = Transform()
@@ -35,7 +37,7 @@ func _multiplayerProcess(delta):
 # ==================== Control Zone ===================================
 
 var control_zone
-const CONTROL_ZONE_NAME = "L2ControlZone"
+const CONTROL_ZONE_NAME = "control_zone"
 const ARM_LEN = 0.60 # a guess at the average
 const TABLE_HEIGHT = 0.8
 
@@ -44,14 +46,18 @@ export(vr.BUTTON) var control_zone_button = vr.BUTTON.A;
 func _set_control_zone(zone):
   if zone == control_zone:
     zone = null
-  print("Setting control zone to ", zone)
-  # TODO de-select control zone
+    return
+  
+  if zone == null and control_zone != null:
+    control_zone.get_parent().exit_zone(gamestate.my_name)
   
   control_zone = zone
   if control_zone == null:
     scale = Vector3.ONE
     transform.origin = Vector3.ZERO
   else:
+    control_zone.get_parent().enter_zone(gamestate.my_name)
+
     # Get bounding box for zone - scale so the size of the box is an arm's length
     # and put 
     var zone_size = control_zone.get_children()[0].shape.get_extents()
@@ -60,16 +66,22 @@ func _set_control_zone(zone):
   rset("puppet_transform", global_transform)
 
 func _controllerProcess(_delta):
-  if vr.button_just_pressed(control_zone_button) || Input.is_action_just_pressed("toggle_control_zone"):
+  if vr.button_just_pressed(control_zone_button) || vr.button_just_pressed(vr.BUTTON.X) || Input.is_action_just_pressed("toggle_control_zone"):
     var overlapping_bodies = left.find_node("GrabArea", true, false).get_overlapping_bodies();
-    print("Found ", overlapping_bodies.size(), " overlaps")
     for b in overlapping_bodies:
-      print(b.get_parent().name)
-      if b.get_parent().name == CONTROL_ZONE_NAME:
+      if b.get_parent().has_method('enter_zone'):
         _set_control_zone(b)
         return
     _set_control_zone(null)
-    
+
+# ==================== Grab logic =====================================
+var grabStart
+
+func _grabProcess(_delta):
+  if lgrab.is_just_grabbing:
+    grabStart = lgrab.grabbed_object.translation
+  elif lgrab.is_grabbing:
+    lgrab.grabbed_object.get_parent().set_pos_and_send(lgrab.grabbed_object.name, lgrab.delta_position + grabStart)
 
 # ===================== Main functions ================================
 
@@ -79,3 +91,4 @@ func _ready():
 func _process(delta):
   _multiplayerProcess(delta)
   _controllerProcess(delta)
+  _grabProcess(delta)

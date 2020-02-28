@@ -15,7 +15,11 @@ ENV PATH /bin/versions/node/$NODE_VERSION/bin:$PATH
 
 RUN git clone https://github.com/RobotWebTools/rclnodejs.git && cd rclnodejs && git submodule update --init --recursive && npm install
 
+RUN echo "source l2_msgs/install/setup.bash" > /root/.bashrc
+
 COPY l2_msgs /l2_msgs
 RUN bash -c "source /opt/ros/dashing/setup.bash && cd /l2_msgs && colcon build --symlink-install"
 
 COPY templates /templates
+
+
