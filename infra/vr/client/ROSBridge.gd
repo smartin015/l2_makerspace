@@ -1,20 +1,52 @@
 extends Node
 
-# {topic: [[node, handler], ...]}
 var handlers = {}
+var connected = false
+var peers = []
+var advertisements = [
+  {
+    "topic": "alive", 
+    "type": "std_msgs/String",
+    "id": "healthcheck"
+  },
+]
+
+class ROSHandler:
+  var topic = ""
+  var type = ""
+  var id = ""
+  var callbacks = [] # [[node, handler], ...]
 
 # Subscribes to a ROS topic via the server & ros bridge, and registers a 
 # handler to call when the topic receives messages.
 func ros_connect(topic: String, type: String, node: Node, handler: String, id: String):
-  handlers[topic] = handlers.get(topic, []) + [[node, handler]]
+  var h = handlers.get(topic)
+  if !h:
+    h = ROSHandler.new()
+    handlers[topic] = h
+    return
+  h.topic = topic
+  h.type = type
+  h.id = id
+  h.callbacks.push_back([node, handler])
   rpc_id(1, 'subscribe', topic, type, id)
+
+remote func set_ros_peers(peers):
+  print("ROS peers: %s" % [peers])
+  if len(peers) > len(self.peers):
+    # Old peers get duplicate adverts, but it should be a no-op
+    for a in advertisements:
+      advertise(a.topic, a.type, a.id)
+    for h in handlers.values():
+      rpc_id(1, 'subscribe', h.topic, h.type, h.id)
+  self.peers = peers
 
 remote func handle_ros_status(level: String, msg: String, id: String):
   print("ROS %s %s: %s" % [level, msg, id])
 
 remote func handle_ros_publish(topic: String, msg, id: String):
-  for handler in handlers.get(topic, []):
-    handler[0].call(handler, msg, id)
+  for cb in handlers.get(topic, {}).get('callbacks', []):
+    cb[0].call(cb[1], msg, id)
 
 func publish(topic: String, type: String, msg, id: String):
   rpc_id(1, 'publish', topic, type, msg, id)
@@ -23,7 +55,7 @@ func advertise(topic: String, type: String, id: String):
   rpc_id(1, 'advertise', topic, type, id)
 
 var healthcheck_timer = null
-const HEALTH_CHECK_INTERVAL = 20.0
+const HEALTH_CHECK_INTERVAL = 5.0
 func _ready():
   healthcheck_timer = Timer.new()
   healthcheck_timer.wait_time = HEALTH_CHECK_INTERVAL
@@ -32,7 +64,7 @@ func _ready():
   healthcheck_timer.start()
 
 func _do_ros_healthcheck():
-  if !gamestate.is_initialized:
+  if len(peers) == 0:
     return
   var id = str(get_tree().get_network_unique_id())
-  ROSBridge.publish('alive', 'std_msgs/String', {"data": id}, "healthcheck")
+  ROSBridge.publish("alive", "std_msgs/String", {"data": id}, "healthcheck")

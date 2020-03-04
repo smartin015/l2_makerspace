@@ -30,7 +30,7 @@ func _init_connection():
   if !socket:
     return
 
-  print("ROS(%s) <- sending unacked connection messages" % id)
+  print("ROS(%s) attempt setup" % id)
   var num_sent = 0
   for msg in ROSBridge.connection_msgs(id):
     if !setup_state.get(msg.id, false):

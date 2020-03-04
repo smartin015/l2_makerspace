@@ -9,10 +9,10 @@ puppetsync func spawn(name, sdf, tf):
   inst.sdf = sdf
   
   self.add_child(inst)
-  print("Initialized SDF %s tf %s" % [name, tf])
+  print("SDF %s spawned" % name)
   return inst
 
 puppetsync func remove(name):
   self.get_node(name).queue_free()
-  print("Removed SDF %s" % name)
+  print("SDF %s removed" % name)
   

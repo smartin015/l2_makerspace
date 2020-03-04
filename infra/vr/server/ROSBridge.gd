@@ -4,27 +4,17 @@
 extends Node
 
 const WS_PORT = 4243
-
-# TODO: Link this up to message type spec in infra/base/l2_msgs/msg/Object3D.msg
-const TYPE_OBJ = 1
-const TYPE_SDF = 2
 const NS = "/l2/vr"
-
-var ROSPeer = load("res://ROSPeer.gd")
-onready var sdf = get_node("/root/World/SDF")
 
 var _server = WebSocketServer.new()
 var listeners = {} # Map of ROS topic to list of godot client IDs
+var services = []
 
 func connection_msgs(id):
-  return [
-    { 
-      "op": "advertise_service",
-      "service": NS + "/PushObject3D",
-      "type": "l2_msgs/PushObject3D",
-      "id": "%s_pushobject3d" % id,
-    },
-  ]
+  var result = []
+  for s in services:
+    result.push_back(s.advertisement(id))
+  return result
 
 func _ready():
   _server.connect("client_connected", self, "_connected")
@@ -34,7 +24,7 @@ func _ready():
   if(_server.listen(WS_PORT) != OK):
     print("An error occurred listening on port", WS_PORT)
   else:
-    print("Listening for bridge connections on port ", WS_PORT)
+    print("ROS listen port ", WS_PORT)
 
 func _broadcast(id: String, msg):
   # Serialization done here instead of in the peers to prevent duplicate work
@@ -52,9 +42,12 @@ func _broadcast(id: String, msg):
   for c in get_children():
     if c.should_throttle(sender):
       return
+    if !c.socket.is_connected:
+      _disconnected(c.id)
+      continue
     c.socket.put_packet(packet)
 
-remote func advertise(topic: String, type: String, msg, id: String):
+remote func advertise(topic: String, type: String, id: String):
   _broadcast(id, {
     "op": "advertise",
     "topic": topic,
@@ -77,7 +70,7 @@ remote func subscribe(topic, type, id: String):
     "type": type,
   })
 
-func _service_response(service, id, values):
+func service_response(service, id, values):
   _broadcast(id, {
     "op": "service_response",
     "service": service,
@@ -85,41 +78,31 @@ func _service_response(service, id, values):
     "result": true,
    })
 
+func send_ros_peers():
+  var peers = []
+  for c in get_children():
+    peers.push_back(int(c.name))
+  rpc('set_ros_peers', peers)
+
+var ROSPeer = load("res://ROSPeer.gd")
 func _connected(id, proto):
   var peer = ROSPeer.new()
   peer.name = str(id)
   add_child(peer)
   peer.begin_init(id, _server.get_peer(id))
-  print("ROS(%d) -> connected" % id)
-
+  print("ROS(%d) connected" % id)
+  send_ros_peers()
+  
 func _close_request(id, code, reason):
-  print("ROS(%d) -> disconnecting with code: %d, reason: %s" % [id, code, reason])
+  print("ROS(%d) disconnecting, code: %d, reason: %s" % [id, code, reason])
 
 func _disconnected(id, was_clean = false):
   var peer = find_node(str(id))
   if !peer:
     return
   remove_child(peer)
-  print("ROS(%d) -> disconnected, clean: %s" % [id, str(was_clean)])
-
-func _handle_push_object_3d(id, args):
-  match args.object.type:
-    TYPE_OBJ:
-      _service_response("PushObject3D", id, {
-        "success": false, 
-        "message": "OBJ parsing not implemented"
-      })
-    TYPE_SDF:
-      sdf.spawn(args.object.name, args.object.data, Transform.IDENTITY)
-      _service_response("PushObject3D", id, {
-        "success": true, 
-        "message": "SDF model %s created" % args.object.name
-      })
-    _:
-      _service_response("PushObject3D", id, {
-        "success": false, 
-        "message": "Unknown type %s" % args.object.type
-      })
+  print("ROS(%d) disconnected, clean: %s" % [id, str(was_clean)])
+  send_ros_peers()
 
 func _on_data(id):
   var pkt = _server.get_peer(id).get_packet()
@@ -152,10 +135,11 @@ func _on_data(id):
             result.get('msg', ''), 
             result.get('id'))
     "call_service":
-      if result.service == ('%s/PushObject3D' % NS):
-        _handle_push_object_3d(result.result.id, result.args)
-      else:
-        print("ROS(%s) Unhandled call_service: ", [id, result.service])
+      print("ROS(%s) -> call_service %s" % [id, result.service])
+      for s in services:
+        if s.maybe_handle(result.service, result.id, result.args):
+          return
+      print("ROS(%s) Unhandled call_service: ", [id, result.service])
     _: print("ROS(%s) Unhandled op: ", [id, result.op])
 
 func _process(delta):

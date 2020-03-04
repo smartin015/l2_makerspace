@@ -24,7 +24,6 @@ func clear():
     remove(p.name)
 
 puppet func remove(id):
-  print("REMOVE %s" % id)
   var p = get_node(str(id))
   if p:
     p.queue_free()
