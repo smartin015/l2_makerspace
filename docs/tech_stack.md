@@ -7,10 +7,10 @@ Only requirement for makers: have a github account (or some git repository ident
 Online and data
 
 *   Have a full separate WAN & gigibit LAN for basement, with internet connectivity
-*   MQTT available for quick pubsub stuff, interoperable with ROS2 telemetry
-*   quick graphing/dashboarding (using SQL?)
+*   ROS2 is the backing system for communication between parts of the makerspace, with bridges to WebSockets, MQTT etc.
+*   Quick graphing/dashboarding (using SQL?)
 *   Local Postgresql server with periodic backup to the cloud 
-*   Each project is at core a github repo (and possibly blobstore? How do people handle large files in git?
+*   Each project is at core a github repo
 
 Digital presence in the makerspace
 
@@ -18,13 +18,13 @@ Digital presence in the makerspace
 *   Phone app allows selecting the project being worked on, also what's shown on individual screens (defaults to a workspace view).
 *   Large screen displaying cost metrics, project statuses, other success indicators.
 *   Several positional cameras (including a couple time lapse cameras) record when the space is active. Cameras can be moved without any manual calibration needed.
-*   "Space is active" determined by enabled project app.
+*   "Space is active" indicator (for documentation and other automation) determined by enabled project app.
 *   Operational dashboard shows what is and isn't working
 
 Efficiency & reliability
 
 *   Screens turn off when nobody in the space
-*   After power cycling, should require 0 effort to get the space running again
+*   After power cycling, should require 0 effort to get the space running again (automated turnup)
 
 App/server requirements
 
