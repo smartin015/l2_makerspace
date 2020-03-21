@@ -2,8 +2,7 @@
 
 ## Mission
 
-Disrupt maker culture by enabling faster, easier, and more effective solutions to more complex and intelligent problems through the use of increasing computation, technical expertise, and investment in open discovery.
-
+Disrupt maker culture by enabling faster, easier, and more effective solutions to more complex and intelligent problems through the use of increasing computation, technical expertise, and by investment in open discovery.
 
 ## Background
 
@@ -13,14 +12,11 @@ The core aspects of making can be divided into three stages: identifying a **pro
 
 Making is also an intersection of engineering and experimentation. This strongly parallels "infrastructure" development for experimental research (e.g. as is done with [Deepmind](http://deepmind.com)).
 
-
 ### Progression
 
-Making can be improved at each of these stages by 1) reducing the time to the next stage, and b) reducing the attention and effort required to move to the next stage. Machine/software automation improves both attention and execution speed, but is hard to achieve as a first resort. 
+Making can be improved at each of these stages by 1) reducing the **time** to the next stage, and b) reducing the **attention** and effort required to move to the next stage. Machine/software automation improves both attention and execution speed, but is hard to achieve as a first resort.
 
-We take a series of smaller steps to reach full autonomy, using a human approach to fill the gaps and steadily decreasing the gap until full automation can be achieved:
-
-
+We take a series of smaller steps to reach full autonomy, using a human approach to fill the gaps and steadily decreasing the gap until full automation can be achieved. Percentages other than for manual are more targets to aim towards than actual real values:
 
 *   **Manual**: 100% attention of maker required
 *   **Outsourced**: 20% attention of maker, with unpaid/paid remote assistance
@@ -116,18 +112,12 @@ Earlier stages in the making process require more creativity and thoughtfulness 
   </tr>
 </table>
 
-
-
-
 *   Most makerspaces fall into either Level 0 or Level 1 - basic wood shops, metal shops, etc. fall into Level 0, while makerspaces that leverage 3D printing, CNC machining, etc. are considered Level 1.
 *   Today's Level 2 spaces are typically research spaces, companies, or institutions - and the capabilities of these spaces are often highly targeted to solving a small class of problems.
 *   The workshops in the Ironman movies describe a futuristic Level 4 space.
 *   At level 5, a maker could give a statement of intent (e.g. a "mission") and have an a-la-carte menu of problems and their solutions presented automatically. The maker can explore and tweak various parameters and then fabricate the solution with trivial effort.
 
-
 ### Barriers & Opportunity
-
-
 
 *   Technical expertise is needed to harness today's L2 tools, and to know what tools even exist / whether integration is possible
     *   E.g. finite element analysis when designing structures, or generative design, or even just regular CAD tools like Fusion 360
@@ -138,37 +128,27 @@ Earlier stages in the making process require more creativity and thoughtfulness 
 *   Sites like [fiverr](fiverr.com) allow for inexpensive, contracted solutions but are typically not utilized by makers today.
 *   Making has entrenched a particular view of DIY, where making something with your own hands is valued more than the thing being made. 
 
-
 ## Objective
-
-
 
 *   By the end of 2020, understand how to make a feasible L2 space and should be making progress on a 1E space.
 *   By the end of 2021, achieve L2 for a makerspace in Pittsburgh.
 
-
 ## Requirements
-
-
 
 *   The design of the space, its progress, and all projects within it must be **open source and publicized**. 
 *   **Low-effort maintenance** is required for all aspects of the L2 space
 *   Creations must be **repeatable**, including the creation of an L2 space
 *   Newcomers should be able to **use the space in an hour or less**
 
-
 ## Execution
 
 Executing the mission is a multi-year undertaking, with substantial monetary and time investment and distributed across many people.
-
 
 ### Project Management
 
 Projects will be managed with [Todoist](todoist.com), with sub-parts broken up into manageable pieces and delegated to experts. A visible display will be set up in the makerspace and its items distributed across various roles/makers. 
 
 When a user wants to create a new project, there should be an easy workflow to automatically:
-
-
 
 *   Create a Todoist project and add some "setup" steps to the project for the maker or contracted admins to do:
     *   complete design document
@@ -179,10 +159,7 @@ When a user wants to create a new project, there should be an easy workflow to a
 
 This project's mission is about meta-making: the act of making in order to improve the act of making. This must itself be a project, but should be tracked alongside all other projects as above (and prioritized as below).
 
-
 ### Administration
-
-
 
 *   To ensure success and tracking of the project, project management will be done by a paid assistant (e-assistant, part-time?) who will also handle hiring of temporary workers to "fill in automation gaps".
 *   To ensure the makerspace is maintained, operational, and utilized, a salaried "maker in residence" will be hired to steward the space, execute on projects, and invent clever solutions for meta-making ($800/wk?).
@@ -190,7 +167,6 @@ This project's mission is about meta-making: the act of making in order to impro
 *   Outreach (both to satisfy maker problems and to seek new makers) will also be contracted.
 
 All of these administrative roles must also be considered as opportunities for automation (e.g. automatic pipelining of contracted work given a "spend" budget)
-
 
 ### Budgeting
 
@@ -202,12 +178,9 @@ Budget for 2020 will be used to explore concepts and prepare for the push for L2
 
 Budget for 2021 will be roughly $440 accrued daily, before deductions for salary etc. This can be applied both to services and to materials for projects.
 
-
 ### Documentation & Open Source
 
 Initially, manual work must be undertaken for:
-
-
 
 *   docwriting and manuals/instruction for makerspace tooling
 *   Youtube videos and other promotional materials showing off the space
@@ -215,31 +188,23 @@ Initially, manual work must be undertaken for:
 
 Moving forward, projects are undertaken to lessen this manual time and effort. For example:
 
-
-
 *   Button activated time lapse and "vlog" cameras for easier video capture
 *   Scripts to transcribe / summarize video, or to convert to e.g. instructables format and automatically post sections of the initial design document
-
 
 ### Profit Model
 
 Ideas executed in the makerspace may have business potential. However:
 
-
-
-*   IP ownership transfer should be compelling, but not compulsive. 
+*   IP ownership transfer should be compelling, and not compulsive. 
 *   The maker should by default own any physical/fabricated thing, and it shouldn't permanently live in the makerspace unless it facilitates the goals of meta-making.
 
 We may also sell design services (e.g. mocap) to companies, or "in-source the out-source" to solve the needs of folks not in Pittsburgh. However, this should not be our primary motivator.
 
 We could additionally bring in instructors or teachers to describe L2 making techniques. This could be free for locals and sold online to cover any excessive cost.
 
-
 ### Capabilities / Tools
 
 See also [L2 Making Tech Stack](https://docs.google.com/document/d/1h5DuauvpZ7f_S83kQJ1KfR9Ppj57YCTjlgOnyPH5PmM/edit?usp=sharing)
-
-
 
 *   Cutting, bending, and working metal 
     *   Start with CNC plasma, metal brake, TIG welder, [5-axis CNC machine](https://pocketnc.com/collections/machines/products/pocket-nc-v2?variant=11607895998511), Induction welder
@@ -266,12 +231,9 @@ See also [L2 Making Tech Stack](https://docs.google.com/document/d/1h5DuauvpZ7f_
     *   [Loc-line](https://www.loc-line.com/) ventilation endpoints
     *   Cardboard & packaged plastics recycling
 
-
 ## Education & Inspiration
 
 Even at L2, much of the identification of problems and solutions would need to be the role of the maker. As a result, we should have ready materials for self-study of various topics to boost ceativity, e.g: 
-
-
 
 *   Robotics
 *   Animatronics
@@ -279,12 +241,9 @@ Even at L2, much of the identification of problems and solutions would need to b
 
 Additionally we could offer a feed of Inspiration - at least a list of links to standout makers' playlists like Colin Furze and/or projects such as Deeplocal's exhibits/installations. This could evolve into a "maker marquis" similar to a TV at reception that shows off projects being undetaken in the space as well as fun published videos of other goings-on in the maker community.
 
-
 ## Application & prioritization
 
 Due to the smaller size of the space, external users must apply - describing their goals, usage patterns, and skills, as well as describing what they want to do which isn't satisfied by an L1 makerspace. Projects are similarly "application" based and are ranked qualitatively, with some preference given to the below:
-
-
 
 1. Meta-making (make it easier/quicker to make)
     *   Scripting/automating common maker actions, improved pipelining/project management, etc
@@ -302,37 +261,24 @@ Due to the smaller size of the space, external users must apply - describing the
     *   Animatronics, aesthetic/themed rooms with interactive behavior, etc.
     *   New ways of blending virtual and real?
 
-
 ## Success Metrics
-
-
 
 *   2+ large published projects (video + instructions)
 *   3+ small published projects (video + instructions)
 *   Budget fully utilized
 *   At least 1 email sent to external makerspaces / labs / makers per week
 
-
 ## Standards
 
-
-
 *   Docker containers for all software projects
-*   All solutions must work with Linux? 
-*   Use SI units for dimensions?
-*   
-
+*   All solutions must work with Linux
+*   Use SI units for dimensions
 
 ## 2020 H1
 
-
-
 *   See [Todoist Project](https://todoist.com/app#project%2F_1573253044751%2Ffull)
 
-
 ## 2020 H2
-
-
 
 *   Start advertising / drumming up interest
 *   HIre an e-assistant to begin administrative work.
@@ -346,16 +292,13 @@ Due to the smaller size of the space, external users must apply - describing the
 
 At the end of 2020, we should be set to have a Level 1E makerspace.
 
-
 ## 2021 H1
 
 Start identifying automatic solutions for outsourced bits of projects
 
-
 ## 2021 H2
 
 By the end of the year, achieve Level 2.
-
 
 ## Advertising
 
