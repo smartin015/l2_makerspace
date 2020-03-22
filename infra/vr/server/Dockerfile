@@ -36,7 +36,7 @@ RUN apt-get update && apt-get install -y --fix-missing --no-install-recommends \
 #    && unzip Godot_v3.2-beta5_linux_headless.64.zip \
 #    && mv Godot_v3.2-beta5_linux_headless.64 /usr/local/bin/godot \
 #    && rm Godot_v3.2-beta5_linux_headless.64.zip
-COPY ./Godot_v3.2-beta5_linux_headless.64 /usr/local/bin/godot
+RUN wget https://downloads.tuxfamily.org/godotengine/3.2.1/Godot_v3.2.1-stable_linux_server.64.zip && unzip Godot_v3.2.1-stable_linux_server.64.zip && cp ./Godot_v3.2.1-stable_linux_server.64 /usr/local/bin/godot
 #    && wget https://downloads.tuxfamily.org/godotengine/3.2/beta5/Godot_v3.2-beta5_export_templates.tpz \
 #    && unzip Godot_v3.2-beta5_export_templates.tpz \
 #    && mv templates/* ~/.local/share/godot/templates/${GODOT_VERSION}.stable \
@@ -72,5 +72,6 @@ COPY ./Godot_v3.2-beta5_linux_headless.64 /usr/local/bin/godot
 #RUN echo "source /opt/ros/crystal/setup.bash" > /root/.bashrc
 
 COPY . /projects/vr_server
-
+EXPOSE 44444/udp
+EXPOSE 4243/tcp
 CMD /bin/bash -c 'cd /projects/vr_server && /usr/local/bin/godot --scene World.tscn'

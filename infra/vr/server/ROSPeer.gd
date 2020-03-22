@@ -30,16 +30,32 @@ func _init_connection():
   if !socket:
     return
 
-  print("ROS(%s) attempt setup" % id)
-  var num_sent = 0
+  var to_send = []
   for msg in ROSBridge.connection_msgs(id):
     if !setup_state.get(msg.id, false):
-      socket.put_packet(JSON.print(msg).to_utf8())
-      num_sent += 1
-  
-  # TODO: if num_sent == 0: # Done initializing, no more attempts needed
-  # Requires bugfix where ros2-web-bridge returns set_level message w/ no id
-  setuptmr.stop()
+      to_send.push_back(JSON.print(msg).to_utf8())
+      setup_state[msg.id] = false
+
+  if len(to_send) == 0:
+    # Done initializing, no more attempts needed
+    setuptmr.stop()
+    return
+
+  # First, always set the logging level to "none" to get all messages.
+  # This lets us match OK responses with advertisements/subscriptions
+  to_send.push_front(JSON.print({
+    "op": "set_level",
+    "id": str(id) + "_setlevel",
+    "level": "none", 
+  }).to_utf8())
+
+  for pkt in to_send:
+    socket.put_packet(pkt)
+  print("ROS(%s) sent %d setup msgs" % [id, len(to_send)])
+
+func handle_status(id, level, msg):
+  if level == 'none' and msg == 'OK' and setup_state.has(id):
+    setup_state[id] = true
 
 func should_throttle(sender):
   # TODO per-user throttling publishes to ROS bridge

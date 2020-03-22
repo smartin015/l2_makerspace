@@ -1,8 +1,11 @@
+# ROS service to accept new 3D objects and send them to the VR clients
+# 
+# Test with:
+#  ros2 service call /l2/vr/PushObject3D l2_msgs/srv/PushObject3D '{object: {type: 1, name: 'test_obj', length: 0, data: ''}}'
 extends Node
 
 # TODO: Link this up to message type spec in infra/base/l2_msgs/msg/Object3D.msg
-const TYPE_OBJ = 1
-const TYPE_SDF = 2
+enum type {OBJ = 1, SDF = 2}
 
 onready var sdf = get_node("/root/World/SDF")
 
@@ -21,13 +24,13 @@ func maybe_handle(service, id, args):
   if service != ('%s/PushObject3D' % ROSBridge.NS):
     return false
 
-  match args.object.type:
-    TYPE_OBJ:
+  match int(args.object.type):
+    type.OBJ:
       ROSBridge.service_response("PushObject3D", id, {
         "success": false, 
         "message": "OBJ parsing not implemented"
       })
-    TYPE_SDF:
+    type.SDF:
       sdf.spawn(args.object.name, args.object.data, Transform.IDENTITY)
       ROSBridge.service_response("PushObject3D", id, {
         "success": true, 

@@ -1,10 +1,14 @@
 version: '3.4'
 
 services:
+  gzweb:
+    image: docker.io/osrf/gazebo:gzweb8
+    command: npm start
+    network_mode: host
   sdf2:
     image: l2sim:latest
     volumes:
-      - /home/smartin015/Documents/l2_makerspace/infra/ros/sim/sdf:/sdf
+      - /home/smartin015/l2_makerspace/infra/ros/sim/sdf:/sdf
     command: bash -c "PYTHONUNBUFFERED=1 /sdf/publish_sdf.sh control_zone2 /sdf/control_zone.sdf"
     network_mode: host
     # depends_on: 
@@ -12,7 +16,7 @@ services:
   sdf:
     image: l2sim:latest
     volumes:
-      - /home/smartin015/Documents/l2_makerspace/infra/ros/sim/sdf:/sdf
+      - /home/smartin015/l2_makerspace/infra/ros/sim/sdf:/sdf
     command: bash -c "PYTHONUNBUFFERED=1 /sdf/publish_sdf.sh control_zone /sdf/test.sdf"
     network_mode: host
     # depends_on:

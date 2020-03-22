@@ -29,7 +29,8 @@ func _ready():
 func _broadcast(id: String, msg):
   # Serialization done here instead of in the peers to prevent duplicate work
   var sender = get_tree().get_rpc_sender_id()
-  msg.id = "%s/%s" % [sender, id]
+  # msg.id = "%s/%s" % [sender, id]
+  msg.id = id
   
   # ALL godot traffic to and from ROS is namespaced so that it's clearly known
   # what topics can be affected by VR users.
@@ -37,13 +38,13 @@ func _broadcast(id: String, msg):
     msg.topic = "%s/%s" % [NS, msg.topic]
   if msg.get('service'):
     msg.service = "%s/%s" % [NS, msg.service]
-
   var packet = JSON.print(msg).to_utf8()
   for c in get_children():
     if c.should_throttle(sender):
+      print("Throttling %s->%s " % [sender, c.name])
       return
-    if !c.socket.is_connected:
-      _disconnected(c.id)
+    if !c.socket.is_connected_to_host():
+      _disconnected(c.name)
       continue
     c.socket.put_packet(packet)
 
@@ -114,15 +115,20 @@ func _on_data(id):
   result = result.result
   match result.op:
     "status":
-      print("ROS(%s) -> %s: %s" % [id, result.level, result.msg])
+      print("ROS(%s) -> %s %s: %s" % [id, result.id, result.level, result.msg])
       # Forward to player if ID is prefixed with a player
-      var p = gamestate.players.get(result.get(id).split('_')[0])
-      if p != null:
-        rpc_id(p, "handle_ros_status", 
-          result.get('level', ''), 
-          result.get('msg', ''), 
-          result.get('id', ''))
-        return
+      # var p = gamestate.players.get(result.get(id).split('_')[0])
+      # if p != null:
+      #    rpc_id(p, "handle_ros_status", 
+      #    result.get('level', ''), 
+      #     result.get('msg', ''), 
+      #     result.get('id', ''))
+      #   return
+      if result.id != null:
+        var rp = get_node(str(result.id).split('_')[0], null)
+        if rp != null:
+          rp.handle_status(result.id, result.level, result.msg)
+          print("ROS(%s) %s -> ROSPeer" % [id, result.id])
     "set_level":
       print("ROS(%s) -> set_level: %s" % [id, result.level])
     "publish":
@@ -140,6 +146,7 @@ func _on_data(id):
         if s.maybe_handle(result.service, result.id, result.args):
           return
       print("ROS(%s) Unhandled call_service: ", [id, result.service])
+      # TODO return with error
     _: print("ROS(%s) Unhandled op: ", [id, result.op])
 
 func _process(delta):
