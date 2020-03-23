@@ -12,7 +12,12 @@ puppetsync func spawn(name, sdf, tf):
   print("SDF %s spawned" % name)
   return inst
 
+# Returns null if no error, error string otherwise
 puppetsync func remove(name):
-  self.get_node(name).queue_free()
+  var n = self.get_node(name)
+  if n == null:
+    return "Node not found"
+  n.queue_free()
   print("SDF %s removed" % name)
+  return null
   

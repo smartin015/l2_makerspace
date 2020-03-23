@@ -5,7 +5,7 @@ onready var sdf = load("res://addons/sdf/main.gd").new()
 onready var SDFActor = load("res://SDFActor.tscn")
 
 puppet func spawn(name, config, tf):
-  print("Spawn called, ", name, " at ", tf.origin)
+  print("SDF spawn %s @ %v" % [name, tf.origin])
   var inst = SDFActor.instance()
   inst.name = name
   inst.transform = tf
@@ -17,4 +17,4 @@ puppet func spawn(name, config, tf):
 
 puppetsync func remove(name):
   self.get_node(name).queue_free()
-  print("Removed SDF %s" % name)
+  print("SDF remove %s" % name)

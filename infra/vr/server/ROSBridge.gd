@@ -9,11 +9,14 @@ const NS = "/l2/vr"
 var _server = WebSocketServer.new()
 var listeners = {} # Map of ROS topic to list of godot client IDs
 var services = []
+var topics = []
 
 func connection_msgs(id):
   var result = []
   for s in services:
     result.push_back(s.advertisement(id))
+  for t in topics:
+    result.push_back(t.advertisement(id))
   return result
 
 func _ready():

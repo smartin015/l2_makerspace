@@ -17,7 +17,7 @@ puppet func spawn(id):
   inst.name = str(id) 
   inst.set_network_master(id)
   add_child(inst)
-  print("GDT(%s) spawned" % id)
+  print("GDT(%s) player spawned" % id)
 
 func clear():
   for p in get_children():
@@ -27,4 +27,4 @@ puppet func remove(id):
   var p = get_node(str(id))
   if p:
     p.queue_free()
-    print("GDT(%s) removed" % id)
+    print("GDT(%s) player removed" % id)

@@ -22,7 +22,7 @@ func _process(delta):
     "x": pos[0],
     "y": pos[2],
     "z": pos[1]
-   })
+   }, "pt")
   
   lastpos = pos
   debounce -= 0.5

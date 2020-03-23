@@ -74,7 +74,6 @@ func connect_to_server(ip, port):
 
 func _connected_ok():
   player.name = str(get_tree().get_network_unique_id())
-  # $MeshStreamer.spawn("5vbJ5vildOq")
 
 func _server_disconnected():
   is_initialized = false
