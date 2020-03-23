@@ -1,6 +1,7 @@
 <?xml version="1.0" ?>
 <sdf version="1.4">
   <model name="Example">
+  <static>true</static>
   <link name="testpendant" l2type="pendant">
     <pose>0 0 0.3 0 0 0</pose>
   </link>

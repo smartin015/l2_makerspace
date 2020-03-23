@@ -8,8 +8,9 @@ docker-compose \
   -f infra/ros/sim/docker-compose.yml \
   -f infra/ros/tf_fwd/docker-compose.yml \
   -f infra/vr/server/docker-compose.yml \
+  -p l2 \
   up \
-  gz bridge_local
+  gz gzweb bridge_local_dev
 # client app storage db vr_server sdf2 tf_fwd
 # echo "TODO Starting the local DB container"
 # echo "TODO vdi/ to start up the virtual desktop server container"

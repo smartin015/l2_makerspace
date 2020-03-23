@@ -125,10 +125,12 @@ func _on_data(id):
       #     result.get('id', ''))
       #   return
       if result.id != null:
-        var rp = get_node(str(result.id).split('_')[0], null)
-        if rp != null:
-          rp.handle_status(result.id, result.level, result.msg)
-          print("ROS(%s) %s -> ROSPeer" % [id, result.id])
+        var name = str(result.id).split('_')[0]
+        for c in get_children():
+          if c.name == name:
+            c.handle_status(result.id, result.level, result.msg)
+            print("ROS(%s) %s -> ROSPeer" % [id, result.id])
+            break
     "set_level":
       print("ROS(%s) -> set_level: %s" % [id, result.level])
     "publish":

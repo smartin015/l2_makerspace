@@ -4,25 +4,29 @@ services:
   gzweb:
     image: docker.io/osrf/gazebo:gzweb8
     command: npm start
-    network_mode: host
+    network_mode: bridge
+    environment:
+      - "GAZEBO_MASTER_URI=http://172.104.130.198:11345"
+    ports:
+      - "8080:8080"
+      - "80:80"
+    links:
+      - gz
   sdf2:
     image: l2sim:latest
     volumes:
       - /home/smartin015/l2_makerspace/infra/ros/sim/sdf:/sdf
     command: bash -c "PYTHONUNBUFFERED=1 /sdf/publish_sdf.sh control_zone2 /sdf/control_zone.sdf"
-    network_mode: host
-    # depends_on: 
-    #   - gz
+    network_mode: bridge
   sdf:
     image: l2sim:latest
     volumes:
       - /home/smartin015/l2_makerspace/infra/ros/sim/sdf:/sdf
     command: bash -c "PYTHONUNBUFFERED=1 /sdf/publish_sdf.sh control_zone /sdf/test.sdf"
-    network_mode: host
-    # depends_on:
-    # - gz
+    network_mode: bridge
   gz:
     image: l2sim:latest
     command: bash -c "source /opt/ros/dashing/setup.bash && source /usr/share/gazebo/setup.sh && gzserver -s libgazebo_ros_factory.so"
-    network_mode: host
-# opt/ros/dashing/share/gazebo_plugins/worlds/
+    network_mode: bridge
+    ports:
+      - "11345:11345"
