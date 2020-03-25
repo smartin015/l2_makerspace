@@ -19,6 +19,8 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(diagnostic_msgs REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -36,11 +38,15 @@ set(msg_files
   msg/Project.msg 
   msg/Item.msg 
   msg/Projects.msg
-  msg/Object3D.msg) 
+  msg/Object3D.msg
+  msg/Object3DArray.msg
+  msg/VRLockStatus.msg
+  msg/VRPlayers.msg) 
 set(srv_files 
-  srv/PushObject3D.srv
+  srv/SpawnObject3D.srv
+  srv/RemoveObject3D.srv
   srv/PushParameter.srv)
-rosidl_generate_interfaces( ${PROJECT_NAME} ${msg_files} ${srv_files} DEPENDENCIES builtin_interfaces)
+rosidl_generate_interfaces( ${PROJECT_NAME} ${msg_files} ${srv_files} DEPENDENCIES builtin_interfaces std_msgs diagnostic_msgs)
 ament_export_dependencies(rosidl_default_runtime)
 
 ament_package()

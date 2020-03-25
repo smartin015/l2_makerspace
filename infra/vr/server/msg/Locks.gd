@@ -1,7 +1,7 @@
-# ROS service to accept new 3D objects and send them to the VR clients
+# ROS topic listing current lock state
 # 
 # Test with:
-#  ros2 service call /l2/vr/PushObject3D l2_msgs/srv/PushObject3D '{object: {type: 1, name: 'test_obj', length: 0, data: ''}}'
+#  ros2 topic echo /l2/vr/Locks
 extends Node
 
 var polltmr
@@ -19,7 +19,7 @@ func _ready():
 func advertisement(id):
   return { 
     "op": "advertise",
-    "service": ROSBridge.NS + "/Locks",
+    "topic": ROSBridge.NS + "/Locks",
     "type": TOPIC_TYPE,
     "id": "%s_locks" % id,
   }
@@ -34,6 +34,6 @@ func _poll():
         "value": l[k],
       })
   
-  ROSBridge.publish("Object3D", TOPIC_TYPE, {
+  ROSBridge.publish("Locks", TOPIC_TYPE, {
     locks: locks,
-  }, "object3d")
+  }, "locks")

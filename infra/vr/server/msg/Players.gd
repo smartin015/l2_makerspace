@@ -1,12 +1,12 @@
-# ROS service to accept new 3D objects and send them to the VR clients
+# ROS topic of current connected players
 # 
 # Test with:
-#  ros2 service call /l2/vr/PushObject3D l2_msgs/srv/PushObject3D '{object: {type: 1, name: 'test_obj', length: 0, data: ''}}'
+#  ros2 topic echo /l2/vr/Players
 extends Node
 
 var polltmr
-const TOPIC_TYPE = "l2_msgs/Object3DArray"
-onready var sdf = get_node("/root/World/SDF")
+const TOPIC_TYPE = "l2_msgs/VRPlayers"
+onready var players = find_node('/root/World/Players')
 
 func _ready():
   ROSBridge.topics.push_back(self)
@@ -19,19 +19,15 @@ func _ready():
 func advertisement(id):
   return { 
     "op": "advertise",
-    "service": ROSBridge.NS + "/Object3D",
+    "topic": ROSBridge.NS + "/Players",
     "type": TOPIC_TYPE,
-    "id": "%s_object3d" % id,
+    "id": "%s_players" % id,
   }
 
 func _poll():
-  var objects = []
-  
-  for c in sdf.get_children():
-    objects.append({
-      name: c.name,
-    })
-  
-  ROSBridge.publish("Object3D", TOPIC_TYPE, {
-    objects: objects,
-   }, "object3d")
+  var names = []
+  for c in players.get_children():
+    names.append(c.name)
+  ROSBridge.publish("Players", TOPIC_TYPE, {
+    "players": names,
+   }, "players")

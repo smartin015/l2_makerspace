@@ -1,7 +1,7 @@
-# ROS service to accept new 3D objects and send them to the VR clients
+# ROS topic to publish current 3D objects
 # 
 # Test with:
-#  ros2 service call /l2/vr/PushObject3D l2_msgs/srv/PushObject3D '{object: {type: 1, name: 'test_obj', length: 0, data: ''}}'
+#  ros2 topic echo /l2/vr/Object3D
 extends Node
 
 var polltmr
@@ -19,7 +19,7 @@ func _ready():
 func advertisement(id):
   return { 
     "op": "advertise",
-    "service": ROSBridge.NS + "/Object3D",
+    "topic": ROSBridge.NS + "/Object3D",
     "type": TOPIC_TYPE,
     "id": "%s_object3d" % id,
   }

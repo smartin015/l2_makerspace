@@ -1,4 +1,4 @@
-l2_msgs/Object3D object
+std_msgs/String name
 ---
-bool success # did the push succeed
+bool success # did the action succeed
 string message # informational, e.g. for error messages
