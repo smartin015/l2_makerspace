@@ -17,7 +17,7 @@ func advertisement(id):
     "id": "%s_rmobject3d" % id,
   }
 
-func maybe_handle(service, id, args):
+func maybe_handle(service, id, args, peer_id):
   if service != ('%s/RemoveObject3D' % ROSBridge.NS):
     return false
 

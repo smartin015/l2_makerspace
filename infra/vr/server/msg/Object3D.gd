@@ -11,7 +11,7 @@ onready var sdf = get_node("/root/World/SDF")
 func _ready():
   ROSBridge.topics.push_back(self)
   polltmr = Timer.new()
-  polltmr.wait_time = 2.0
+  polltmr.wait_time = 10.0
   polltmr.connect("timeout", self, "_poll") 
   add_child(polltmr)
   polltmr.start()
@@ -29,9 +29,9 @@ func _poll():
   
   for c in sdf.get_children():
     objects.append({
-      name: c.name,
+      "name": c.name,
     })
-  
+  print(JSON.print(objects))
   ROSBridge.publish("Object3D", TOPIC_TYPE, {
-    objects: objects,
+    "objects": objects,
    }, "object3d")

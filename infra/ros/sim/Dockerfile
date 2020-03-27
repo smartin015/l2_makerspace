@@ -1,7 +1,7 @@
 from l2base:latest
 
 # Gazebo installation
-RUN bash -c "source /opt/ros/dashing/setup.bash && apt-get update && apt-get install -y ros-dashing-gazebo-ros ros-dashing-gazebo-ros-pkgs && rm -rf /var/lib/apt/lists/*"
+RUN bash -c "source /opt/ros/$ROS_DISTRO/setup.bash && apt-get update && apt-get install -y ros-$ROS_DISTRO-gazebo-ros ros-$ROS_DISTRO-gazebo-ros-pkgs && rm -rf /var/lib/apt/lists/*"
 
 RUN echo "source /usr/share/gazebo/setup.sh" >> /root/.bashrc
 

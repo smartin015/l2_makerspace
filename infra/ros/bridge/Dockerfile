@@ -1,5 +1,15 @@
 FROM l2base:latest
 
+# Install nvm, Node.js and node-gyp
+ENV NODE_VERSION v10.16.1
+RUN wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash \
+    && . $HOME/.nvm/nvm.sh \
+    && nvm install $NODE_VERSION && nvm alias default $NODE_VERSION
+
+ENV PATH /bin/versions/node/$NODE_VERSION/bin:$PATH
+
+RUN git clone https://github.com/RobotWebTools/rclnodejs.git && cd rclnodejs && git submodule update --init --recursive && npm install
+
 RUN wget https://github.com/smartin015/ros2-web-bridge/archive/develop.zip \
   && unzip develop.zip && rm develop.zip \
   && mv ros2-web-bridge-develop ros2-web-bridge

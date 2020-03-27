@@ -1,11 +1,8 @@
 #!/bin/bash
 ROOT=$(pwd)
-cd $ROOT/example && docker build --tag l2example:latest .
-cd $ROOT/depth_camera && docker build --tag l2depth:latest .
-cd $ROOT/gazebo && docker build --tag l2sim:latest .
-cd $ROOT/tasks && docker build --tag l2tasks:latest .
-cd $ROOT/storage && docker build --tag l2storage:latest .
-cd $ROOT/bridge && docker build --tag l2bridge:latest .
-cd $ROOT/tensorflow && docker build --tag l2tensorflow:latest .
-cd $ROOT/tf_fwd && docker build --tag l2tf_fwd:latest .
+DIRS=$(find . -mindepth 1 -maxdepth 1 -type d -printf '%f\n')
+for d in $DIRS; do
+  echo "Building $d as l2$d"
+  cd $ROOT/$d && docker build --tag "l2$d:latest" .
+done
 cd $ROOT

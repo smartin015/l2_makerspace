@@ -1,4 +1,6 @@
 l2_msgs/Object3D object
+geometry_msgs/Pose pose
+float32 scale
 ---
 bool success # did the action succeed
 string message # informational, e.g. for error messages

@@ -21,6 +21,7 @@ find_package(builtin_interfaces REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(diagnostic_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -45,8 +46,10 @@ set(msg_files
 set(srv_files 
   srv/SpawnObject3D.srv
   srv/RemoveObject3D.srv
-  srv/PushParameter.srv)
-rosidl_generate_interfaces( ${PROJECT_NAME} ${msg_files} ${srv_files} DEPENDENCIES builtin_interfaces std_msgs diagnostic_msgs)
+  srv/PushParameter.srv
+  srv/GetFile.srv
+  srv/GetProject.srv)
+rosidl_generate_interfaces( ${PROJECT_NAME} ${msg_files} ${srv_files} DEPENDENCIES builtin_interfaces std_msgs diagnostic_msgs geometry_msgs)
 ament_export_dependencies(rosidl_default_runtime)
 
 ament_package()

@@ -2,8 +2,9 @@ FROM l2base:latest
 
 RUN pip3 install psycopg2-binary
 
-CMD ["bash", "-c", "source /py_srvcli/install/setup.bash && source /l2_msgs/install/setup.bash && ros2 run py_srvcli service"]
-
 ENV L2NAME=l2_storage
+
+CMD ["bash", "-i", "-c", "source /node/install/setup.bash && ros2 run ${L2NAME} node"]
+
 COPY . /node
-RUN /templates/setup_boilerplate.sh
+RUN /templates/setup_boilerplate.sh node.py 

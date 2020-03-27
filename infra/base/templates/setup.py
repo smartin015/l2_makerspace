@@ -1,7 +1,7 @@
 from setuptools import setup
 from os import environ
 
-package_name = environ['L2NAME']
+package_name = environ['L2PKG']
 node_files = "$NODES"
 nodes = [node.split('.')[0] for node in node_files.split(' ')]
 

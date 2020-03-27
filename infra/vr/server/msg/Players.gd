@@ -11,7 +11,7 @@ onready var players = find_node('/root/World/Players')
 func _ready():
   ROSBridge.topics.push_back(self)
   polltmr = Timer.new()
-  polltmr.wait_time = 2.0
+  polltmr.wait_time = 30.0
   polltmr.connect("timeout", self, "_poll") 
   add_child(polltmr)
   polltmr.start()

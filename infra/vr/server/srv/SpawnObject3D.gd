@@ -20,9 +20,20 @@ func advertisement(id):
     "id": "%s_spawnobject3d" % id,
   }
 
-func maybe_handle(service, id, args):
+func maybe_handle(service, id, args, peer_id):
   if service != ('%s/SpawnObject3D' % ROSBridge.NS):
     return false
+
+  var tf = Transform.IDENTITY
+  if args.get("pose") != null:
+    var pos = args.pose.get("position")
+    if pos != null:
+      tf.position = Vector3(pos.x, pos.y, pos.z)
+    var quat = args.pose.get("orientation")
+    if quat != null:
+      tf.basis = Basis(Quat(quat.x, quat.y, quat.z, quat.w))
+
+  tf = tf.scaled(Vector3.ONE * args.get("scale", 1.0))
 
   match int(args.object.type):
     type.OBJ:
@@ -31,10 +42,12 @@ func maybe_handle(service, id, args):
         "message": "OBJ parsing not implemented"
       })
     type.SDF:
-      sdf.spawn(args.object.name, args.object.data, Transform.IDENTITY)
+      # We forward the peer ID so that we can monitor the remote
+      # simulated environment to autoremove the object
+      sdf.spawn(args.object.name, args.object.data, tf, peer_id)
       ROSBridge.service_response("SpawnObject3D", id, {
         "success": true, 
-        "message": "SDF model %s created" % args.object.name
+        "message": "SDF model %s created @ %s" % [args.object.name, tf],
       })
     _:
       ROSBridge.service_response("SpawnObject3D", id, {

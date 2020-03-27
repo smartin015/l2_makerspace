@@ -8,6 +8,7 @@ const NS = "/l2/vr"
 
 var _server = WebSocketServer.new()
 var listeners = {} # Map of ROS topic to list of godot client IDs
+var calls = {} # Map of service call IDs to ROSCalls
 var services = []
 var topics = []
 
@@ -73,6 +74,16 @@ remote func subscribe(topic, type, id: String):
     "topic": topic,
     "type": type,
   })
+
+remote func call_service(service, args, id: String):
+  # TODO how do we direct calls to the right service location?
+  # TODO attach a ROSCall object
+  # _broadcast(id, {
+  #   "op": "call_service",
+  #   "service": service,
+  #   "args": args,
+  # })
+  pass
 
 func service_response(service, id, values):
   _broadcast(id, {
@@ -148,7 +159,7 @@ func _on_data(id):
     "call_service":
       print("ROS(%s) -> call_service %s" % [id, result.service])
       for s in services:
-        if s.maybe_handle(result.service, result.id, result.args):
+        if s.maybe_handle(result.service, result.id, result.args, id):
           return
       print("ROS(%s) Unhandled call_service: ", [id, result.service])
       # TODO return with error

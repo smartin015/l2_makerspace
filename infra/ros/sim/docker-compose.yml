@@ -12,21 +12,21 @@ services:
       - "80:80"
     links:
       - gz
-  sdf2:
+  sdf_control_zone:
     image: l2sim:latest
     volumes:
       - /home/smartin015/l2_makerspace/infra/ros/sim/sdf:/sdf
-    command: bash -c "PYTHONUNBUFFERED=1 /sdf/publish_sdf.sh control_zone2 /sdf/control_zone.sdf"
+    command: bash -i -c "PYTHONUNBUFFERED=1 /sdf/spawn_object3d.sh control_zone /sdf/control_zone.sdf 1.0 0.5 0.5 0.5"
     network_mode: bridge
-  sdf:
+  sdf_testbox:
     image: l2sim:latest
     volumes:
       - /home/smartin015/l2_makerspace/infra/ros/sim/sdf:/sdf
-    command: bash -c "PYTHONUNBUFFERED=1 /sdf/publish_sdf.sh control_zone /sdf/test.sdf"
+    command: bash -i -c "PYTHONUNBUFFERED=1 /sdf/spawn_object3d.sh testbox /sdf/testbox.sdf 1.0 0.5 0.5 0.5"
     network_mode: bridge
   gz:
     image: l2sim:latest
-    command: bash -c "source /opt/ros/dashing/setup.bash && source /usr/share/gazebo/setup.sh && gzserver -s libgazebo_ros_factory.so"
+    command: bash -c "source /opt/ros/dashing/setup.bash && source /usr/share/gazebo/setup.sh && gzserver -s libgazebo_ros_factory.so -s libgazebo_ros_state.so -s libgazebo_ros_init.so"
     network_mode: bridge
     ports:
       - "11345:11345"

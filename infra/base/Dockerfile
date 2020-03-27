@@ -1,25 +1,14 @@
 # This is a base file from which all other L2 making docker files should extend.
 # This lets us add instrumentation and other features that interop with the space.
-FROM ros:dashing
+FROM ros:eloquent-ros-base
 
-RUN apt-get update && apt-get install -y ros-dashing-demo-nodes-cpp wget unzip && rm -rf /var/lib/apt/lists/*
+# RUN apt-get update && apt-get install —no-install-recommends -y wget unzip && rm -rf /var/lib/apt/lists/*
+#RUN echo "source l2_msgs/install/setup.bash" > /root/.bashrc
+ENV ROS_WS /l2_msgs
+WORKDIR $ROS_WS
+COPY l2_msgs $ROS_WS
 
-
-# Install nvm, Node.js and node-gyp
-ENV NODE_VERSION v10.16.1
-RUN wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash \
-    && . $HOME/.nvm/nvm.sh \
-    && nvm install $NODE_VERSION && nvm alias default $NODE_VERSION
-
-ENV PATH /bin/versions/node/$NODE_VERSION/bin:$PATH
-
-RUN git clone https://github.com/RobotWebTools/rclnodejs.git && cd rclnodejs && git submodule update --init --recursive && npm install
-
-RUN echo "source l2_msgs/install/setup.bash" > /root/.bashrc
-
-COPY l2_msgs /l2_msgs
-RUN bash -c "source /opt/ros/dashing/setup.bash && cd /l2_msgs && colcon build --symlink-install"
+RUN . /opt/ros/$ROS_DISTRO/setup.sh && colcon build
+# RUN . /opt/ros/$ROS_DISTRO/setup.sh && cd /l2_msgs && colcon build --symlink-install"
 
 COPY templates /templates
-
-

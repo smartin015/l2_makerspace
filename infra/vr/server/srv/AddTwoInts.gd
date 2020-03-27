@@ -16,7 +16,7 @@ func advertisement(id):
     "id": "%s_addtwoints" % id,
   }
 
-func maybe_handle(service, id, args):
+func maybe_handle(service, id, args, peer_id):
   if service != ('%s/AddTwoInts' % ROSBridge.NS):
     return false
   
