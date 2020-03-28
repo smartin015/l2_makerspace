@@ -1,0 +1,7 @@
+version: '3.4'
+services:
+  syncer:
+    image: l2vr:latest
+    network_mode: bridge
+    environment:
+      - PYTHONUNBUFFERED=1

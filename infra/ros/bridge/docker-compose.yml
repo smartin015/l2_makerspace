@@ -4,21 +4,21 @@ services:
   bridge_local:
     image: l2bridge:latest
     network_mode: bridge
-    command: bash -c "source /opt/ros/dashing/setup.bash && source /l2_msgs/install/setup.bash && cd /ros2-web-bridge && DEBUG=ros2-web-bridge:index,ros2-web-bridge:Bridge node bin/rosbridge.js --address=ws://127.0.0.1:4243"
+    command: bash -c "source /opt/ros/eloquent/setup.bash && source /l2_msgs/install/setup.bash && cd /ros2-web-bridge && DEBUG=ros2-web-bridge:index,ros2-web-bridge:Bridge node bin/rosbridge.js --address=ws://127.0.0.1:4243"
     # depends_on:
     #   - vr_server
   bridge_local_dev:
     image: l2bridge:latest
     network_mode: bridge
-    command: bash -c "source /opt/ros/dashing/setup.bash && source /l2_msgs/install/setup.bash && cd /ros2-web-bridge && rm -r /ros2-web-bridge/node_modules/rclnodejs/generated && DEBUG=ros2-web-bridge:index,ros2-web-bridge:Bridge,ros2-web-bridge:ResourceProvider node bin/rosbridge.js --address=ws://172.104.130.198:4243"
+    command: bash -c "source /opt/ros/eloquent/setup.bash && source /l2_msgs/install/setup.bash && cd /ros2-web-bridge && rm -r /ros2-web-bridge/node_modules/rclnodejs/generated && DEBUG=ros2-web-bridge:index,ros2-web-bridge:Bridge,ros2-web-bridge:ResourceProvider node bin/rosbridge.js --address=ws://172.104.130.198:4243"
     # pid: host
     volumes:
       - /home/smartin015/l2_makerspace/infra/ros/bridge/ros2-web-bridge:/ros2-web-bridge
   bridge_remote:
     image: l2bridge:latest
     network_mode: bridge
-    command: bash -c "source /opt/ros/dashing/setup.bash && source /l2_msgs/install/setup.bash && cd /ros2-web-bridge && DEBUG=ros2-web-bridge:index,ros2-web-bridge:Bridge node bin/rosbridge.js --address=ws://35.245.112.218:4243"
+    command: bash -c "source /opt/ros/eloquent/setup.bash && source /l2_msgs/install/setup.bash && cd /ros2-web-bridge && DEBUG=ros2-web-bridge:index,ros2-web-bridge:Bridge node bin/rosbridge.js --address=ws://35.245.112.218:4243"
   bridge_server:
     image: l2bridge:latest
     network_mode: bridge
-    command: bash -c "source /opt/ros/dashing/setup.bash && source /l2_msgs/install/setup.bash && cd /ros2-web-bridge && DEBUG=ros2-web-bridge:index,ros2-web-bridge:Bridge node bin/rosbridge.js --port=4243"
+    command: bash -c "source /opt/ros/eloquent/setup.bash && source /l2_msgs/install/setup.bash && cd /ros2-web-bridge && DEBUG=ros2-web-bridge:index,ros2-web-bridge:Bridge node bin/rosbridge.js --port=4243"

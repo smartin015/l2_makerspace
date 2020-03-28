@@ -101,7 +101,7 @@ func send_ros_peers():
 
 var ROSPeer = load("res://ros/ROSPeer.tscn")
 func _connected(id, _proto):
-  var peer = ROSPeer.new()
+  var peer = ROSPeer.instance()
   peer.name = str(id)
   add_child(peer)
   peer.begin_init(id, _server.get_peer(id))

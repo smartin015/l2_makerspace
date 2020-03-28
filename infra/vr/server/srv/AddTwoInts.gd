@@ -6,7 +6,8 @@
 extends Node
 
 func _ready():
-  ROSBridge.services.push_back(self)
+  #ROSBridge.services.push_back(self)
+  pass
 
 func advertisement(id):
   return { 

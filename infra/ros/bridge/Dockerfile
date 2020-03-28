@@ -1,5 +1,7 @@
 FROM l2base:latest
 
+RUN apt-get update && apt-get install -y --no-install-recommends wget unzip && apt-get clean
+
 # Install nvm, Node.js and node-gyp
 ENV NODE_VERSION v10.16.1
 RUN wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash \
@@ -15,9 +17,9 @@ RUN wget https://github.com/smartin015/ros2-web-bridge/archive/develop.zip \
   && mv ros2-web-bridge-develop ros2-web-bridge
 
 RUN cd ros2-web-bridge \
-  && bash -c "source /opt/ros/dashing/setup.bash \
+  && bash -c "source /opt/ros/eloquent/setup.bash \
      && source /l2_msgs/install/setup.bash \
      && npm install bufferutil@^4.0.1 utf-8-validate@^5.0.2 \
      && npm install"
 
-CMD ["bash", "-c", "source /opt/ros/dashing/local_setup.bash && source /l2_msgs/install/setup.bash && rm -r /ros2-web-bridge/node_modules/rclnodejs/generated cd /ros2-web-bridge && DEBUG=ros2-web-bridge:index,ros2-web-bridge:Bridge node bin/rosbridge.js --address=ws://127.0.0.1:4243"]
+CMD ["bash", "-c", "source /opt/ros/eloquent/local_setup.bash && source /l2_msgs/install/setup.bash && rm -r /ros2-web-bridge/node_modules/rclnodejs/generated cd /ros2-web-bridge && DEBUG=ros2-web-bridge:index,ros2-web-bridge:Bridge node bin/rosbridge.js --address=ws://127.0.0.1:4243"]

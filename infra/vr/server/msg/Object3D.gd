@@ -31,7 +31,6 @@ func _poll():
     objects.append({
       "name": c.name,
     })
-  print(JSON.print(objects))
   ROSBridge.publish("Object3D", TOPIC_TYPE, {
     "objects": objects,
    }, "object3d")
