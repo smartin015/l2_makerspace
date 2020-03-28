@@ -22,7 +22,7 @@ config/icon="res://icon.png"
 [autoload]
 
 gamestate="*res://gamestate.gd"
-ROSBridge="*res://ROSBridge.gd"
+ROSBridge="*res://ros/ROSBridge.gd"
 locks="*res://locks.gd"
 
 [editor_plugins]
