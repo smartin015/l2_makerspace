@@ -2,7 +2,7 @@
 # This lets us add instrumentation and other features that interop with the space.
 FROM ros:eloquent-ros-base
 
-# RUN apt-get update && apt-get install —no-install-recommends -y wget unzip && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install --no-install-recommends -y ros-$ROS_DISTRO-gazebo-msgs && apt-get clean
 #RUN echo "source l2_msgs/install/setup.bash" > /root/.bashrc
 ENV ROS_WS /l2_msgs
 WORKDIR $ROS_WS
