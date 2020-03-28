@@ -26,7 +26,7 @@ services:
     network_mode: bridge
   gz:
     image: l2sim:latest
-    command: bash -c "source /opt/ros/dashing/setup.bash && source /usr/share/gazebo/setup.sh && gzserver -s libgazebo_ros_factory.so -s libgazebo_ros_state.so -s libgazebo_ros_init.so"
+    command: bash -i -c "source /usr/share/gazebo/setup.sh && gzserver -s libgazebo_ros_factory.so -s libgazebo_ros_init.so /default.world"
     network_mode: bridge
     ports:
       - "11345:11345"
