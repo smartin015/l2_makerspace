@@ -99,8 +99,8 @@ func send_ros_peers():
     peers.push_back(int(c.name))
   rpc('set_ros_peers', peers)
 
-var ROSPeer = load("res://ROSPeer.gd")
-func _connected(id, proto):
+var ROSPeer = load("res://ros/ROSPeer.tscn")
+func _connected(id, _proto):
   var peer = ROSPeer.new()
   peer.name = str(id)
   add_child(peer)
