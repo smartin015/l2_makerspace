@@ -1,0 +1,5 @@
+string name
+---
+bool success # did the action succeed
+string message # informational, e.g. for error messages
+l2_msgs/Object3D object

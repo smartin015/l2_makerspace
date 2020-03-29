@@ -1,5 +1,5 @@
 # This node handles ROS-side logic for the VR server
-from l2_msgs.srv import GetFile, SpawnObject3D
+from l2_msgs.srv import GetFile, SpawnObject3D, GetObject3D
 from l2_msgs.msg import Object3DArray, Object3D
 from gazebo_msgs.msg import ModelStates
 from std_msgs.msg import String
@@ -27,6 +27,8 @@ class VRServer(Node):
     self.create_subscription(ModelStates, "/model_states", self.set_sim_state, qos_profile_sensor_data)
     self.create_timer(10.0, self.log_status)
     self.create_timer(5.0, self.resolve_diffs)
+    self.getcli = node.create_client(GetObject3D, '/get_object3d')
+    self.spawncli = node.create_client(SpawnObject3D, '/spawn_object3d')
 
   def vr_missing(self):
     now = self.get_clock().now()
@@ -42,9 +44,39 @@ class VRServer(Node):
     return gz_objs.difference(vr_objs)
 
   def resolve_diffs(self):
-    missing = self.vr_missing()
-    # TODO fetch object metadata (SDF) from storage
-    # TODO Call SpawnObject3D on VR
+    # TODO handle possible overrun in diff resolution
+    if not self.getcli.wait_for_service(timeout_sec=1.0):
+      node.get_logger().info('GetObject3D service not available')
+      return
+
+    for name in self.vr_missing():
+      req = GetObject3D.Request()
+      req.name = name
+      future = getcli.call_async(req)
+      rclpy.spin_until_future_complete(node, future, timeout_sec=1.0)
+      try:
+        result = future.result()
+      except Exception as e:
+          node.get_logger().info('GetObject3D failed: %r' % (e,))
+          continue
+      else:
+        if not result.success:
+          node.get_logger().warn(str(result.message))
+          continue
+
+        node.get_logger().info(str(result))
+        req = SpawnObject3D.Request()
+        req.object = result.object
+        req.object.name = name # Use registry name, not object real name
+        req.scale = 1.0
+        # req.pose = ???
+        node.get_logger().info("Calling SpawnObject3D with object name %s" % req.object.name)
+        future = spawncli.call_async(req)
+        rclpy.spin_until_future_complete(node, future, timeout_sec=1.0)
+        if !future.done():
+          future.cancel()
+        else:
+          node.get_logger().info(str(future.result()))
 
   def log_status(self):
     status = {

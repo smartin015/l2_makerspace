@@ -46,9 +46,27 @@ class DBServer(Node):
 
   def get_object3d_callback(self, request, response):
     self.get_logger().info(str(request))
-    response.object.name = "test"
-    response.success = False
-    response.message = "Unimplemented"
+    cur = None
+    try:
+      cur = self.con.cursor()
+      cur.execute("SELECT object3d.objtype, object3d.name, object3d.data FROM object3d_registry " +
+                  "LEFT JOIN object3d ON object3d.id=object3d_registry.object3d_id WHERE object3d_registry.name = %(name)s LIMIT 1", {"name": request.name})
+      row = cur.fetchone()
+      if row is None:
+          response.success = False
+          response.message = "Not found"
+      else:
+        response.object.type = row[0]
+        response.object.name = row[1]
+        response.object.data = row[2]
+        response.success = True
+        response.message = "OK"
+    except (Exception, psycopg2.Error) as error:
+      response.success = False
+      response.message = str(error)
+    finally:
+      if cur:
+        cur.close()
     return response
 
   def get_file_callback(self, request, response):
