@@ -1,10 +1,7 @@
-FROM l2base:latest
+ARG L2PKG=l2_storage
+ARG L2NODES=node.py
+FROM l2base-pre
+FROM l2base-post
 
 RUN pip3 install psycopg2-binary
-
-ENV L2NAME=l2_storage
-
-CMD ["bash", "-i", "-c", "source /node/install/setup.bash && ros2 run ${L2NAME} node"]
-
-COPY . /node
-RUN /templates/setup_boilerplate.sh node.py 
+COPY --from=0 /node/install /node/install

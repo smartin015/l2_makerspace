@@ -1,10 +1,11 @@
-version: '3.4'
+version: '3.5'
 
 services:
   gzweb:
     image: docker.io/osrf/gazebo:gzweb8
     command: npm start
-    network_mode: bridge
+    networks:
+      - l2
     environment:
       - "GAZEBO_MASTER_URI=http://172.104.130.198:11345"
     ports:
@@ -12,21 +13,31 @@ services:
       - "80:80"
     links:
       - gz
+
   sdf_control_zone:
     image: l2sim:latest
     volumes:
       - /home/smartin015/l2_makerspace/infra/ros/sim/sdf:/sdf
     command: bash -i -c "PYTHONUNBUFFERED=1 /sdf/spawn_object3d.sh control_zone /sdf/control_zone.sdf 1.0 0.5 0.5 0.5"
-    network_mode: bridge
+    networks: 
+     - l2
+
   sdf_testbox:
     image: l2sim:latest
     volumes:
       - /home/smartin015/l2_makerspace/infra/ros/sim/sdf:/sdf
     command: bash -i -c "PYTHONUNBUFFERED=1 /sdf/spawn_object3d.sh testbox /sdf/testbox.sdf 1.0 0.5 0.5 0.5"
-    network_mode: bridge
+    networks:
+      - l2
   gz:
     image: l2sim:latest
     command: bash -i -c "source /usr/share/gazebo/setup.sh && gzserver --verbose -s libgazebo_ros_factory.so -s libgazebo_ros_init.so /default.world"
-    network_mode: bridge
     ports:
       - "11345:11345"
+    networks:
+      - l2
+
+networks:
+  l2:
+    driver: bridge
+    name: l2

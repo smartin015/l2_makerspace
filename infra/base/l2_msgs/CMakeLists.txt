@@ -48,7 +48,8 @@ set(srv_files
   srv/RemoveObject3D.srv
   srv/PushParameter.srv
   srv/GetFile.srv
-  srv/GetProject.srv)
+  srv/GetProject.srv
+  srv/GetObject3D.srv)
 rosidl_generate_interfaces( ${PROJECT_NAME} ${msg_files} ${srv_files} DEPENDENCIES builtin_interfaces std_msgs diagnostic_msgs geometry_msgs)
 ament_export_dependencies(rosidl_default_runtime)
 

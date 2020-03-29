@@ -1,17 +1,18 @@
-version: '3.4'
+version: '3.5'
 services:
   storage:
     image: l2storage:latest
-    ports:
-      - "8080:8080"
     environment:
       PYTHONUNBUFFERED: 1
       PGRST_DB_URI: postgres://app_user:password@db:5432/app_db
       PGRST_DB_SCHEMA: public
       PGRST_DB_ANON_ROLE: app_user #In production this role should not be the same as the one used for the connection
-    network_mode: bridge
+      #network_mode: bridge
     volumes:
       - ./files:/volume
+    networks:
+      - backend
+      - l2
   db:
     image: postgres
     ports:
@@ -20,6 +21,18 @@ services:
       POSTGRES_DB: app_db
       POSTGRES_USER: app_user
       POSTGRES_PASSWORD: password
-    network_mode: bridge
+      #network_mode: bridge
+    # container_name: db
     volumes:
       - "../pgdata:/var/lib/postgresql/data"
+      # files dir here is mounted just for debugging
+      - "./files:/volume"
+    networks:
+      - backend
+
+networks:
+  l2:
+    driver: bridge
+    name: l2
+  backend:
+    driver: bridge

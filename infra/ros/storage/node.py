@@ -1,4 +1,4 @@
-from l2_msgs.srv import GetProject, GetFile
+from l2_msgs.srv import GetProject, GetFile, GetObject3D
 
 import rclpy
 from rclpy.node import Node
@@ -17,9 +17,10 @@ class DBServer(Node):
     # Dirpath used for GetFile requests
     self.dirpath = self.get_parameter_or('dir_path', '/volume')
 
-    self.get_logger().info("Setting up service")
     self.create_service(GetProject, 'get_project', self.get_project_callback)
+    self.create_service(GetObject3D, 'get_object3d', self.get_object3d_callback)
     self.create_service(GetFile, 'get_file', self.get_file_callback)
+    self.get_logger().info("Services ready")
     
   def connect_to_db(self):
     self.get_logger().info("Parsing environment...")
@@ -30,7 +31,7 @@ class DBServer(Node):
     database = result.path[1:]
     hostname = result.hostname
     
-    self.get_logger().info("Connecting to db...")
+    self.get_logger().info("Connecting to host %s, database %s" % (hostname, database))
     self.con = psycopg2.connect(
             database=database, 
             user=username, 
@@ -39,25 +40,34 @@ class DBServer(Node):
     self.get_logger().info("Connected!")
 
   def get_project_callback(self, request, response):
+    self.get_logger().info(str(request))
     response.project.name = "test"
-    self.get_logger().info('Incoming request\nname: %s' % (request.name))
+    return response
+
+  def get_object3d_callback(self, request, response):
+    self.get_logger().info(str(request))
+    response.object.name = "test"
+    response.success = False
+    response.message = "Unimplemented"
     return response
 
   def get_file_callback(self, request, response):
-    self.get_logger().info('Fetching file %s', request.path)
     resolved = os.path.realpath(os.path.join(self.dirpath, request.path))
-    if not resolved.startsWith(self.dirpath):
+    self.get_logger().info("Resolved: %s" % resolved)
+    if not resolved.startswith(self.dirpath):
         response.success = False
-        response.data = "Access denied to %s; not within accessible path" % request.path
-        self.get_logger().info('File access denied: %s' % request.name)
+        response.data = "Access denied: %s" % request.path
+        self.get_logger().info(response.data)
+        return response
     try:
         with open(resolved, 'r') as f:
             response.success = True
             response.data = f.read()
-            self.get_logger().info('Read file (%dB): %s' % (len(response.data), request.name))
+            self.get_logger().info('Read file (%dB): %s' % (len(response.data), request.path))
     except FileNotFoundError:
         response.success = False
-        response.data = "Not found: %" % request.path
+        response.data = "Not found: %s" % request.path
+        self.get_logger().info(response.data) 
     return response
 
 def main(args=None):

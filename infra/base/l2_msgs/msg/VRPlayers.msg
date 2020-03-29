@@ -1,1 +1,1 @@
-std_msgs/String[] players
+string[] players
