@@ -1,10 +1,12 @@
 # Level 2 Makerspace
 
+http://l2making.com/
+
 ## Overview
 
 This repository contains design docs, software tools, work tracking, and other digital assets to support a Level 2 Makerspace.
 
-See [docs/design.md] for more detail on the overall mission and planning.
+See [docs/design.md](https://github.com/smartin015/l2_makerspace/blob/master/docs/design.md) for more detail on the overall mission and planning.
 
 ## Docker
 
