@@ -3,6 +3,7 @@ version: '3.4'
 services:
   tf_fwd:
     image: l2tf_fwd:latest
+    pid: "host" # TODO(https://github.com/ros2/rmw_fastrtps/issues/349)
     depends_on:
       - gz
     network_mode: host

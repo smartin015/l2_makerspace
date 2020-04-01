@@ -4,6 +4,7 @@ services:
   gzweb:
     image: docker.io/osrf/gazebo:gzweb8
     command: npm start
+    pid: "host" # TODO(https://github.com/ros2/rmw_fastrtps/issues/349)
     networks:
       - l2
     environment:
@@ -16,6 +17,7 @@ services:
 
   sdf_control_zone:
     image: l2sim:latest
+    pid: "host" # TODO(https://github.com/ros2/rmw_fastrtps/issues/349)
     volumes:
       - /home/smartin015/l2_makerspace/infra/ros/sim/sdf:/sdf
     command: bash -i -c "PYTHONUNBUFFERED=1 /sdf/spawn_object3d.sh control_zone /sdf/control_zone.sdf 1.0 0.5 0.5 0.5"
@@ -24,6 +26,7 @@ services:
 
   sdf_testbox:
     image: l2sim:latest
+    pid: "host" # TODO(https://github.com/ros2/rmw_fastrtps/issues/349)
     volumes:
       - /home/smartin015/l2_makerspace/infra/ros/sim/sdf:/sdf
     command: bash -i -c "PYTHONUNBUFFERED=1 /sdf/spawn_object3d.sh testbox /sdf/testbox.sdf 1.0 0.5 0.5 0.5"
@@ -31,6 +34,7 @@ services:
       - l2
   gz:
     image: l2sim:latest
+    pid: "host" # TODO(https://github.com/ros2/rmw_fastrtps/issues/349)
     command: bash -i -c "source /usr/share/gazebo/setup.sh && gzserver --verbose -s libgazebo_ros_factory.so -s libgazebo_ros_init.so /default.world"
     ports:
       - "11345:11345"

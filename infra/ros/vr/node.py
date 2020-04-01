@@ -23,20 +23,18 @@ class VRServer(Node):
     self.vr_object3d = Object3DArray()
     self.last_vr_msg = T0
     self.get_logger().info("Init")
+    self.unresolved_pub = self.create_publisher(Object3DArray, "unresolved_object3d", 10)
     self.create_subscription(Object3DArray, "/l2/vr/Object3D", self.set_vr_state, qos_profile_sensor_data)
     self.create_subscription(ModelStates, "/model_states", self.set_sim_state, qos_profile_sensor_data)
     self.create_timer(10.0, self.log_status)
     self.create_timer(5.0, self.resolve_diffs)
-    self.getcli = node.create_client(GetObject3D, '/get_object3d')
-    self.spawncli = node.create_client(SpawnObject3D, '/spawn_object3d')
+    self.getcli = self.create_client(GetObject3D, '/get_object3d')
+    self.spawncli = self.create_client(SpawnObject3D, '/spawn_object3d')
 
   def vr_missing(self):
     now = self.get_clock().now()
-    if now - self.last_sim_msg > self.MAX_AGE:
-      self.get_logger().info("Sim stale (not running?): %s" % self.last_sim_msg)
-      return set()
-    if now - self.last_vr_msg > self.MAX_AGE:
-      self.get_logger().info("VR stale (not running?): %s" % self.last_vr_msg)
+    # Return an empty diff if either sim or vr is stale
+    if (now - self.last_sim_msg > self.MAX_AGE) or (now - self.last_vr_msg > self.MAX_AGE):
       return set()
 
     gz_objs = set(self.sim_model_states.name).difference(self.ignore_names)
@@ -45,38 +43,51 @@ class VRServer(Node):
 
   def resolve_diffs(self):
     # TODO handle possible overrun in diff resolution
-    if not self.getcli.wait_for_service(timeout_sec=1.0):
-      node.get_logger().info('GetObject3D service not available')
-      return
-
+    service_available = self.getcli.wait_for_service(timeout_sec=1.0)
+    unresolved = []
     for name in self.vr_missing():
+      if not service_available:
+        self.get_logger().info('GetObject3D service not available')
+        unresolved.append(name)
+        continue
+
       req = GetObject3D.Request()
       req.name = name
       future = getcli.call_async(req)
-      rclpy.spin_until_future_complete(node, future, timeout_sec=1.0)
+      rclpy.spin_until_future_complete(self, future, timeout_sec=1.0)
       try:
         result = future.result()
       except Exception as e:
-          node.get_logger().info('GetObject3D failed: %r' % (e,))
+          self.get_logger().info('GetObject3D failed: %r' % (e,))
+          unresolved.append(name)
           continue
       else:
         if not result.success:
-          node.get_logger().warn(str(result.message))
+          self.get_logger().warn(str(result.message))
+          unresolved.append(name)
           continue
 
-        node.get_logger().info(str(result))
+        self.get_logger().info(str(result))
         req = SpawnObject3D.Request()
         req.object = result.object
         req.object.name = name # Use registry name, not object real name
         req.scale = 1.0
         # req.pose = ???
-        node.get_logger().info("Calling SpawnObject3D with object name %s" % req.object.name)
+        self.get_logger().info("Calling SpawnObject3D with object name %s" % req.object.name)
         future = spawncli.call_async(req)
         rclpy.spin_until_future_complete(node, future, timeout_sec=1.0)
-        if !future.done():
+        if not future.done():
           future.cancel()
+          unresolved.append(name)
         else:
-          node.get_logger().info(str(future.result()))
+          self.get_logger().info(str(future.result()))
+    
+    result = Object3DArray()
+    for u in unresolved:
+        r = Object3D()
+        r.name = u
+        result.objects.append(r)
+    self.unresolved_pub.publish(result)
 
   def log_status(self):
     status = {
