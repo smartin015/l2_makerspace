@@ -19,13 +19,13 @@ func _ready():
   print("GDT listen port ", PORT)
 
 func _peer_connected(id):
-  print("GDT(%s) connected" % id)
+  print("GDT(%s) connected; pushing %d players %d sdfs" % [id, len(players.get_children()), len(sdf.get_children())])
   
   # Spawn all currently active dynamic elements for new r
   for p in players.get_children():
     players.rpc_id(id, "spawn", p.get_network_master())
   for s in sdf.get_children():
-    sdf.rpc_id(id, "spawn", s.name, s.sdf, s.transform)
+    sdf.rpc_id(id, "spawn", s.name, s.sdf, s.transform, s.peer_id)
   
   # Let user know about ROS peers
   ROSBridge.send_ros_peers()
