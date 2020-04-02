@@ -7,7 +7,8 @@ services:
       - l2
     environment:
       - PYTHONUNBUFFERED=1
-        #command: ros2 run l2_vr node
+    command: ros2 run l2_vr node
+    #__log_level:=debug
 
 networks:
   l2:
