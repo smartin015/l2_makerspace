@@ -1,15 +1,15 @@
 extends Node
 
 
-onready var sdf = load("res://addons/sdf/main.gd").new()
-onready var SDFActor = load("res://SDFActor.tscn")
+onready var parser = load("res://addons/sdf/main.gd").new()
+onready var SDFActor = load("res://sdf/SDFActor.tscn")
 
-puppet func spawn(name, config, tf, peer_id):
-  print("SDF spawn %s @ %v from ROS(%s)" % [name, tf.origin, peer_id])
+puppet func spawn(name, sdf, tf, peer_id):
+  print("SDF spawn %s @ %s from ROS(%s)" % [name, tf.origin, peer_id])
   var inst = SDFActor.instance()
   inst.name = name
   inst.transform = tf
-  var parsed = sdf.ParseAttrs(config)
+  var parsed = parser.ParseAttrs(sdf)
   inst.add_child(parsed)
   inst.setup_controls()
   add_child(inst)

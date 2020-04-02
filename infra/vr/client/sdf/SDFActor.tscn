@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=2]
 
-[ext_resource path="res://SDFActor.gd" type="Script" id=1]
+[ext_resource path="res://sdf/SDFActor.gd" type="Script" id=1]
 
 [node name="SDFActor" type="Spatial"]
 script = ExtResource( 1 )
