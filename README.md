@@ -20,3 +20,5 @@ See ./base for base image (available publicly for download at gcr.io/l2-making/b
 * Docker support for GPU acceleration is device-specific: http://wiki.ros.org/docker/Tutorials/Hardware%20Acceleration#Intel
 * A ROS2 subscriber can receive a topic message only if its QOS profile is compatible with the QOS profile of the publisher - [src](https://answers.ros.org/question/304946/ros2-retrieving-qos-settings-for-a-topic/)
 * The default docker "bridge" network doesn't allow lookups by container name, only by IP address - must use a user-defined container for name resolution
+* ROS message transport (Fast RTPS) breaks if the same PID and IP address are used (https://github.com/ros2/rmw_fastrtps/issues/349)
+* If long-running nodes exit with error (137), it's an OOM. `docker ps -a` to find termination time, then `less /var/log/kern.log` and go to the time of death to correlate. 
