@@ -9,8 +9,8 @@ import os
 class DBServer(Node):
     SDF_PUBLISH_PD = 10.0
 
-    def __init__(self):
-        super().__init__('db_server')
+    def __init__(self, ns="/l2/storage"):
+        super().__init__('db_server', namespace=ns)
         self.get_logger().info("Init")
         self.connect_to_db()
 

@@ -1,5 +1,5 @@
 # This node handles ROS-side logic for the VR server
-from l2_msgs.srv import GetFile, SpawnObject3D, GetObject3D
+from l2_msgs.srv import GetFile, SpawnObject3D, RemoveObject3D, GetObject3D
 from l2_msgs.msg import Object3DArray, Object3D
 from gazebo_msgs.msg import ModelStates
 from std_msgs.msg import String
@@ -9,6 +9,7 @@ from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from rclpy.time import Time
 from rclpy.duration import Duration
+from datetime import datetime
 
 class TimeoutError(Exception):
     pass
@@ -16,51 +17,66 @@ class TimeoutError(Exception):
 class VRServer(Node):
     MAX_AGE = Duration(seconds=9.0)
 
-    def __init__(self):
-        super().__init__('l2_vr')
+    def __init__(self, ns="/l2"):
+        super().__init__('l2_vr', namespace=ns)
+        self.get_logger().info("Init")
         T0 = Time(clock_type=self.get_clock().clock_type)
+
         self.ignore_names = set(['ground_plane'])
         self.sim_model_states = ModelStates()
-        self.last_sim_msg = T0
         self.vr_object3d = Object3DArray()
+        self.last_sim_msg = T0
         self.last_vr_msg = T0
-        self.get_logger().info("Init")
-        self.executor = rclpy.executors.MultiThreadedExecutor()
+        
         # Node's default callback group is mutually exclusive. 
         # This would prevent the client response
         # from being processed until the timer callback finished,
         # but the timer callback in this
         # example is waiting for the client response
         cb_group = rclpy.callback_groups.ReentrantCallbackGroup()
-        self.logtmr = self.create_timer(10.0, self.log_status, callback_group=cb_group)
-        self.resolvetmr = self.create_timer(10.0, self.resolve_diffs, callback_group=cb_group)
-        self.getcli = self.create_client(GetObject3D, '/get_object3d', callback_group=cb_group)
-        self.spawncli = self.create_client(SpawnObject3D, '/l2/vr/SpawnObject3D', callback_group=cb_group)
-        self.unresolved_pub = self.create_publisher(Object3DArray, "unresolved_object3d", 10)
-        self.create_subscription(Object3DArray, "/l2/vr/Object3D", self.set_vr_state, qos_profile_sensor_data, callback_group=cb_group)
-        self.create_subscription(ModelStates, "/model_states", self.set_sim_state, qos_profile_sensor_data, callback_group=cb_group)
+        self.executor = rclpy.executors.MultiThreadedExecutor()
         self.future_deadlines = []
 
-    def vr_missing(self):
-        now = self.get_clock().now()
-        # Return an empty diff if either sim or vr is stale
-        if (now - self.last_sim_msg > self.MAX_AGE) or (now - self.last_vr_msg > self.MAX_AGE):
-            return set()
+        self.logtmr = self.create_timer(10.0, self.log_status, callback_group=cb_group)
+        self.resolvetmr = self.create_timer(10.0, self.resolve_diffs, callback_group=cb_group)
+        self.getcli = self.create_client(GetObject3D, 'storage/get_object3d', callback_group=cb_group)
+        self.spawncli = self.create_client(SpawnObject3D, 'vr/SpawnObject3D', callback_group=cb_group)
+        self.rmcli = self.create_client(RemoveObject3D, 'vr/RemoveObject3D', callback_group=cb_group)
+        self.vr_missing_pub = self.create_publisher(Object3DArray, "vr/missing_object3d", 10)
+        self.vr_extra_pub = self.create_publisher(Object3DArray, "vr/extra_object3d", 10)
+        self.create_subscription(Object3DArray, "vr/Object3D", self.set_vr_state, qos_profile_sensor_data, callback_group=cb_group)
+        self.create_subscription(ModelStates, "/model_states", self.set_sim_state, qos_profile_sensor_data, callback_group=cb_group)
 
-        gz_objs = set(self.sim_model_states.name).difference(self.ignore_names)
-        vr_objs = set([v.name for v in self.vr_object3d.objects])
-        return gz_objs.difference(vr_objs)
+    def stale(self):
+        now = self.get_clock().now()
+        return (now - self.last_sim_msg > self.MAX_AGE) or (now - self.last_vr_msg > self.MAX_AGE)
+
+    def sim_objset(self):
+        return set(self.sim_model_states.name).difference(self.ignore_names)
+
+    def vr_objset(self):
+        return set([v.name for v in self.vr_object3d.objects])
+
+    def call_with_deadline(self, client, req, callback, seconds=2):
+        if not client.service_is_ready():
+            self.get_logger().error('Not ready: %s' % client)
+            return
+        future = client.call_async(req)
+        future.add_done_callback(callback)
+        self.future_deadlines.append((future, self.get_clock().now() + Duration(seconds=seconds)))
 
     def resolve_diffs(self):
-        for name in self.vr_missing():
-            if not self.getcli.service_is_ready():
-                self.get_logger().info('GetObject3D service not ready')
-                continue
-            req = GetObject3D.Request()
-            req.name = name
-            future = self.getcli.call_async(req)
-            future.add_done_callback(self.get_object3d_response)
-            self.future_deadlines.append((future, self.get_clock().now() + Duration(seconds=2)))
+        if self.stale():
+            return
+
+        # Look up any missing object configs via the storage ros node,
+        # then push them to the VR server in the callback
+        for name in self.sim_objset().difference(self.vr_objset()):
+            self.call_with_deadline(self.getcli, GetObject3D.Request(name=name), self.get_object3d_response)
+
+        # Remove any objects on the VR server that are missing in sim
+        for name in self.vr_objset().difference(self.sim_objset()):
+            self.call_with_deadline(self.rmcli, RemoveObject3D.Request(name=name), self.log_response)
 
     def get_object3d_response(self, response):
         if response.exception() is not None:
@@ -71,35 +87,28 @@ class VRServer(Node):
             self.get_logger().warn("Bad result: " + str(response))
             return
         self.get_logger().info('Got response %s' % str(response))
-        req = SpawnObject3D.Request()
-        req.object = response.object
-        req.scale = 1.0
-        self.get_logger().info("Calling SpawnObject3D with object name %s" % req.object.name)
-        future = self.spawncli.call_async(req)
-        future.add_done_callback(self.spawn_object3d_response)
-        self.future_deadlines.append((future, self.get_clock().now() + Duration(seconds=2)))
+        self.call_with_deadline(self.spawncli, SpawnObject3D.Request(object=response.object, scale=1.0), self.log_response)
 
-    def spawn_object3d_response(self, response):
+    def log_response(self, response):
         if response.exception() is not None:
             self.get_logger().error(str(response.exception()))
             return
         self.get_logger().info(str(response.result()))
         
+    def fmt_time(self, time):
+        return datetime.fromtimestamp(time.seconds_nanoseconds()[0]).isoformat()
+
     def log_status(self):
         status = {
-            "sim_ts": self.last_sim_msg,
-            "sim_objs": len(self.sim_model_states.name),
-            "vr_ts": self.last_vr_msg,
-            "vr_objs": len(self.vr_object3d.objects),
-            "vr_missing": self.vr_missing(),
+            "ts": self.fmt_time(self.get_clock().now()),
+            "sim_ts": self.fmt_time(self.last_sim_msg),
+            "vr_ts": self.fmt_time(self.last_vr_msg),
+            "sim_objs": self.sim_objset(),
+            "vr_objs": self.vr_objset(),
         }
         self.get_logger().info(pprint.pformat(status))
-        result = Object3DArray()
-        for u in status['vr_missing']:
-            r = Object3D()
-            r.name = u
-            result.objects.append(r)
-        self.unresolved_pub.publish(result)
+        self.vr_missing_pub.publish(Object3DArray(objects=[Object3D(name=n) for n in self.vr_objset().difference(self.sim_objset())]))
+        self.vr_extra_pub.publish(Object3DArray(objects=[Object3D(name=n) for n in self.sim_objset().difference(self.vr_objset())]))
 
     def set_vr_state(self, msg):
         self.vr_object3d = msg

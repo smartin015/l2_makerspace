@@ -15,7 +15,7 @@ puppetsync func spawn(name, sdf, tf, peer_id):
 
 # Returns null if no error, error string otherwise
 puppetsync func remove(name):
-  var n = get_node(name)
+  var n = find_node(name, false, false)
   if n == null:
     return "Node not found"
   n.queue_free()
