@@ -15,10 +15,12 @@ puppetsync func spawn(name, sdf, tf, peer_id):
 
 # Returns null if no error, error string otherwise
 puppetsync func remove(name):
-  var n = find_node(name, false, false)
-  if n == null:
-    return "Node not found"
-  n.queue_free()
-  print("SDF %s removed" % name)
-  return null
+  var names = []
+  for c in get_children():
+    if c.name == name:
+      c.queue_free()
+      print("SDF %s removed" % name)
+      return null
+    names.append(c.name)
+  return "Node not found; candidates %s" % names 
   
