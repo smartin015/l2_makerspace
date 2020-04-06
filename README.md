@@ -18,7 +18,8 @@ See ./base for base image (available publicly for download at gcr.io/l2-making/b
 
 * ROS2 uses DDS as a backing networking protocol - and it [has issues](https://answers.ros.org/question/296828/ros2-connectivity-across-docker-containers-via-host-driver/) when your run docker containers with the "host" network mode. For simplicity, always use `network_mode: bridge` when setting up docker nodes via docker-compose.
 * Docker support for GPU acceleration is device-specific: http://wiki.ros.org/docker/Tutorials/Hardware%20Acceleration#Intel
-* A ROS2 subscriber can receive a topic message only if its QOS profile is compatible with the QOS profile of the publisher - [src](https://answers.ros.org/question/304946/ros2-retrieving-qos-settings-for-a-topic/)
+* A ROS2 subscriber can receive a topic message only if its QOS profile is compatible with the QOS profile of the publisher - [src](https://answers.ros.org/question/304946/ros2-retrieving-qos-settings-for-a-topic/). Nothing tells you this; the messages just aren't received.
 * The default docker "bridge" network doesn't allow lookups by container name, only by IP address - must use a user-defined container for name resolution
-* ROS message transport (Fast RTPS) breaks if the same PID and IP address are used (https://github.com/ros2/rmw_fastrtps/issues/349)
+* ROS message transport (Fast RTPS) breaks if the same PID and IP address are used more than once (https://github.com/ros2/rmw_fastrtps/issues/349)
 * If long-running nodes exit with error (137), it's an OOM. `docker ps -a` to find termination time, then `less /var/log/kern.log` and go to the time of death to correlate. 
+* ROS nodes don't by default allow you to make nested async calls (e.g. publish from a subscriber callback). A `ReentrantCallbackGroup` must be used (see [vr node](https://github.com/smartin015/l2_makerspace/blob/master/infra/ros/vr/node.py) for an example that also supports service call deadlines).
