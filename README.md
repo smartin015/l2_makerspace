@@ -30,4 +30,5 @@ See ./base for base image (available publicly for download at gcr.io/l2-making/b
 * As of 2020Q2, Webots doesn't export debian packages for ROS2 Eloquent. If using Crystal, the examples need to be modified to remove QoS settings on publisher definitions:
   *  `/opt/ros/crystal/lib/python3.6/site-packages/webots_ros2_examples/example_controller.py`
   *  `vim /opt/ros/crystal/lib/python3.6/site-packages/webots_ros2_core/webots_node.py`
+* You can build webots from source for eloquent; this is probably easier.
 
