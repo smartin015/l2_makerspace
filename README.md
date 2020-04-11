@@ -23,3 +23,11 @@ See ./base for base image (available publicly for download at gcr.io/l2-making/b
 * ROS message transport (Fast RTPS) breaks if the same PID and IP address are used more than once (https://github.com/ros2/rmw_fastrtps/issues/349)
 * If long-running nodes exit with error (137), it's an OOM. `docker ps -a` to find termination time, then `less /var/log/kern.log` and go to the time of death to correlate. 
 * ROS nodes don't by default allow you to make nested async calls (e.g. publish from a subscriber callback). A `ReentrantCallbackGroup` must be used (see [vr node](https://github.com/smartin015/l2_makerspace/blob/master/infra/ros/vr/node.py) for an example that also supports service call deadlines).
+* Webots ros integration requires the following environment variables to run (as well as sourcing the ROS setup.bash file):
+  *  `export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$WEBOTS_HOME/lib/controller"`
+  *  `export PYTHONPATH="$PYTHONPATH:$WEBOTS_HOME/lib/controller/python36"`
+  *  `export WEBOTS_HOME=/usr/local/webots`
+* As of 2020Q2, Webots doesn't export debian packages for ROS2 Eloquent. If using Crystal, the examples need to be modified to remove QoS settings on publisher definitions:
+  *  `/opt/ros/crystal/lib/python3.6/site-packages/webots_ros2_examples/example_controller.py`
+  *  `vim /opt/ros/crystal/lib/python3.6/site-packages/webots_ros2_core/webots_node.py`
+
