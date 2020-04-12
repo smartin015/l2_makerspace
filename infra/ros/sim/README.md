@@ -10,4 +10,8 @@ The goal is to have a hosted mixed-reality VR environment where multiple physica
 
 In order to do this, we must synchronize between the running Webots simulation and Godot. For a first attempt, we'll ensure that the [world file](https://cyberbotics.com/doc/reference/webots-world-files) for each running simulation is also loaded into VR, and that all joint states and movable entity positions are published to a ROS topic that the VR server can read.
 
-These topics wlil be namespaced to the world to prevent collisions with other simulations.
+These topics will be namespaced to the world to prevent collisions with other simulations.
+
+### Dynamic environments
+
+Future dynamic environments (where Webots nodes are created and removed) are possible with a Supervisor node and [reflection calls](https://cyberbotics.com/doc/reference/supervisor?tab-language=python#wb_supervisor_field_get_mf_node), but this is significant added complexity and will be followup work. 
