@@ -4,7 +4,7 @@
 [ext_resource path="res://srv/AddTwoInts.gd" type="Script" id=2]
 [ext_resource path="res://Players.gd" type="Script" id=3]
 [ext_resource path="res://msg/Object3D.gd" type="Script" id=4]
-[ext_resource path="res://sdf/SDF.gd" type="Script" id=5]
+[ext_resource path="res://actor/actor.gd" type="Script" id=5]
 [ext_resource path="res://srv/RemoveObject3D.gd" type="Script" id=6]
 [ext_resource path="res://msg/Locks.gd" type="Script" id=7]
 [ext_resource path="res://msg/Players.gd" type="Script" id=8]
@@ -14,7 +14,7 @@
 [node name="Players" type="Node" parent="."]
 script = ExtResource( 3 )
 
-[node name="SDF" type="Node" parent="."]
+[node name="Actors" type="Node" parent="."]
 script = ExtResource( 5 )
 
 [node name="srv" type="Node" parent="."]

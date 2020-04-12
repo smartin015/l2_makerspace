@@ -4,7 +4,7 @@
 #  ros2 service call /l2/vr/RemoveObject3D std_msgs/String '{object: {type: 1, name: 'test_obj', length: 0, data: ''}}'
 extends Node
 
-onready var sdf = get_node("/root/World/SDF")
+onready var actors = get_node("/root/World/Actors")
 
 func _ready():
   ROSBridge.services.push_back(self)
@@ -21,7 +21,7 @@ func maybe_handle(service, id, args, peer_id):
   if service != ('%s/RemoveObject3D' % ROSBridge.NS):
     return false
 
-  var errstr = sdf.remove(args.name)
+  var errstr = actors.remove(args.name)
   ROSBridge.service_response("RemoveObject3D", id, {
     "success": errstr != null, 
     "message": errstr,

@@ -1,6 +1,6 @@
 extends "res://addons/gut/test.gd"
 
-var sdf = load("res://addons/sdf/main.gd").new()
+var sdf = load("res://addons/parse/sdf.gd").new()
 
 const ASSERT_PROPERTIES = [
   "scale",
@@ -45,8 +45,8 @@ func test_basic():
   mi.scale = Vector3(0.1, 0.1, 0.1)
   wl.add_child(mi)
   
-  #assert_eq(len(models.keys()), 1, "exactly one model returned")
-  # assert_node_deep_eq(models["test_model"], want)
+  assert_eq(len(models.keys()), 1, "exactly one model returned")
+  assert_node_deep_eq(models["test_model"], want)
 
 func notest_shapes():
   var f = File.new()

@@ -30,8 +30,20 @@ class ProtoNode extends Spatial:
     return "ProtoNode"
   func to_string():
     return "%s: %s %s" % [type, data, get_children()]
-  func append(args):
-    pass
+  func debug():
+    return _debug(self)
+  func _debug(p):
+    if p == null or (typeof(p) == TYPE_OBJECT and p.get_class() != "ProtoNode"):
+      return null
+    var result = {"_children": []}
+    for k in p.data.keys():
+      if typeof(p.data[k]) == TYPE_OBJECT and p.data[k].get_class() == "ProtoNode":
+        result[k] = _debug(p.data[k])
+      else:
+        result[k] = p.data[k]
+    for c in p.get_children():
+      result["_children"].append(_debug(c))
+    return result
   func clone():
     var dup = self.duplicate()
     for k in data.keys():
@@ -132,9 +144,8 @@ func parseStructure(s, idx, tag):
       oIdx = oSearch.get_end()
       sIdx = oSearch.get_start() 
     
-    # We have some body to parse
+    # We have some body to parse; append parsed body fields
     if idx != sIdx:
-      # Append parsed body fields
       for b in parseBody(tag, s.substr(idx, sIdx-idx)):
         parsed.append(b)
     

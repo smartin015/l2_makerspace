@@ -5,9 +5,9 @@
 extends Node
 
 # TODO: Link this up to message type spec in infra/base/l2_msgs/msg/Object3D.msg
-enum type {OBJ = 1, SDF = 2}
+enum type {OBJ = 1, SDF = 2, PROTO = 3}
 
-onready var sdf = get_node("/root/World/SDF")
+onready var actors = get_node("/root/World/Actors")
 
 func _ready():
   ROSBridge.services.push_back(self)
@@ -44,10 +44,18 @@ func maybe_handle(service, id, args, peer_id):
     type.SDF:
       # We forward the peer ID so that we can monitor the remote
       # simulated environment to autoremove the object
-      sdf.spawn(args.object.name, args.object.data, tf, peer_id)
+      actors.spawn(args.object.name, "SDF", args.object.data, tf, peer_id)
       ROSBridge.service_response("SpawnObject3D", id, {
         "success": true, 
         "message": "SDF model %s created @ %s" % [args.object.name, tf],
+      })
+    type.PROTO:
+      # We forward the peer ID so that we can monitor the remote
+      # simulated environment to autoremove the object
+      actors.spawn(args.object.name, "PROTO", args.object.data, tf, peer_id)
+      ROSBridge.service_response("SpawnObject3D", id, {
+        "success": true, 
+        "message": "PROTO model %s created @ %s" % [args.object.name, tf],
       })
     _:
       ROSBridge.service_response("SpawnObject3D", id, {

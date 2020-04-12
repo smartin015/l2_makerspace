@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://Player.tscn" type="PackedScene" id=2]
-[ext_resource path="res://sdf/SDF.gd" type="Script" id=5]
+[ext_resource path="res://actor/actor.gd" type="Script" id=5]
 [ext_resource path="res://addons/mesh/MeshStreamer.gd" type="Script" id=6]
 [ext_resource path="res://Fiversketchfab/room.tscn" type="PackedScene" id=7]
 [ext_resource path="res://Players.gd" type="Script" id=10]
@@ -13,7 +13,7 @@ script = ExtResource( 10 )
 
 [node name="Player" parent="Players" instance=ExtResource( 2 )]
 
-[node name="SDF" type="Node" parent="."]
+[node name="Actors" type="Node" parent="."]
 script = ExtResource( 5 )
 
 [node name="MeshStreamer" type="HTTPRequest" parent="."]

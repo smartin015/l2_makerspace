@@ -6,7 +6,6 @@ extends Node
 
 var polltmr
 const TOPIC_TYPE = "l2_msgs/VRLockStatus"
-onready var sdf = get_node("/root/World/SDF")
 
 func _ready():
   ROSBridge.topics.push_back(self)

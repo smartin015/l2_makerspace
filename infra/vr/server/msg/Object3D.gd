@@ -6,7 +6,7 @@ extends Node
 
 var polltmr
 const TOPIC_TYPE = "l2_msgs/Object3DArray"
-onready var sdf = get_node("/root/World/SDF")
+onready var actors = get_node("/root/World/Actors")
 
 func _ready():
   ROSBridge.topics.push_back(self)
@@ -27,7 +27,7 @@ func advertisement(id):
 func _poll():
   var objects = []
   
-  for c in sdf.get_children():
+  for c in actors.get_children():
     objects.append({
       "name": c.name,
     })

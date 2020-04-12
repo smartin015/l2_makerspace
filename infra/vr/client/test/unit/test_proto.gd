@@ -1,510 +1,106 @@
 extends "res://addons/gut/test.gd"
 
-var proto = load("res://addons/sdf/proto.gd").new()
+var proto = load("res://addons/parse/proto.gd").new()
 
-func debugObj(p):
-  if p == null:
-    return null
-  var result = {"_children": []}
-  for k in p.data.keys():
-    if typeof(p.data[k]) == TYPE_OBJECT and p.data[k].get_class() == "ProtoNode":
-      result[k] = debugObj(p.data[k])
-    else:
-      result[k] = p.data[k]
-  for c in p.get_children():
-    result["_children"].append(debugObj(c))
-  return result
+const ASSERT_PROPERTIES = [
+  "scale",
+  "transform",
+ ]
+func assert_node_deep_eq(got, want):
+  assert_eq(typeof(got), typeof(want), "Matching node types")
+  if !want.name.begins_with("@"):
+    assert_eq(got.name, want.name, "Matching node names")
+    
+  for ap in ASSERT_PROPERTIES:
+    if want.get(ap):
+      assert_eq(got.get(ap), want.get(ap), "Matching property %s on %s" % [ap, want.name])
 
-func test_basic():
-  proto.init({})
-  var got = JSON.print(debugObj(proto.parse("""Solid {
-    translation 0 0 1
-    rotation 0 1 0 0
-  }""")))
-  var want = JSON.print({
-    "_children": [
-      {
-        "_children": [],
-        "_type": "Solid",
-        "translation": [
-          0,
-          0,
-          1
-        ],
-        "rotation": [
-          0,
-          1,
-          0,
-          0
-        ]
-      }
-    ],
-    "_type": "Root"
-  })
-  assert(got == want)
+  var wc = want.get_children()
+  var gc = got.get_children()
+  assert_eq(len(gc), len(wc), "Children of node with name %s length" % want.name)
   
-func test_basic_children():
-  proto.init({})
-  var got = JSON.print(debugObj(proto.parse("""Solid {
-  children [
-    Transform {
-      translation 0 0 -0.27
-    }
-    Transform {
-      translation 0 0 0.5
-    }
-  ]
-}""")))
-  var want = JSON.print({
-    "_children": [
-      {
-        "_children": [
-          {
-            "_children": [],
-            "_type": "Transform",
-            "translation": [
-              0,
-              0,
-              -0.27
-            ]
-          },
-          {
-            "_children": [],
-            "_type": "Transform",
-            "translation": [
-              0,
-              0,
-              0.5
-            ]
-          }
-        ],
-        "_type": "Solid"
-      }
-    ],
-    "_type": "Root"
-  })
-  assert(got == want)
+  if len(wc) != len(gc):
+    return
+    
+  for i in range(len(wc)):
+    assert_node_deep_eq(gc[i], wc[i])
 
-func test_nested_children():
-  proto.init({})
-  var got = JSON.print(debugObj(proto.parse("""Solid {
-  children [
-    Transform {
-      translation 0 0 -0.27
-      children [
-        Solid {
-          appearance Appearance {
-            material Material {}
-          }
+func test_basic_world():
+  var world = proto.ParseAttrs("""
+  #VRML_SIM V8.5 utf8
+  WorldInfo {
+  }
+  Viewpoint {
+    orientation 1 0 0 -0.8
+    position 0.25 0.708035 0.894691
+  }
+  Background {
+    skyColor [0.2 0.2 0.2]
+  }
+  Solid {
+    translation 0 1 0
+    children [
+      Shape {
+        appearance PBRAppearance {
+          baseColor 0 1 0
+          roughness 0.2
+          metalness 0
         }
-      ]
-    }
-  ]
-}""")))
-  var want = JSON.print({
-    "_children": [
-      {
-        "_children": [
-          {
-            "_children": [
-              {
-                "_children": [],
-                "_type": "Solid",
-                "appearance": {
-                  "_children": [],
-                  "_type": "Appearance",
-                  "material": {
-                    "_children": [],
-                    "_type": "Material"
-                  }
-                }
-              }
-            ],
-            "_type": "Transform",
-            "translation": [
-              0,
-              0,
-              -0.27
-            ]
-          }
-        ],
-        "_type": "Solid"
-      }
-    ],
-    "_type": "Root"
-  })
-  assert(got == want)
-
-func test_def_use():
-  proto.init({})
-  var got = JSON.print(debugObj(proto.parse("""
-    Transform {
-      children [
-        DEF LEG_SHAPE Shape {
-          geometry Box { size 0.075 0.52 0.075 }
-        }
-      ]
-    }
-    Transform {
-      children [ USE LEG_SHAPE ]
-    }
-  """)))
-  var want = JSON.print({
-    "_children": [
-      {
-        "_children": [
-          {
-            "_children": [],
-            "_type": "Shape",
-            "geometry": {
-              "_children": [],
-              "_type": "Box",
-              "size": [
-                0.075,
-                0.52,
-                0.075
-              ]
-            }
-          }
-        ],
-        "_type": "Transform"
-      },
-      {
-        "_children": [
-          {
-            "_children": [],
-            "_type": "Shape",
-            "geometry": {
-              "_children": [],
-              "_type": "Box",
-              "size": [
-                0.075,
-                0.52,
-                0.075
-              ]
-            }
-          }
-        ],
-        "_type": "Transform"
-      }
-    ],
-    "_type": "Root"
-  })
-  assert(got == want)
-
-func test_non_child_object():
-  proto.init({})
-  var got = JSON.print(debugObj(proto.parse("""Shape {
-    geometry Cylinder {
-      height 0.1
-      radius 0.4
-    }
-  }""")))
-  var want = JSON.print({
-    "_children": [
-      {
-        "_children": [],
-        "_type": "Shape",
-        "geometry": {
-          "_children": [],
-          "_type": "Cylinder",
-          "height": 0.1,
-          "radius": 0.4
+        geometry Box {
+          size 0.23 0.1 0.1
         }
       }
-    ],
-    "_type": "Root"
-  })
-  assert(got == want)
-
-func test_pass_obj_param():
-  proto.init({
-    "seatGeometry": proto.parse("""
-      Cylinder {
-      height 0.1
-      radius 0.4
-    }""").get_child(0),
-  })
-  var got = JSON.print(debugObj(proto.parse("""geometry IS seatGeometry""")))
-  var want = JSON.print({
-    "_children": [],
-    "_type": "Root",
-    "geometry": {
-      "_children": [],
-      "_type": "Cylinder",
-      "height": 0.1,
-      "radius": 0.4
-    }
-  })
-  assert(got == want)
-
-func test_web_example1():
-  # https://www.cyberbotics.com/doc/reference/proto-example
-  proto.init({
-    "name": "test",
-    "translation": [0, 0, 0], 
-    "rotation": [0, 0, 1, 0],
-    "seatExtensionSlot": null,
-    "seatColor": [0, 0.5, 0],
-    "seatGeometry": proto.parse("""
-      Cylinder {
-      height 0.1
-      radius 0.4
-    }""").get_child(0),
-    "legColor": [0, 0.5, 0],
-  })
-  var got = JSON.print(debugObj(proto.parse("""
-    Solid {
-      translation IS translation
-      rotation IS rotation
-      children [
-        Transform {
-          translation 0 0 -0.27
-          children IS seatExtensionSlot
+    ]
+  }
+  Solid {
+    translation -0.2 1 0
+    children [
+      Shape {
+        appearance PBRAppearance {
+          baseColor 1 0 0
+          roughness 0.2
+          metalness 0.5
         }
-        Transform {
-          translation 0 -0.35 0
-          children [
-            Shape {
-              appearance Appearance {
-                material Material { diffuseColor IS seatColor }
-              }
-              geometry IS seatGeometry
-            }
-          ]
+        geometry Sphere {
+          radius 0.1
         }
-        Transform {
-          translation 0.25 -0.65 -0.23
-          children [
-            DEF LEG_SHAPE Shape {
-              appearance Appearance {
-                material Material { diffuseColor IS legColor }
-              }
-              geometry Box { size 0.075 0.52 0.075 }
-            }
-          ]
-        }
-        Transform {
-          translation -0.25 -0.65 -0.23
-          children [ USE LEG_SHAPE ]
-        }
-        Transform {
-          translation 0.25 -0.65 0.2
-          children [ USE LEG_SHAPE ]
-        }
-        Transform {
-          translation -0.25 -0.65 0.2
-          children [ USE LEG_SHAPE ]
-        }
-      ]
-      name IS name
-    }""")))
-  var want = JSON.print({
-    "_children": [
-      {
-        "_children": [
-          {
-            "_children": [],
-            "_type": "Transform",
-            "translation": [
-              0,
-              0,
-              -0.27
-            ]
-          },
-          {
-            "_children": [
-              {
-                "_children": [],
-                "_type": "Shape",
-                "appearance": {
-                  "_children": [],
-                  "_type": "Appearance",
-                  "material": {
-                    "_children": [],
-                    "_type": "Material",
-                    "diffuseColor": [
-                      0,
-                      0.5,
-                      0
-                    ]
-                  }
-                },
-                "geometry": {
-                  "_children": [],
-                  "_type": "Cylinder",
-                  "height": 0.1,
-                  "radius": 0.4
-                }
-              }
-            ],
-            "_type": "Transform",
-            "translation": [
-              0,
-              -0.35,
-              0
-            ]
-          },
-          {
-            "_children": [
-              {
-                "_children": [],
-                "_type": "Shape",
-                "appearance": {
-                  "_children": [],
-                  "_type": "Appearance",
-                  "material": {
-                    "_children": [],
-                    "_type": "Material",
-                    "diffuseColor": [
-                      0,
-                      0.5,
-                      0
-                    ]
-                  }
-                },
-                "geometry": {
-                  "_children": [],
-                  "_type": "Box",
-                  "size": [
-                    0.075,
-                    0.52,
-                    0.075
-                  ]
-                }
-              }
-            ],
-            "_type": "Transform",
-            "translation": [
-              0.25,
-              -0.65,
-              -0.23
-            ]
-          },
-          {
-            "_children": [
-              {
-                "_children": [],
-                "_type": "Shape",
-                "appearance": {
-                  "_children": [],
-                  "_type": "Appearance",
-                  "material": {
-                    "_children": [],
-                    "_type": "Material",
-                    "diffuseColor": [
-                      0,
-                      0.5,
-                      0
-                    ]
-                  }
-                },
-                "geometry": {
-                  "_children": [],
-                  "_type": "Box",
-                  "size": [
-                    0.075,
-                    0.52,
-                    0.075
-                  ]
-                }
-              }
-            ],
-            "_type": "Transform",
-            "translation": [
-              -0.25,
-              -0.65,
-              -0.23
-            ]
-          },
-          {
-            "_children": [
-              {
-                "_children": [],
-                "_type": "Shape",
-                "appearance": {
-                  "_children": [],
-                  "_type": "Appearance",
-                  "material": {
-                    "_children": [],
-                    "_type": "Material",
-                    "diffuseColor": [
-                      0,
-                      0.5,
-                      0
-                    ]
-                  }
-                },
-                "geometry": {
-                  "_children": [],
-                  "_type": "Box",
-                  "size": [
-                    0.075,
-                    0.52,
-                    0.075
-                  ]
-                }
-              }
-            ],
-            "_type": "Transform",
-            "translation": [
-              0.25,
-              -0.65,
-              0.2
-            ]
-          },
-          {
-            "_children": [
-              {
-                "_children": [],
-                "_type": "Shape",
-                "appearance": {
-                  "_children": [],
-                  "_type": "Appearance",
-                  "material": {
-                    "_children": [],
-                    "_type": "Material",
-                    "diffuseColor": [
-                      0,
-                      0.5,
-                      0
-                    ]
-                  }
-                },
-                "geometry": {
-                  "_children": [],
-                  "_type": "Box",
-                  "size": [
-                    0.075,
-                    0.52,
-                    0.075
-                  ]
-                }
-              }
-            ],
-            "_type": "Transform",
-            "translation": [
-              -0.25,
-              -0.65,
-              0.2
-            ]
-          }
-        ],
-        "_type": "Solid",
-        "translation": [
-          0,
-          0,
-          0
-        ],
-        "rotation": [
-          0,
-          0,
-          1,
-          0
-        ],
-        "name": "test"
       }
-    ],
-    "_type": "Root"
-  })
-  assert(got == want)
+    ]
+  }
+  Solid {
+    translation 0.2 1 0
+    children [
+      Shape {
+        appearance PBRAppearance {
+          baseColor 0 0 1
+          roughness 1.0
+          metalness 0.0
+        }
+        geometry Cylinder {
+          radius 0.1
+          height 0.1
+        }
+      }
+    ]
+  }""")
+  
+  var obj = JSON.print(world.debug())
+  assert(false)
+  #  var want = Spatial.new()
+  #  want.name = "test_model"
+  #  var wl = Spatial.new()
+  #  wl.name = "test_link"
+  #  wl.transform.origin = Vector3(0.1, 0, 0)
+  #  wl.rotate_x(0.1)
+  #  want.add_child(wl)
+  #  var mi = MeshInstance.new()
+  #  mi.mesh = CubeMesh.new()
+  #  mi.scale = Vector3(0.1, 0.1, 0.1)
+  #  wl.add_child(mi)
+    
+  #assert_eq(len(models.keys()), 1, "exactly one model returned")
+  #assert_node_deep_eq(models["test_model"], want)
+  
+
+func test_proto_def_and_load():
+  pass
