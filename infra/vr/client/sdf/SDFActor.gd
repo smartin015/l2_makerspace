@@ -26,7 +26,6 @@ class PuppetJoint:
   var axis: Vector3
   var child: Spatial
   var origin: Transform
-    
   func apply(val: int):
     var mapped = ((limits[1] - limits[0]) * val + limits[0])
     match type:
