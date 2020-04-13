@@ -13,12 +13,12 @@ puppet func spawn(name, objtype, config, tf, peer_id):
   match objtype:
     "SDF":
       inst.add_child(sdfParser.ParseAttrs(config))
-      inst.setup_controls()
     "PROTO":
       inst.add_child(protoParser.ParseAttrs(config))
     _:
       print("ERROR: No parser for objtype " + objtype)
       return
+  inst.setup_controls()
   add_child(inst)
   return inst
 
@@ -26,8 +26,40 @@ puppetsync func remove(name):
   self.get_node(name).queue_free()
   print("Actor %s removed" % name)
 
-
 func _ready():
+  spawn("testjoint", "PROTO", """
+    Robot {
+      translation 0 1.7 -1
+      children [
+        HingeJoint {
+          jointParameters HingeJointParameters {
+            anchor 0 1 0
+          }
+          device [
+            RotationalMotor {
+              name "wheel1"
+            }
+          ]
+          endPoint Solid {
+            translation 0 0 0
+            children [
+              Shape {
+                appearance PBRAppearance {
+                  baseColor 1 0.8 1
+                  roughness 1
+                  metalness 0
+                }
+                geometry Box {
+                   size 0.1 0.1 0.1
+                 }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }""", Transform.IDENTITY, 0)
+
   spawn("testproto", "PROTO", """
   #VRML_SIM V8.5 utf8
   WorldInfo {
@@ -40,7 +72,7 @@ func _ready():
     skyColor [0.2 0.2 0.2]
   }
   Solid {
-    translation 0 1 0
+    translation 0 1.5 -1
     children [
       Shape {
         appearance PBRAppearance {
@@ -55,7 +87,7 @@ func _ready():
     ]
   }
   Solid {
-    translation -0.2 1 0
+    translation -0.3 1.5 -1
     children [
       Shape {
         appearance PBRAppearance {
@@ -70,7 +102,7 @@ func _ready():
     ]
   }
   Solid {
-    translation 0.2 1 0
+    translation 0.3 1.5 -1
     children [
       Shape {
         appearance PBRAppearance {

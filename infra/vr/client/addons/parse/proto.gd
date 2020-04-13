@@ -2,39 +2,6 @@ extends Node
 
 var tree = load("res://addons/parse/proto_tree.gd").new()
 
-func _set_geometry(link: Spatial, n):
-  var mi = MeshInstance.new()
-  mi.material_override = SpatialMaterial.new()
-  link.add_child(mi)
-  match n.type:
-    "Box":
-      mi.mesh = CubeMesh.new()
-      var v = n.get_node("size").data.split(" ", false)
-      mi.scale = Vector3(float(v[0]), float(v[2]), float(v[1]))
-    "Plane":
-      mi.mesh = PlaneMesh.new()
-      var v = n.get_node("normal").data.split(" ", false)
-      var norm  = Vector3(float(v[0]), float(v[2]), float(v[1]))
-      if norm.angle_to(Vector3.UP) > 0:
-        var axis = norm.cross(Vector3(0,1,0)).normalized()
-        mi.rotate(axis, n.angle_to(Vector3.UP))
-      
-      v = n.get_node("size").data.split(" ", false)
-      mi.scale = Vector3(float(v[0]), 1, float(v[1]))
-    "Cylinder":
-      mi.mesh = CylinderMesh.new()
-      var r = float(n.get_node("radius").data)
-      mi.scale.x = r
-      mi.scale.z = r
-      var l = float(n.get_node("length").data)
-      mi.scale.y = l
-    "Sphere":
-      mi.mesh = SphereMesh.new()
-      var d = 2*float(n.get_node("radius").data)
-      mi.scale = Vector3(d, d, d)
-    _:
-      print("Error: Unknown geometry type ", n.type)
-
 func _fillShape(parent, n):
   var n2 = MeshInstance.new()
   n2.material_override = SpatialMaterial.new()
@@ -46,7 +13,6 @@ func _fillShape(parent, n):
     n2.material_override.albedo_color = Color(v[0], v[1], v[2], 1.0-t)
     n2.material_override.roughness = a.get("roughness", 0)
     n2.material_override.metallic = a.get("metalness", 0)
-    print("Albedo " + str(n2.material_override.albedo_color))
 
   var g = n.data.get("geometry")
   if g != null:
@@ -80,15 +46,12 @@ func _fillShape(parent, n):
         n2.mesh.height = n2.mesh.radius*2
       _:
         print("WARNING: Unknown shape " + g.data["_type"])
-  
   # Put the shape in place; remove extra bits
-  parent.add_child(n2)
-  n.queue_free()
+  n.get_parent().add_child(n2)
+  n.free()
   
-
 func _fillSolid(parent, n):
   var t = n.data.get("translation")
-  # Note: godot and webots are both Y-up
   if t != null:
     n.transform.origin = Vector3(t[0], t[1], t[2])
   t = n.data.get("rotation")
@@ -97,21 +60,59 @@ func _fillSolid(parent, n):
   for c in n.get_children():
     _fillNode(n, c)
 
+func _fillRobot(parent, n):
+  # TODO get robot topics via customData
+  var t = n.data.get("translation")
+  if t != null:
+    n.transform.origin = Vector3(t[0], t[1], t[2])
+  t = n.data.get("rotation")
+  if t != null:
+    n.rotate(Vector3(t[0], t[1], t[2]), t[3])
+  for c in n.get_children():
+    _fillNode(n, c)
+
+func _fillHingeJoint(parent, n):
+  # Clear any child nodes; we don't need them
+  #  for c in n.get_children():
+  #    c.free()
+  var jp = n.data.get("jointParameters")
+  var ep = n.data.get("endPoint")
+  n.data = {"_type": "HingeJoint"}
+  if jp != null:
+    var v = jp.data.get("anchor", [1,1,1])
+    n.data["axis"] = Vector3(v[0], v[1], v[2])
+  for c in n.get_children():
+    # Get motor name
+    if c.data["_type"] == "device":
+      n.data["name"] = c.get_child(0).data.get("name").trim_prefix("\"").trim_suffix("\"")
+    c.free()
+  if ep != null:
+    n.add_child(ep)
+    _fillNode(n, ep)
+  else: 
+    print("WARNING no endPoint")
+  
 func _fillNode(parent, n):
   match n.data["_type"]:
     "Solid":
       _fillSolid(parent, n)
     "Shape":
       _fillShape(parent, n)
+    "Robot":
+      _fillRobot(parent, n)
+    "HingeJoint":
+      _fillHingeJoint(parent, n)
     _:
       print("Ignoring: " + n.data["_type"])
+      n.free()
 
 func ParseAttrs(s):
   # TODO handle PROTO loading n'at
   # if s[0] == "#": # We got a world file
   tree.init()
   var root = tree.parse(s)
+  # print(JSON.print(root.debug()))
   for c in root.get_children():
     _fillNode(root, c)
-  print(root.debug())
+  # print(JSON.print(root.debug()))
   return root

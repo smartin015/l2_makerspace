@@ -22,22 +22,22 @@ func init(parameters = {}):
   defs = {}
   
 
-# SDFNode is a basic node that contains the XML data for a corresponding SDF element
-class ProtoNode extends Spatial:
+# Basic node that contains the data for a corresponding element
+class L2Node extends Spatial:
   var type = ""
   var data = {}
   func get_class():
-    return "ProtoNode"
+    return "L2Node"
   func to_string():
     return "%s: %s %s" % [type, data, get_children()]
   func debug():
     return _debug(self)
   func _debug(p):
-    if p == null or (typeof(p) == TYPE_OBJECT and p.get_class() != "ProtoNode"):
+    if p == null or (typeof(p) == TYPE_OBJECT and p.get_class() != "L2Node"):
       return null
     var result = {"_children": []}
     for k in p.data.keys():
-      if typeof(p.data[k]) == TYPE_OBJECT and p.data[k].get_class() == "ProtoNode":
+      if typeof(p.data[k]) == TYPE_OBJECT and p.data[k].get_class() == "L2Node":
         result[k] = _debug(p.data[k])
       else:
         result[k] = p.data[k]
@@ -48,7 +48,7 @@ class ProtoNode extends Spatial:
     var dup = self.duplicate()
     for k in data.keys():
       var v = data[k]
-      if typeof(v) == TYPE_OBJECT and v.get_class() == "ProtoNode":
+      if typeof(v) == TYPE_OBJECT and v.get_class() == "L2Node":
         dup.data[k] = v.clone()
       else:
         dup.data[k] = v
@@ -70,7 +70,7 @@ func parseBody(tag, sub) -> Array:
         print("WARNING: no param for PROTO line: " + r.strip_edges())
       else:
         var v = params[kv[2]]
-        if typeof(v) == TYPE_OBJECT and v.get_class() == "ProtoNode":
+        if typeof(v) == TYPE_OBJECT and v.get_class() == "L2Node":
           v = v.clone()
         result.append([kv[0], v])
     else:
@@ -78,14 +78,14 @@ func parseBody(tag, sub) -> Array:
   return result
 
 func postProcess(tag, parsed):
-  var result = ProtoNode.new()
+  var result = L2Node.new()
   result.data["_type"] = tag
   var nextDef = null
   var assignNext = null
   # Each element in parsed is either a key/value pair or 
   # the result of a previous call to postProcess.
   for p in parsed:
-    if typeof(p) == TYPE_OBJECT and p.get_class() == "ProtoNode":
+    if typeof(p) == TYPE_OBJECT and p.get_class() == "L2Node":
       if nextDef != null:
         defs[nextDef] = p
         nextDef = null

@@ -4,8 +4,17 @@
 extends Node
 
 const WS_PORT = 4243
-const NS = "/l2/vr"
 
+# For isolation, only subscription to topics within
+# a certain namespace are allowed for the VR server.
+# This should only be visible on the server-side;
+# the client should not know this namespace exists.
+const NS = "/l2/vr"
+func _ns(topic):
+  return "%s/%s" % [NS, topic.trim_prefix("/")]
+func _strip_ns(topic):
+  return topic.trim_prefix(NS+"/")
+  
 var _server = WebSocketServer.new()
 var listeners = {} # Map of ROS topic to list of godot client IDs
 var calls = {} # Map of service call IDs to ROSCalls
@@ -39,9 +48,9 @@ func _broadcast(id: String, msg):
   # ALL godot traffic to and from ROS is namespaced so that it's clearly known
   # what topics can be affected by VR users.
   if msg.get('topic'):
-    msg.topic = "%s/%s" % [NS, msg.topic]
+    msg.topic = _ns(msg.topic)
   if msg.get('service'):
-    msg.service = "%s/%s" % [NS, msg.service]
+    msg.service = _ns(msg.service)
   var packet = JSON.print(msg).to_utf8()
   for c in get_children():
     if c.should_throttle(sender):
@@ -69,6 +78,7 @@ remote func publish(topic: String, type: String, msg, id: String):
 
 remote func subscribe(topic, type, id: String):
   listeners[topic] = listeners.get(topic, []) + [get_tree().get_rpc_sender_id()]
+  print("New listener on %s - now %s" % [topic, listeners[topic]])
   _broadcast(id, {
     "op": "subscribe",
     "topic": topic,
@@ -149,14 +159,19 @@ func _on_data(id):
       print("ROS(%s) -> set_level: %s" % [id, result.level])
     "publish":
       # forward to subscribed players
+      result.topic = _strip_ns(result.topic)
       for ls in listeners.get(result.topic, []):
-        var p = gamestate.players.get(ls)
+        print("listener %s" % ls)
+        var p = gamestate.players.get_node(str(ls))
         if p != null:
-          rpc_id(p, "handle_ros_publish", 
-            result.get('topic', ''), 
-            result.get('msg', ''), 
-            result.get('id'))
+          print("Sending handle_ros_publish")
+          rpc_id(ls, "handle_ros_publish", 
+            result.get("topic", ""), 
+            result.get("msg", ""), 
+            result.get("id", ""))
+          
     "call_service":
+      result.service = _strip_ns(result.service)
       print("ROS(%s) -> call_service %s" % [id, result.service])
       for s in services:
         if s.maybe_handle(result.service, result.id, result.args, id):

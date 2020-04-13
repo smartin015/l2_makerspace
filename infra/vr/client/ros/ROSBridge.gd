@@ -24,7 +24,6 @@ func ros_connect(topic: String, type: String, node: Node, handler: String, id: S
   if !h:
     h = ROSHandler.new()
     handlers[topic] = h
-    return
   h.topic = topic
   h.type = type
   h.id = id
@@ -45,7 +44,10 @@ remote func handle_ros_status(level: String, msg: String, id: String):
   print("ROS %s %s: %s" % [level, msg, id])
 
 remote func handle_ros_publish(topic: String, msg, id: String):
-  for cb in handlers.get(topic, {}).get('callbacks', []):
+  var h = handlers.get(topic)
+  if h == null:
+    return
+  for cb in h.callbacks:
     cb[0].call(cb[1], msg, id)
 
 func publish(topic: String, type: String, msg, id: String):

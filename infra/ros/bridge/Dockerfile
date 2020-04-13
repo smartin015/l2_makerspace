@@ -12,11 +12,11 @@ ENV PATH /bin/versions/node/$NODE_VERSION/bin:$PATH
 
 RUN git clone https://github.com/RobotWebTools/rclnodejs.git && cd rclnodejs && git submodule update --init --recursive && npm install
 
-RUN wget https://github.com/smartin015/ros2-web-bridge/archive/develop.zip \
+RUN cd / && wget https://github.com/smartin015/ros2-web-bridge/archive/develop.zip \
   && unzip develop.zip && rm develop.zip \
   && mv ros2-web-bridge-develop ros2-web-bridge
 
-RUN cd ros2-web-bridge \
+RUN cd /ros2-web-bridge \
   && bash -c "source /opt/ros/eloquent/setup.bash \
      && source /l2_msgs/install/setup.bash \
      && npm install bufferutil@^4.0.1 utf-8-validate@^5.0.2 \

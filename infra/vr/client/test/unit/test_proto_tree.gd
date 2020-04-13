@@ -30,26 +30,25 @@ func test_basic():
   })
   assert(got == want)
   
-func test_basic_string_array():
-  proto.init({})
-  var got = JSON.print(proto.parse("""WorldInfo {
-    info [
-      "Stuff"
-      "Things"
-    ]
-  }""")).debug())
-  var want = JSON.print({})
-  assert(got == want)
-  
-func test_def_use_on_assign():
-  proto.init({})
-  var got = JSON.print(proto.parse("""
-    geometry DEF BOX0 Box {
-      size 0.23 0.1 0.1
-    }""")).debug())
-  var want = JSON.print({})
-  assert(got == want)
-    
+#func test_basic_string_array():
+#  proto.init({})
+#  var got = JSON.print(proto.parse("""WorldInfo {
+#    info [
+#      "Stuff"
+#      "Things"
+#    ]
+#  }""").debug())
+#  var want = JSON.print({})
+#  assert(got == want)
+#
+#func test_def_use_on_assign():
+#  proto.init({})
+#  var got = JSON.print(proto.parse("""
+#    geometry DEF BOX0 Box {
+#      size 0.23 0.1 0.1
+#    }""").debug())
+#  var want = JSON.print({})
+#  assert(got == want)
   
 func test_basic_children():
   proto.init({})
@@ -277,7 +276,7 @@ func test_pass_obj_param():
       radius 0.4
     }""").get_child(0),
   })
-  var got = JSON.print(debugObj(proto.parse("""geometry IS seatGeometry""")))
+  var got = JSON.print(proto.parse("""geometry IS seatGeometry""").debug())
   var want = JSON.print({
     "_children": [],
     "_type": "Root",
@@ -305,7 +304,7 @@ func test_web_example1():
     }""").get_child(0),
     "legColor": [0, 0.5, 0],
   })
-  var got = JSON.print(debugObj(proto.parse("""
+  var got = JSON.print(proto.parse("""
     Solid {
       translation IS translation
       rotation IS rotation
@@ -350,7 +349,7 @@ func test_web_example1():
         }
       ]
       name IS name
-    }""")))
+    }""").debug())
   var want = JSON.print({
     "_children": [
       {

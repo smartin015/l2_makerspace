@@ -110,15 +110,5 @@ func _fill_sdf(n: SDFNode):
       if coll != null:
         _set_collision(n, coll.get_child(0))
       # TODO transparency & color
-      #    "/visual/transparency":
-      #      var mi = link.get_node("meshinstance")
-      #      mi.material_override.flags_transparent = true
-      #      mi.material_override.albedo_color.a = float(data)
-      #    "/visual/material/script":
-      #      var mi = link.get_node("meshinstance")
-      #      match data:
-      #        "Gazebo/Purple":
-      #          mi.material_override.albedo_color = Color(0.5, 0, 0.5)
-      #        _:
-      #          print("Unknown color ", data)
+
   return n
