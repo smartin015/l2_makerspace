@@ -37,7 +37,7 @@ func _ready():
           }
           device [
             RotationalMotor {
-              name "wheel1"
+              name "motor1"
             }
           ]
           endPoint Solid {

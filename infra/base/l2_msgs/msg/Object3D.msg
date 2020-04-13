@@ -1,9 +1,8 @@
 uint8 TYPE_UNKNOWN = 0
 uint8 TYPE_OBJ = 1
 uint8 TYPE_SDF = 2
+uint8 TYPE_PROTO = 3
 uint8 type
 
 string name
-
-int64 length
 string data

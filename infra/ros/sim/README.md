@@ -35,3 +35,31 @@ It may be desirable in the future to run multiple independent environments simul
 1. VR clients load the config, subscribe to all relevant topics, and update their state based on the published topics from the `controller` nodes
 1. When the simulation is terminated (`sim_worker` and all `controller`s brought down), the `vr` ROS node detects the absence of [topic publishers](http://docs.ros2.org/crystal/api/rclpy/api/node.html#rclpy.node.Node.count_publishers) and tells the VR server to end the simulation
 1. The VR server forwards the end of simulation to all VR clients, who clean up their state.
+
+### Manual test with example controller
+
+Start the webots server container:
+
+```
+docker run -v $(pwd)/single_motor.wbt:/single_motor.wbt --volume=/tmp/.X11-unix:/tmp/.X11-unix   
+--device=/dev/dri:/dev/dri   --env="DISPLAY=$DISPLAY"   -it --rm l2sim /webots_ros2/install/webots_ros2_desktop/share/webots_ros2_desktop/webots/web
+ots --no-sandbox --stdout --stderr /single_motor.wbt
+```
+
+Exec into the server and start the controller
+
+```
+docker exec -it $(docker ps -q) /bin/bash
+export WEBOTS_HOME=/webots_ros2/install/webots_ros2_desktop/share/webots_ros2_desktop/webots/
+export LD_LIBRARY_PATH=$WEBOTS_HOME/lib/controller
+source /ros_entrypoint.sh
+ros2 run l2_sim example_controller --ros-args -p synchronization:=False
+```
+
+Exec another ros node and listen to the topic
+
+```
+docker exec -it $(docker ps -q) /bin/bash
+source /ros_entrypoint.sh
+ros2 topic echo /joint_state
+```

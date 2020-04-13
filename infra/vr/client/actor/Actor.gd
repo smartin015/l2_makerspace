@@ -78,7 +78,6 @@ func _update_joints(js):
     print("Set joint ", j, " to ", js[j])
     
 func _handle_joint_states(msg, id):
-  print("Handle " + str(msg))
   for i in len(msg['name']):
     var j = joints.get(msg['name'][i])
     if j != null:

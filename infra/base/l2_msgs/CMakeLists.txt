@@ -36,11 +36,12 @@ endif()
 
 
 set(msg_files 
-  msg/Project.msg 
   msg/Item.msg 
-  msg/Projects.msg
   msg/Object3D.msg
   msg/Object3DArray.msg
+  msg/Project.msg 
+  msg/Projects.msg
+  msg/Simulation.msg
   msg/VRLockStatus.msg
   msg/VRPlayers.msg) 
 set(srv_files 

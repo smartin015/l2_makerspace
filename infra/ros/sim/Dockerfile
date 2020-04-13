@@ -1,8 +1,8 @@
-from l2base:latest
+ARG L2PKG=l2_sim
+ARG L2NODES="node.py example_controller.py"
 
-RUN . /opt/ros/$ROS_DISTRO/setup.sh \
-  && apt-get update && apt-get install -y ros-$ROS_DISTRO-gazebo-ros ros-$ROS_DISTRO-gazebo-ros-pkgs \
-  && rm -rf /var/lib/apt/lists/*
+FROM l2base-pre
+FROM l2base-post-sim
+COPY --from=0 /node/install /node/install
 
-COPY default.world /default.world
 ENV ROS_DISTRO=$ROS_DISTRO
