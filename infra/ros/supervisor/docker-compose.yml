@@ -1,0 +1,12 @@
+version: '3.4'
+
+services:
+  main:
+    image: l2supervisor:latest
+    pid: "host" # TODO(https://github.com/ros2/rmw_fastrtps/issues/349)
+    environment:
+      - "PYTHONUNBUFFERED=1"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "/usr/bin/docker:/usr/bin/docker"
+      - "./config.yaml:/config.yaml"

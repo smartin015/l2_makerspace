@@ -63,3 +63,9 @@ docker exec -it $(docker ps -q) /bin/bash
 source /ros_entrypoint.sh
 ros2 topic echo /joint_state
 ```
+
+### Client simulation to server
+
+Can [install a VPN](https://www.cyberciti.biz/faq/howto-setup-openvpn-server-on-ubuntu-linux-14-04-or-16-04-lts/) to allow for ROS2 comms between server and client.
+
+
