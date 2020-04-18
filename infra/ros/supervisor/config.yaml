@@ -2,7 +2,9 @@
 # possible work that can be executed.
 # It loosely follows the style of docker-compose, but not
 # all features are present.
-a:
-   - 5 
-   - 10
-b: "hello"
+test:
+  test1:
+    image: "hello-world"
+b: 
+  test2:
+    asdf: "herp"
