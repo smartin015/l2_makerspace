@@ -38,18 +38,25 @@ It may be desirable in the future to run multiple independent environments simul
 
 ### Manual test with example controller
 
-Start the webots server container:
+Create the volume for unix socket comms (and the l2 network if not already exists):
 
 ```
-docker run -v $(pwd)/single_motor.wbt:/single_motor.wbt --volume=/tmp/.X11-unix:/tmp/.X11-unix   
+docker volume create webots
+docker network create l2
+```
+
+Start the webots server container 
+
+```
+docker run -v webots:/tmp -v $(pwd)/single_motor.wbt:/single_motor.wbt --volume=/tmp/.X11-unix:/tmp/.X11-unix   
 --device=/dev/dri:/dev/dri   --env="DISPLAY=$DISPLAY"   -it --rm l2sim /webots_ros2/install/webots_ros2_desktop/share/webots_ros2_desktop/webots/web
 ots --no-sandbox --stdout --stderr /single_motor.wbt
 ```
 
-Exec into the server and start the controller
+Start the controller container:
 
 ```
-docker exec -it $(docker ps -q) /bin/bash
+docker run -it --rm -v webots:/tmp --net=l2 l2sim /bin/bash
 export WEBOTS_HOME=/webots_ros2/install/webots_ros2_desktop/share/webots_ros2_desktop/webots/
 export LD_LIBRARY_PATH=$WEBOTS_HOME/lib/controller
 source /ros_entrypoint.sh
@@ -59,7 +66,7 @@ ros2 run l2_sim example_controller --ros-args -p synchronization:=False
 Exec another ros node and listen to the topic
 
 ```
-docker exec -it $(docker ps -q) /bin/bash
+docker run -it --rm --net=l2 l2base /bin/bash
 source /ros_entrypoint.sh
 ros2 topic echo /joint_state
 ```
