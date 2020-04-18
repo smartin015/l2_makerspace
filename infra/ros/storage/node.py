@@ -6,6 +6,36 @@ from rclpy.node import Node
 import psycopg2
 import os
 
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+
+class WatchHandler(FileSystemEventHandler):
+    def __init__(self, handler):
+        super().__init__()
+        self.handler = handler
+        print("TODO walk dir and call _update on init")
+
+
+    def on_moved(self, event):
+        self._update(event.dest_path)
+
+    def on_created(self, event):
+        if event.is_directory:
+            return
+        self._update(event.src_path)
+
+    def on_modified(self, event):
+        if event.is_directory:
+            return
+        self._update(event.src_path)
+
+    def _update(self,path):
+        (name, ext) = os.path.splitext(os.path.basename(path))
+        with open(path, 'r') as f:
+            data = f.read()
+        self.handler(name, ext, data)
+
+
 class DBServer(Node):
     SDF_PUBLISH_PD = 10.0
 
@@ -21,7 +51,16 @@ class DBServer(Node):
         self.create_service(GetObject3D, 'get_object3d', self.get_object3d_callback)
         self.create_service(GetFile, 'get_file', self.get_file_callback)
         self.get_logger().info("Services ready")
+
+        self.watch_handler = WatchHandler(handler=self.upsert)
+        self.observer = Observer()
+        self.observer.schedule(self.watch_handler, self.dirpath, recursive=True)
+        self.observer.start()
+
         
+    def upsert(self, name, typestr, data):
+        print(name, typestr, data)
+
     def connect_to_db(self):
         self.get_logger().info("Parsing environment...")
         from urllib.parse import urlparse
@@ -89,6 +128,7 @@ class DBServer(Node):
             response.data = "Not found: %s" % request.path
             self.get_logger().info(response.data) 
         return response
+
 
 def main(args=None):
     rclpy.init(args=args)
