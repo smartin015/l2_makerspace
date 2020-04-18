@@ -1,4 +1,5 @@
 from l2_msgs.srv import GetProject, GetFile, GetObject3D
+from l2_msgs.msg import Object3D
 
 import rclpy
 from rclpy.node import Node
@@ -10,11 +11,13 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 class WatchHandler(FileSystemEventHandler):
-    def __init__(self, handler):
+    def __init__(self, handler, dirpath):
         super().__init__()
         self.handler = handler
-        print("TODO walk dir and call _update on init")
-
+        # Push all files on init
+        for dirName, subdirList, fileList in os.walk(dirpath):
+            for fname in fileList:
+                self._update(os.path.join(dirName, fname))
 
     def on_moved(self, event):
         self._update(event.dest_path)
@@ -52,14 +55,46 @@ class DBServer(Node):
         self.create_service(GetFile, 'get_file', self.get_file_callback)
         self.get_logger().info("Services ready")
 
-        self.watch_handler = WatchHandler(handler=self.upsert)
+        self.watch_handler = WatchHandler(handler=self.upsert, dirpath=self.dirpath)
         self.observer = Observer()
         self.observer.schedule(self.watch_handler, self.dirpath, recursive=True)
         self.observer.start()
 
-        
+    def create_object3d_upsert_query(self, table):
+        PRIMARY_KEY=["id"]
+        DATABASE_COLUMNS=["objtype", "name", "data"]
+        columns = ', '.join([f'{col}' for col in DATABASE_COLUMNS])
+        constraint = ', '.join([f'{col}' for col in PRIMARY_KEY])
+        placeholder = ', '.join([f'%({col})s' for col in DATABASE_COLUMNS])
+        updates = ', '.join([f'{col} = EXCLUDED.{col}' for col in DATABASE_COLUMNS])
+        query = f"""INSERT INTO {table} ({columns}) 
+              VALUES ({placeholder}) 
+              ON CONFLICT ({constraint}) 
+              DO UPDATE SET {updates};"""
+        query.split()
+        query = ' '.join(query.split())
+        return query
+
     def upsert(self, name, typestr, data):
-        print(name, typestr, data)
+        objtype = {
+            ".wbt": Object3D.TYPE_PROTO,
+            ".sdf": Object3D.TYPE_SDF,
+            ".obj": Object3D.TYPE_OBJ,
+        }.get(typestr, Object3D.TYPE_UNKNOWN)
+
+        if objtype == Object3D.TYPE_UNKNOWN:
+            print("Skipping %s%s" % (name, typestr))
+            return
+
+        cursor = self.con.cursor()
+        cursor.execute(self.create_object3d_upsert_query(table="object3d"), {
+                  "objtype": int(objtype),
+                  "name": name,
+                  "data": data,
+              })
+        self.con.commit()
+        cursor.close()
+        print("Added %s%s to db" % (name, typestr))
 
     def connect_to_db(self):
         self.get_logger().info("Parsing environment...")
