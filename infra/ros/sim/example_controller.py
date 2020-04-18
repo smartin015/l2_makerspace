@@ -27,17 +27,27 @@ class ExampleController(WebotsNode):
         self.timer = self.create_timer(0.01 * self.timestep, self.pub_callback)
         self.motor = self.robot.getMotor('motor1')
         self.motor.setPosition(float('inf'))
-        self.motor.setVelocity(3.14/4)
+        self.velocity = 3.14/4
+        self.motor.setVelocity(self.velocity)
         
         # Reports NaN if not enabled
         self.motor.getPositionSensor().enable(100)
+        self.last_pos = self.motor.getPositionSensor().getValue()
+        self.last_pub = self.get_clock().now()
         self.jointStatePublisher = self.create_publisher(JointState, '/l2/vr/joint_states', 10)
         self.get_logger().info("Ready")
 
     def pub_callback(self):
+        pos = self.motor.getPositionSensor().getValue()
+        now = self.get_clock().now()
         msg = JointState(
             name=["motor1"], 
-            position=[self.motor.getPositionSensor().getValue()])
+            position=[pos],
+            velocity=[self.velocity],# [(pos - self.last_pos) / ((now - self.last_pub).nanoseconds / 1000000000.0)],
+        )
+
+        self.last_pos = pos
+        self.last_pub = now
         self.jointStatePublisher.publish(msg)
 
 def main(args=None):

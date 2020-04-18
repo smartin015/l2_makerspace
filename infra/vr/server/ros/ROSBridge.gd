@@ -85,6 +85,12 @@ remote func subscribe(topic, type, id: String):
     "type": type,
   })
 
+func unsubscribe(topic, id: String):
+  _broadcast(id, {
+    "op": "unsubscribe",
+    "topic": topic,
+  })
+
 remote func call_service(service, args, id: String):
   # TODO how do we direct calls to the right service location?
   # TODO attach a ROSCall object
@@ -160,16 +166,23 @@ func _on_data(id):
     "publish":
       # forward to subscribed players
       result.topic = _strip_ns(result.topic)
-      for ls in listeners.get(result.topic, []):
-        print("listener %s" % ls)
-        var p = gamestate.players.get_node(str(ls))
+      var ls = listeners.get(result.topic, [])
+      for l in ls:
+        var p = gamestate.players.find_node(str(l), false, false)
         if p != null:
-          print("Sending handle_ros_publish")
-          rpc_id(ls, "handle_ros_publish", 
+          print("pub %s" % p)
+          rpc_id(l, "handle_ros_publish", 
             result.get("topic", ""), 
             result.get("msg", ""), 
             result.get("id", ""))
-          
+        else:
+          # Clear out the listener if the user is no longer present
+          ls.erase(l)
+
+      if len(ls) == 0:
+        # Unsubscribe if nobody's listening
+        print("ROS(%s) unsub %s (unused)" % [id, result.topic])
+        unsubscribe(result.topic, "unsub")
     "call_service":
       result.service = _strip_ns(result.service)
       print("ROS(%s) -> call_service %s" % [id, result.service])

@@ -1,6 +1,25 @@
 version: '3.5'
 
 services:
+  webots_nogpu:
+    image: l2sim
+    volumes:
+      - "webots:/tmp"
+      - "./single_motor.wbt:/single_motor.wbt"
+      - "/tmp/.X11-unix:/tmp/.X11-unix"
+    environment:
+      - "DISPLAY=$DISPLAY"
+    command: /webots_ros2/install/webots_ros2_desktop/share/webots_ros2_desktop/webots/webots --no-sandbox --stdout --stderr /single_motor.wbt
+  example_controller:
+    image: l2sim
+    volumes:
+      - "webots:/tmp"
+    networks:
+      - l2
+    environment:
+      - "WEBOTS_HOME=/webots_ros2/install/webots_ros2_desktop/share/webots_ros2_desktop/webots/"
+      - "LD_LIBRARY_PATH=/webots_ros2/install/webots_ros2_desktop/share/webots_ros2_desktop/webots/lib/controller"
+    command: /ros_entrypoint.sh ros2 run l2_sim example_controller --ros-args -p synchronization:=False
   gzweb:
     image: docker.io/osrf/gazebo:gzweb8
     command: npm start
@@ -45,3 +64,6 @@ networks:
   l2:
     driver: bridge
     name: l2
+
+volumes:
+  webots:
