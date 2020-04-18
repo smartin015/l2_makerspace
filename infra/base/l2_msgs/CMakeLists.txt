@@ -41,6 +41,9 @@ set(msg_files
   msg/Object3DArray.msg
   msg/Project.msg 
   msg/Projects.msg
+  msg/L2Sequence.msg
+  msg/L2SequenceArray.msg
+  msg/L2SequenceItem.msg
   msg/Simulation.msg
   msg/VRLockStatus.msg
   msg/VRPlayers.msg) 
@@ -51,7 +54,9 @@ set(srv_files
   srv/GetFile.srv
   srv/GetProject.srv
   srv/GetObject3D.srv)
-rosidl_generate_interfaces( ${PROJECT_NAME} ${msg_files} ${srv_files} DEPENDENCIES builtin_interfaces std_msgs diagnostic_msgs geometry_msgs)
+set(action_files
+  action/L2Sequence.action)
+rosidl_generate_interfaces( ${PROJECT_NAME} ${msg_files} ${srv_files} ${action_files} DEPENDENCIES builtin_interfaces std_msgs diagnostic_msgs geometry_msgs)
 ament_export_dependencies(rosidl_default_runtime)
 
 ament_package()

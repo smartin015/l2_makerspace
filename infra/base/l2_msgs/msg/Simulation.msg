@@ -1,5 +1,5 @@
 # Namespace is prepended to published messages for this simulation
-string namespace
+string ns
 
 # Path the worker reports this message to
 string report_path

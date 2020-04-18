@@ -1,0 +1,10 @@
+# This file is read by the supervisor node and represents
+# possible work that can be executed.
+# It loosely follows the style of docker-compose, but not
+# all features are present.
+test:
+  test1:
+    image: "hello-world"
+b: 
+  test2:
+    asdf: "herp"

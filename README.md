@@ -31,4 +31,5 @@ See ./base for base image (available publicly for download at gcr.io/l2-making/b
   *  `/opt/ros/crystal/lib/python3.6/site-packages/webots_ros2_examples/example_controller.py`
   *  `vim /opt/ros/crystal/lib/python3.6/site-packages/webots_ros2_core/webots_node.py`
 * You can build webots from source for eloquent; this is probably easier.
+* Webots ROS2 Node class has a timer that calls a `timer_callback` callback - accidentally overriding this causes the controller to halt. There's also naming collisions in rclp if you name something "Sequence"
 
