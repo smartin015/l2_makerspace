@@ -11,6 +11,8 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 class WatchHandler(FileSystemEventHandler):
+    IGNORED_EXT = [".swp"]
+
     def __init__(self, handler, dirpath):
         super().__init__()
         self.handler = handler
@@ -34,6 +36,9 @@ class WatchHandler(FileSystemEventHandler):
 
     def _update(self,path):
         (name, ext) = os.path.splitext(os.path.basename(path))
+        if ext in self.IGNORED_EXT:
+            return
+        print("Reading %s" % path)
         with open(path, 'r') as f:
             data = f.read()
         self.handler(name, ext, data)
@@ -60,13 +65,11 @@ class DBServer(Node):
         self.observer.schedule(self.watch_handler, self.dirpath, recursive=True)
         self.observer.start()
 
-    def create_object3d_upsert_query(self, table):
-        PRIMARY_KEY=["id"]
-        DATABASE_COLUMNS=["objtype", "name", "data"]
-        columns = ', '.join([f'{col}' for col in DATABASE_COLUMNS])
-        constraint = ', '.join([f'{col}' for col in PRIMARY_KEY])
-        placeholder = ', '.join([f'%({col})s' for col in DATABASE_COLUMNS])
-        updates = ', '.join([f'{col} = EXCLUDED.{col}' for col in DATABASE_COLUMNS])
+    def create_upsert_query(self, table, pkey, cols):
+        columns = ', '.join([f'{col}' for col in cols])
+        constraint = ', '.join([f'{col}' for col in pkey])
+        placeholder = ', '.join([f'%({col})s' for col in cols])
+        updates = ', '.join([f'{col} = EXCLUDED.{col}' for col in cols])
         query = f"""INSERT INTO {table} ({columns}) 
               VALUES ({placeholder}) 
               ON CONFLICT ({constraint}) 
@@ -87,7 +90,11 @@ class DBServer(Node):
             return
 
         cursor = self.con.cursor()
-        cursor.execute(self.create_object3d_upsert_query(table="object3d"), {
+        cursor.execute(self.create_upsert_query(
+                table="object3d",
+                pkey=["name"],
+                cols=["objtype", "name", "data"],
+            ), {
                   "objtype": int(objtype),
                   "name": name,
                   "data": data,
@@ -124,8 +131,9 @@ class DBServer(Node):
         cur = None
         try:
             cur = self.con.cursor()
-            cur.execute("SELECT object3d.objtype, object3d.data FROM object3d_registry " +
-                                    "LEFT JOIN object3d ON object3d.id=object3d_registry.object3d_id WHERE object3d_registry.name = %(name)s LIMIT 1", {"name": request.name})
+            #cur.execute("SELECT object3d.objtype, object3d.data FROM object3d_registry " +
+            #                        "LEFT JOIN object3d ON object3d.id=object3d_registry.object3d_id WHERE object3d_registry.name = %(name)s LIMIT 1", {"name": request.name})
+            cur.execute("SELECT objtype, data FROM object3d WHERE name = %(name)s LIMIT 1", {"name": request.name})
             row = cur.fetchone()
             if row is None:
                 response.success = False

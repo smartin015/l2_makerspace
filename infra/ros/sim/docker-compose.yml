@@ -1,6 +1,20 @@
 version: '3.5'
 
 services:
+  sim:
+    image: l2sim
+    pid: "host" # TODO(https://github.com/ros2/rmw_fastrtps/issues/349)
+    networks:
+      - l2
+    volumes:
+      - "webots:/tmp"
+      - "./tmp:/cfg"
+      - "/tmp/.X11-unix:/tmp/.X11-unix"
+    environment:
+      - "DISPLAY=$DISPLAY"
+      - "PYTHONUNBUFFERED=1"
+    command: /ros_entrypoint.sh ros2 run l2_sim node --ros-args -p report_path:=/test -p object_config:=single_motor -r __ns:=/l2
+
   webots_nogpu:
     image: l2sim
     volumes:
@@ -19,7 +33,7 @@ services:
     environment:
       - "WEBOTS_HOME=/webots_ros2/install/webots_ros2_desktop/share/webots_ros2_desktop/webots/"
       - "LD_LIBRARY_PATH=/webots_ros2/install/webots_ros2_desktop/share/webots_ros2_desktop/webots/lib/controller"
-    command: /ros_entrypoint.sh ros2 run l2_sim example_controller --ros-args -p synchronization:=False
+    command: /ros_entrypoint.sh ros2 run l2_sim example_controller --ros-args -p synchronization:=False -r __ns:=/l2
   gzweb:
     image: docker.io/osrf/gazebo:gzweb8
     command: npm start
