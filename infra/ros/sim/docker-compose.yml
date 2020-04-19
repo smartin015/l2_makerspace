@@ -5,11 +5,11 @@ services:
     image: l2sim
     volumes:
       - "webots:/tmp"
-      - "./single_motor.wbt:/single_motor.wbt"
+      - "./tmp:/cfg"
       - "/tmp/.X11-unix:/tmp/.X11-unix"
     environment:
       - "DISPLAY=$DISPLAY"
-    command: /webots_ros2/install/webots_ros2_desktop/share/webots_ros2_desktop/webots/webots --no-sandbox --stdout --stderr /single_motor.wbt
+    command: /webots_ros2/install/webots_ros2_desktop/share/webots_ros2_desktop/webots/webots --no-sandbox --stdout --stderr /cfg/single_motor.wbt
   example_controller:
     image: l2sim
     volumes:

@@ -56,7 +56,7 @@ class SimWorker(Node):
 
     def launch(self):
 	# Webots
-        arguments = ['--mode=realtime', '--world='+self.TEMP_PATH]
+        arguments = ['--mode=realtime', '--world='+self.TEMP_PATH, '--stdout', '--stderr']
         webots = launch_ros.actions.Node(package='webots_ros2_core', node_executable='webots_launcher',
                                          arguments=arguments, output='screen')
         ld = LaunchDescription([
