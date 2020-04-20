@@ -33,4 +33,4 @@ See ./base for base image (available publicly for download at gcr.io/l2-making/b
 * You can build webots from source for eloquent; this is probably easier.
 * Webots ROS2 Node class has a timer that calls a `timer_callback` callback - accidentally overriding this causes the controller to halt. There's also naming collisions in rclp if you name something "Sequence"
 * Sometimes docker-compose takes a looong time to start, with no console output. This was because there was low entropy on the server in order to open a secure connection (see [here](https://github.com/docker/compose/issues/6552))
-
+* Streaming data from Webots requires setting IPC to "host" mode on the docker container; otherwise it exits with a "code 245"
