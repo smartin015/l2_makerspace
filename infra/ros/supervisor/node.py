@@ -52,7 +52,12 @@ class Work():
                 self.supervisor.get_logger().error("Config %s.%s has no image to run; ignoring" % (item.name, c[0]))
                 continue
             cc = dict([(k, v) for (k, v) in c[1].items() if k in ["cmd", "volumes", "network"]])
-            self.supervisor.client.containers.run(image, labels={"l2_work_id": self.id}, detach=True, pid_mode="host", **cc)
+            labels = {"l2_work_id": self.id}
+            #if c[1].get("placement"): # Placement implies swarm / service
+            #rp = docker.RestartPolicy(condition="none") # Don't auto restart
+            #self.supervisor.client.services.create(image, labels=labels, restart_policy=rp, *cc)
+            #else:
+            self.supervisor.client.containers.run(image, labels=labels, detach=True, pid_mode="host", **cc)
         return container_ids
 
     def active(self):
@@ -88,6 +93,11 @@ class Work():
                    c.remove()
                    self.info("%s (%s) removed (%s %d)" % (c.name, c.short_id, c.status, details["StatusCode"]))
         
+            for s in self.supervisor.client.services.list(filters=self.filters):
+                print(s.tasks())
+                print("TODO handle service task management")
+                # s.remove() if tasks exited/failed
+
             current = self.sequence.items[self.idx]
             if current.code != 0:
                 self.stop_sequence(current)

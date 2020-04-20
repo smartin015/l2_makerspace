@@ -1,10 +1,48 @@
 from l2_msgs.srv import GetProject, GetFile, GetObject3D
+from l2_msgs.msg import Object3D
 
 import rclpy
 from rclpy.node import Node
 
 import psycopg2
 import os
+
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+
+class WatchHandler(FileSystemEventHandler):
+    IGNORED_EXT = [".swp"]
+
+    def __init__(self, handler, dirpath):
+        super().__init__()
+        self.handler = handler
+        # Push all files on init
+        for dirName, subdirList, fileList in os.walk(dirpath):
+            for fname in fileList:
+                self._update(os.path.join(dirName, fname))
+
+    def on_moved(self, event):
+        self._update(event.dest_path)
+
+    def on_created(self, event):
+        if event.is_directory:
+            return
+        self._update(event.src_path)
+
+    def on_modified(self, event):
+        if event.is_directory:
+            return
+        self._update(event.src_path)
+
+    def _update(self,path):
+        (name, ext) = os.path.splitext(os.path.basename(path))
+        if ext in self.IGNORED_EXT:
+            return
+        print("Reading %s" % path)
+        with open(path, 'r') as f:
+            data = f.read()
+        self.handler(name, ext, data)
+
 
 class DBServer(Node):
     SDF_PUBLISH_PD = 10.0
@@ -21,7 +59,50 @@ class DBServer(Node):
         self.create_service(GetObject3D, 'get_object3d', self.get_object3d_callback)
         self.create_service(GetFile, 'get_file', self.get_file_callback)
         self.get_logger().info("Services ready")
-        
+
+        self.watch_handler = WatchHandler(handler=self.upsert, dirpath=self.dirpath)
+        self.observer = Observer()
+        self.observer.schedule(self.watch_handler, self.dirpath, recursive=True)
+        self.observer.start()
+
+    def create_upsert_query(self, table, pkey, cols):
+        columns = ', '.join([f'{col}' for col in cols])
+        constraint = ', '.join([f'{col}' for col in pkey])
+        placeholder = ', '.join([f'%({col})s' for col in cols])
+        updates = ', '.join([f'{col} = EXCLUDED.{col}' for col in cols])
+        query = f"""INSERT INTO {table} ({columns}) 
+              VALUES ({placeholder}) 
+              ON CONFLICT ({constraint}) 
+              DO UPDATE SET {updates};"""
+        query.split()
+        query = ' '.join(query.split())
+        return query
+
+    def upsert(self, name, typestr, data):
+        objtype = {
+            ".wbt": Object3D.TYPE_PROTO,
+            ".sdf": Object3D.TYPE_SDF,
+            ".obj": Object3D.TYPE_OBJ,
+        }.get(typestr, Object3D.TYPE_UNKNOWN)
+
+        if objtype == Object3D.TYPE_UNKNOWN:
+            print("Skipping %s%s" % (name, typestr))
+            return
+
+        cursor = self.con.cursor()
+        cursor.execute(self.create_upsert_query(
+                table="object3d",
+                pkey=["name"],
+                cols=["objtype", "name", "data"],
+            ), {
+                  "objtype": int(objtype),
+                  "name": name,
+                  "data": data,
+              })
+        self.con.commit()
+        cursor.close()
+        print("Added %s%s to db" % (name, typestr))
+
     def connect_to_db(self):
         self.get_logger().info("Parsing environment...")
         from urllib.parse import urlparse
@@ -50,8 +131,9 @@ class DBServer(Node):
         cur = None
         try:
             cur = self.con.cursor()
-            cur.execute("SELECT object3d.objtype, object3d.data FROM object3d_registry " +
-                                    "LEFT JOIN object3d ON object3d.id=object3d_registry.object3d_id WHERE object3d_registry.name = %(name)s LIMIT 1", {"name": request.name})
+            #cur.execute("SELECT object3d.objtype, object3d.data FROM object3d_registry " +
+            #                        "LEFT JOIN object3d ON object3d.id=object3d_registry.object3d_id WHERE object3d_registry.name = %(name)s LIMIT 1", {"name": request.name})
+            cur.execute("SELECT objtype, data FROM object3d WHERE name = %(name)s LIMIT 1", {"name": request.name})
             row = cur.fetchone()
             if row is None:
                 response.success = False
@@ -89,6 +171,7 @@ class DBServer(Node):
             response.data = "Not found: %s" % request.path
             self.get_logger().info(response.data) 
         return response
+
 
 def main(args=None):
     rclpy.init(args=args)

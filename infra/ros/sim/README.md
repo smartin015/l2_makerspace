@@ -45,7 +45,14 @@ docker volume create webots
 docker network create l2
 ```
 
-Start the webots server container 
+If running on a headless server, make sure to start an xvfb display
+
+```
+Xvfb :99 -screen 0 1024x768x16
+export DISPLAY=:99
+```
+
+Start the webots server container (leave out the --device stanza if no intel GPU)
 
 ```
 docker run -v webots:/tmp -v $(pwd)/single_motor.wbt:/single_motor.wbt --volume=/tmp/.X11-unix:/tmp/.X11-unix   
@@ -66,9 +73,9 @@ ros2 run l2_sim example_controller --ros-args -p synchronization:=False
 Exec another ros node and listen to the topic
 
 ```
-docker run -it --rm --net=l2 l2base /bin/bash
+docker run -it --rm --net=l2 --pid=host l2base /bin/bash
 source /ros_entrypoint.sh
-ros2 topic echo /joint_state
+ros2 topic echo /l2/vr/joint_state
 ```
 
 ### Client simulation to server

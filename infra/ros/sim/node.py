@@ -2,65 +2,67 @@
 import os
 import rclpy
 from rclpy.node import Node
-from l2_msgs.msg import Simulation, Object3D, GetObject3D
+from rcl_interfaces.msg import ParameterDescriptor
+from l2_msgs.msg import Simulation, Object3D
+from l2_msgs.srv import GetObject3D
 import uuid
 import threading
 from launch import LaunchDescription
 from launch import LaunchService
+import launch
 import launch_ros.actions
-
+import osrf_pycommon
 from webots_ros2_core.utils import ControllerLauncher
+
+class SimError(Exception):
+    pass
 
 class SimWorker(Node):
     PUBLISH_PD = 60  # seconds
     TEMP_PATH = "/tmp/world.wbt"
 
-    def __init__(self):
-        name = 'l2_sim_worker_'+uuid.uuid4()
+    def __init__(self, ls):
+        name = 'l2_sim_worker_'+uuid.uuid4().hex
         super().__init__(name)
-
-        self.sim_msg = Simulation(
-            namespace=self.get_parameter('namespace'),
-            report_path=self.get_parameter('report_path'),
-            worker_id=name,
-            object=Object3D(name=self.get_parameter('object_config')))
+        self.ls = ls
+        self.launch_ready = False
+        self.declare_parameter('report_path', '', ParameterDescriptor())
+        self.declare_parameter('object_config', '', ParameterDescriptor())
         self.get_logger().info("Init")
-        self.sim_pub = self.create_publisher(Simulation, '', 10)
+        self.sim_msg = Simulation(
+            ns=self.get_namespace(),
+            report_path=self.get_parameter('report_path').value,
+            worker_id=name,
+            object=Object3D(name=self.get_parameter('object_config').value))
+        self.sim_pub = self.create_publisher(Simulation, 'simulation', 10)
         self.sim_pub_timer = self.create_timer(self.PUBLISH_PD, self.publish_sim)
-        self.publish_sim()
-        self.resolve_and_launch()
+        self.getcli = self.create_client(GetObject3D, 'storage/get_object3d')
+        self.get_logger().info("Waiting for storage")
+        self.getcli.wait_for_service(timeout_sec=5)
+        if not self.getcli.service_is_ready():
+            raise SimError("Timed out waiting for storage")
+        self.get_logger().info("GetObject3D %s" % self.sim_msg.object.name)
+        future = self.getcli.call_async(GetObject3D.Request(name=self.sim_msg.object.name))
+        future.add_done_callback(self.handle_response)
 
-    def resolve_and_launch(self):
-        # TODO lookup from storage
-        self.lookup_response_then_launch(GetObject3D.Response(
-            success=True,
-            message="ok",
-            object=Object3D(
-                type=Object3D.TYPE_PROTO,
-                name="testobj",
-                data="TODO",
-                )
-            ))
-
-    def lookup_response_then_launch(self, response):
+    def handle_response(self, response):
         if response.exception() is not None:
-            self.get_logger().error(str(response.exception()))
+            raise response.exception()
         response = response.result()
         if not response.success or response.object.type != Object3D.TYPE_PROTO:
-            self.logger().error("Bad result: " + str(response))
-            return
+            raise SimError("Bad result: " + str(response))
         with open(self.TEMP_PATH, 'w') as f:
             f.write(response.object.data)
-        print("Lookup response object written to temp file %s" % self.TEMP_PATH)
+        self.get_logger().info("Response for %s written to %s" % (response.object.name, self.TEMP_PATH))
         self.launch()
 
     def launch(self):
-	# Webots
-        arguments = ['--mode=realtime', '--world='+self.TEMP_PATH]
+    # Webots
+        arguments = ['--mode=realtime', '--world='+self.TEMP_PATH, '--no-gui']
         webots = launch_ros.actions.Node(package='webots_ros2_core', node_executable='webots_launcher',
                                          arguments=arguments, output='screen')
         ld = LaunchDescription([
-	    webots,
+            webots,
             # Shutdown launch when Webots exits.
             launch.actions.RegisterEventHandler(
                 event_handler=launch.event_handlers.OnProcessExit(
@@ -69,19 +71,29 @@ class SimWorker(Node):
                 )
             ),
         ])
-        self.ls = LaunchService()
         self.ls.include_launch_description(ld)
-        self.sim_thread = threading.Thread(target=self.ls.run)
-        self.get_logger().info("Launched simulator on new thread")
-        self.sim_thread.start()
+        self.launch_ready = True
+    # Note: launch service will be started from main thread
+        self.publish_sim()
 
     def publish_sim(self):
-        self.pub.publish(self.sim_msg)
+        self.sim_pub.publish(self.sim_msg)
 
 def main(args=None):
     rclpy.init(args=args)
-    server = SimWorker()
-    rclpy.spin(server)
+    ls = LaunchService(debug=True)
+    server = SimWorker(ls)
+    print("Waiting until launch ready")
+    while not server.launch_ready:
+        rclpy.spin_once(server)
+    print("Starting async task")
+    loop = osrf_pycommon.process_utils.get_loop()
+    launch_task = loop.create_task(ls.run_async())
+    async def rclpy_spin():
+        await rclpy.spin(server)
+    rcl_task = loop.create_task(rclpy_spin())
+    print("Looping")
+    loop.run_until_complete(launch_task)
     rclpy.shutdown()
 
 if __name__ == '__main__':

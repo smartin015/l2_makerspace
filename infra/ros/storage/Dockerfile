@@ -3,5 +3,5 @@ ARG L2NODES=node.py
 FROM l2base-pre
 FROM l2base-post
 
-RUN pip3 install psycopg2-binary
+RUN pip3 install psycopg2-binary watchdog
 COPY --from=0 /node/install /node/install
