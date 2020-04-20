@@ -19,7 +19,7 @@ func _ready():
 func advertisement(id):
   return { 
     "op": "advertise",
-    "topic": ROSBridge.NS + "/Players",
+    "topic": "Players",
     "type": TOPIC_TYPE,
     "id": "%s_players" % id,
   }

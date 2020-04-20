@@ -1,6 +1,7 @@
 # from l2_msgs.srv import GetProject
 import os
 import rclpy
+import asyncio
 from rclpy.node import Node
 from rcl_interfaces.msg import ParameterDescriptor
 from l2_msgs.msg import Simulation, Object3D
@@ -18,7 +19,7 @@ class SimError(Exception):
     pass
 
 class SimWorker(Node):
-    PUBLISH_PD = 60  # seconds
+    PUBLISH_PD = 5  # seconds
     TEMP_PATH = "/tmp/world.wbt"
 
     def __init__(self, ls):
@@ -86,14 +87,16 @@ def main(args=None):
     print("Waiting until launch ready")
     while not server.launch_ready:
         rclpy.spin_once(server)
-    print("Starting async task")
     loop = osrf_pycommon.process_utils.get_loop()
     launch_task = loop.create_task(ls.run_async())
-    async def rclpy_spin():
-        await rclpy.spin(server)
-    rcl_task = loop.create_task(rclpy_spin())
-    print("Looping")
-    loop.run_until_complete(launch_task)
+    print("Spinning")
+    # This is probably not the most awesome way to hand
+    # off between rclpy and the launch service... but it works.
+    # asyncio code copied from https://github.com/ros2/launch/pull/210
+    while True:
+        loop.run_until_complete(asyncio.sleep(0, loop=loop))
+        rclpy.spin_once(server)
+    loop.close()
     rclpy.shutdown()
 
 if __name__ == '__main__':

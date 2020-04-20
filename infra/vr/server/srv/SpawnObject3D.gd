@@ -6,6 +6,7 @@ extends Node
 
 # TODO: Link this up to message type spec in infra/base/l2_msgs/msg/Object3D.msg
 enum type {OBJ = 1, SDF = 2, PROTO = 3}
+const srvname = "SpawnObject3D"
 
 onready var actors = get_node("/root/World/Actors")
 
@@ -15,13 +16,14 @@ func _ready():
 func advertisement(id):
   return { 
     "op": "advertise_service",
-    "service": ROSBridge.NS + "/SpawnObject3D",
+    "service": srvname,
     "type": "l2_msgs/SpawnObject3D",
     "id": "%s_spawnobject3d" % id,
   }
 
 func maybe_handle(service, id, args, peer_id):
-  if service != ('%s/SpawnObject3D' % ROSBridge.NS):
+  print("%s vs %s" % [service, srvname])
+  if service != srvname:
     return false
 
   var tf = Transform.IDENTITY
@@ -37,7 +39,7 @@ func maybe_handle(service, id, args, peer_id):
 
   match int(args.object.type):
     type.OBJ:
-      ROSBridge.service_response("SpawnObject3D", id, {
+      ROSBridge.service_response(srvname, id, {
         "success": false, 
         "message": "OBJ parsing not implemented"
       })
@@ -45,7 +47,7 @@ func maybe_handle(service, id, args, peer_id):
       # We forward the peer ID so that we can monitor the remote
       # simulated environment to autoremove the object
       actors.spawn(args.object.name, "SDF", args.object.data, tf, peer_id)
-      ROSBridge.service_response("SpawnObject3D", id, {
+      ROSBridge.service_response(srvname, id, {
         "success": true, 
         "message": "SDF model %s created @ %s" % [args.object.name, tf],
       })
@@ -53,12 +55,12 @@ func maybe_handle(service, id, args, peer_id):
       # We forward the peer ID so that we can monitor the remote
       # simulated environment to autoremove the object
       actors.spawn(args.object.name, "PROTO", args.object.data, tf, peer_id)
-      ROSBridge.service_response("SpawnObject3D", id, {
+      ROSBridge.service_response(srvname, id, {
         "success": true, 
         "message": "PROTO model %s created @ %s" % [args.object.name, tf],
       })
     _:
-      ROSBridge.service_response("SpawnObject3D", id, {
+      ROSBridge.service_response(srvname, id, {
         "success": false, 
         "message": "Unknown type %s" % args.object.type
       })

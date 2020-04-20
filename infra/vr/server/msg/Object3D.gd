@@ -11,7 +11,7 @@ onready var actors = get_node("/root/World/Actors")
 func _ready():
   ROSBridge.topics.push_back(self)
   polltmr = Timer.new()
-  polltmr.wait_time = 10.0
+  polltmr.wait_time = 5.0
   polltmr.connect("timeout", self, "_poll") 
   add_child(polltmr)
   polltmr.start()
@@ -19,7 +19,7 @@ func _ready():
 func advertisement(id):
   return { 
     "op": "advertise",
-    "topic": ROSBridge.NS + "/Object3D",
+    "topic": "Object3D",
     "type": TOPIC_TYPE,
     "id": "%s_object3d" % id,
   }

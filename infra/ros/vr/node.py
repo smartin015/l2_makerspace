@@ -1,7 +1,6 @@
 # This node handles ROS-side logic for the VR server
 from l2_msgs.srv import GetFile, SpawnObject3D, RemoveObject3D, GetObject3D
-from l2_msgs.msg import Object3DArray, Object3D
-from gazebo_msgs.msg import ModelStates
+from l2_msgs.msg import Object3DArray, Object3D, Simulation
 from std_msgs.msg import String
 import pprint
 import rclpy
@@ -23,7 +22,7 @@ class VRServer(Node):
         T0 = Time(clock_type=self.get_clock().clock_type)
 
         self.ignore_names = set(['ground_plane'])
-        self.sim_model_states = ModelStates()
+        self.sim_state = Simulation() # TODO support multiple simulations
         self.vr_object3d = Object3DArray()
         self.last_sim_msg = T0
         self.last_vr_msg = T0
@@ -45,14 +44,16 @@ class VRServer(Node):
         self.vr_missing_pub = self.create_publisher(Object3DArray, "vr/missing_object3d", 10)
         self.vr_extra_pub = self.create_publisher(Object3DArray, "vr/extra_object3d", 10)
         self.create_subscription(Object3DArray, "vr/Object3D", self.set_vr_state, qos_profile_sensor_data, callback_group=cb_group)
-        self.create_subscription(ModelStates, "/model_states", self.set_sim_state, qos_profile_sensor_data, callback_group=cb_group)
+        self.create_subscription(Simulation, "simulation", self.set_sim_state, qos_profile_sensor_data, callback_group=cb_group)
 
     def stale(self):
         now = self.get_clock().now()
         return (now - self.last_sim_msg > self.MAX_AGE) or (now - self.last_vr_msg > self.MAX_AGE)
 
     def sim_objset(self):
-        return set(self.sim_model_states.name).difference(self.ignore_names)
+        if self.sim_state.object.name == "":
+            return set()
+        return set([self.sim_state.object.name]).difference(self.ignore_names)
 
     def vr_objset(self):
         return set([v.name for v in self.vr_object3d.objects])
@@ -72,10 +73,12 @@ class VRServer(Node):
         # Look up any missing object configs via the storage ros node,
         # then push them to the VR server in the callback
         for name in self.sim_objset().difference(self.vr_objset()):
+            self.get_logger().info("Lookup %s" % name)
             self.call_with_deadline(self.getcli, GetObject3D.Request(name=name), self.get_object3d_response)
 
         # Remove any objects on the VR server that are missing in sim
         for name in self.vr_objset().difference(self.sim_objset()):
+            self.get_logger().info("Remove %s" % name)
             self.call_with_deadline(self.rmcli, RemoveObject3D.Request(name=name), self.log_response)
 
     def get_object3d_response(self, response):
@@ -105,6 +108,7 @@ class VRServer(Node):
             "vr_ts": self.fmt_time(self.last_vr_msg),
             "sim_objs": self.sim_objset(),
             "vr_objs": self.vr_objset(),
+            "stale": self.stale(),
         }
         self.get_logger().info(pprint.pformat(status))
         self.vr_missing_pub.publish(Object3DArray(objects=[Object3D(name=n) for n in self.vr_objset().difference(self.sim_objset())]))
@@ -115,7 +119,7 @@ class VRServer(Node):
         self.last_vr_msg = self.get_clock().now()
 
     def set_sim_state(self, msg):
-        self.sim_model_states = msg
+        self.sim_state = msg
         self.last_sim_msg = self.get_clock().now()
 
     def spin(self):

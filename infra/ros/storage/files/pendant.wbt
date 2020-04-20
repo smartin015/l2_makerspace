@@ -1,0 +1,49 @@
+#VRML_SIM V8.5 utf8
+WorldInfo {
+  info [
+    "Pendant test"
+    "Q2 2020"
+  ]
+}
+Viewpoint {
+  orientation 1 0 0 -0.8
+  position 0.25 0.708035 0.894691
+}
+Background {
+  skyColor [
+    0.4 0.4 0.4
+  ]
+}
+PointLight {
+  ambientIntensity 0.54
+  intensity 0.5
+  location 0 1 0
+}
+DEF EXAMPLE Robot {
+  name "pendant"
+  controller "<extern>"
+  translation 0 2 -2
+  children [
+    Solid {
+      translation 0 0.025 0
+      children [
+        DEF CONE_SHAPE Shape {
+          appearance PBRAppearance {
+            baseColor 0.2 0.8 0.2
+            roughness 1
+            metalness 0
+          }
+          geometry Cone {
+            bottomRadius 0.03
+            height 0.05
+          }
+        }
+      ]
+    }
+    Solid {
+      translation 0 -0.025 0
+      rotation 1 0 0 3.14159
+      children [ USE CONE_SHAPE ]
+    }
+  ]
+}

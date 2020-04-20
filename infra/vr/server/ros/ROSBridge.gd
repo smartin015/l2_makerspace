@@ -27,6 +27,12 @@ func connection_msgs(id):
     result.push_back(s.advertisement(id))
   for t in topics:
     result.push_back(t.advertisement(id))
+
+  for r in result:
+    if r.get("topic"):
+      r["topic"] = _ns(r["topic"])
+    elif r.get("service"):
+      r["service"] = _ns(r["service"])
   return result
 
 func _ready():
@@ -170,7 +176,6 @@ func _on_data(id):
       for l in ls:
         var p = gamestate.players.find_node(str(l), false, false)
         if p != null:
-          print("pub %s" % p)
           rpc_id(l, "handle_ros_publish", 
             result.get("topic", ""), 
             result.get("msg", ""), 
@@ -189,9 +194,9 @@ func _on_data(id):
       for s in services:
         if s.maybe_handle(result.service, result.id, result.args, id):
           return
-      print("ROS(%s) Unhandled call_service: ", [id, result.service])
-      # TODO return with error
-    _: print("ROS(%s) Unhandled op: ", [id, result.op])
+      print("ROS(%s) Unhandled call_service: %s" % [id, result.service])
+    _: 
+      print("ROS(%s) Unhandled op: ", [id, result.op])
 
 func _process(delta):
   _server.poll()

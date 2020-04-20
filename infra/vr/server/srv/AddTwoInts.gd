@@ -5,6 +5,8 @@
 #   ros2 service call /l2/vr/AddTwoInts example_interfaces/srv/AddTwoInts '{a: 1, b: 2}'
 extends Node
 
+const srvname = "AddTwoInts"
+
 func _ready():
   #ROSBridge.services.push_back(self)
   pass
@@ -13,15 +15,15 @@ func advertisement(id):
   return { 
     "op": "advertise_service",
     "type": "example_interfaces/AddTwoInts",
-    "service": ROSBridge.NS + "/AddTwoInts",
+    "service": srvname,
     "id": "%s_addtwoints" % id,
   }
 
 func maybe_handle(service, id, args, peer_id):
-  if service != ('%s/AddTwoInts' % ROSBridge.NS):
+  if service != srvname:
     return false
   
-  ROSBridge.service_response("AddTwoInts", id, {
+  ROSBridge.service_response(srvname, id, {
     "sum": args.a + args.b, 
   })
   return true

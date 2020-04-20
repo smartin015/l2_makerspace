@@ -11,7 +11,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 class WatchHandler(FileSystemEventHandler):
-    IGNORED_EXT = [".swp"]
+    EXT_LIST = [".wbt", ".sdf"]
 
     def __init__(self, handler, dirpath):
         super().__init__()
@@ -36,7 +36,7 @@ class WatchHandler(FileSystemEventHandler):
 
     def _update(self,path):
         (name, ext) = os.path.splitext(os.path.basename(path))
-        if ext in self.IGNORED_EXT:
+        if ext not in self.EXT_LIST:
             return
         print("Reading %s" % path)
         with open(path, 'r') as f:

@@ -5,6 +5,7 @@
 extends Node
 
 onready var actors = get_node("/root/World/Actors")
+const srvname = "RemoveObject3D"
 
 func _ready():
   ROSBridge.services.push_back(self)
@@ -12,17 +13,17 @@ func _ready():
 func advertisement(id):
   return { 
     "op": "advertise_service",
-    "service": ROSBridge.NS + "/RemoveObject3D",
+    "service": srvname,
     "type": "l2_msgs/RemoveObject3D",
     "id": "%s_rmobject3d" % id,
   }
 
 func maybe_handle(service, id, args, peer_id):
-  if service != ('%s/RemoveObject3D' % ROSBridge.NS):
+  if service != srvname:
     return false
 
   var errstr = actors.remove(args.name)
-  ROSBridge.service_response("RemoveObject3D", id, {
+  ROSBridge.service_response(srvname, id, {
     "success": errstr != null, 
     "message": errstr,
   })
