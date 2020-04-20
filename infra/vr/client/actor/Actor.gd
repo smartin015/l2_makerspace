@@ -31,12 +31,12 @@ func _setupControlZone(n):
 
 func _setupHingeJoint(n):
   var j = PuppetJoint.new()
-  if !n.data.get("name"):
-    print("ERROR joint has no name!")
+  if n.data.get("name") == null:
+    print("ERROR joint has no name! data " + str(n.data))
     return
   j.type = PuppetJoint.REVOLUTE
   var axis = n.data.get("axis", [0,1,0])
-  j.axis = Vector3(axis[0], axis[2], axis[1])
+  j.axis = Vector3(axis[0], axis[2], axis[1]).normalized()
   joints[n.data.get("name")] = j
   n.get_parent().add_child(j)
   for c in n.get_children():
@@ -58,6 +58,8 @@ func _postprocess(n: Node):
         _setupDepthRender(n)
       CONTROL_ZONE_NAME:
         _setupControlZone(n)
+  if n == null:
+    return
   for c in n.get_children():
     _postprocess(c)
   return n

@@ -282,25 +282,25 @@ func test_single_motor():
   var got = JSON.print(proto.parse("""
     #VRML_SIM V8.5 utf8
     WorldInfo {
-      info [           
+      info [
         "Single motor example test"
-        "Q2 2020"          
-      ]                
-    }           
-    Viewpoint {     
-      orientation 1 0 0 -0.8                    
+        "Q2 2020"
+      ]
+    }
+    Viewpoint {
+      orientation 1 0 0 -0.8
       position 0.25 0.708035 0.894691
-    }      
-    Background {  
-      skyColor [             
-        0.4 0.4 0.4        
-      ]      
-    }                        
+    }
+    Background {
+      skyColor [
+        0.4 0.4 0.4
+      ]
+    }
     PointLight {
       ambientIntensity 0.54
-      intensity 0.5          
-      location 0 1 0  
-    }        
+      intensity 0.5
+      location 0 1 0
+    }
     DEF EXAMPLE Robot {
       name "example"
       controller "<extern>"

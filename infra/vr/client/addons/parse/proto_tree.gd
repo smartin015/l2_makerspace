@@ -20,18 +20,17 @@ func init(parameters = {}):
   isRE = re("^(\\w+)\\s+IS\\s+(\\w+)$")
   defUseRE = re("^(DEF|USE)\\s+(\\w+)$")
   params = parameters
-  defs = {}
-  print("Init  complete")
-  
+  defs = {}  
 
 # Basic node that contains the data for a corresponding element
 class L2Node extends Spatial:
-  var type = ""
   var data = {}
   func get_class():
     return "L2Node"
+
   func to_string():
-    return "%s: %s %s" % [type, data, get_children()]
+    return "%s %s" % [data, get_children()]
+
   func debug():
     var result = {}
     for k in data.keys():
@@ -109,7 +108,6 @@ func parseBody(sub, assign) -> Array:
 
 func processValue(v):
   # Must always return either a singleton or an array of size 2
-  print(v)
   if typeof(v) == TYPE_STRING:
     v = [v]
     

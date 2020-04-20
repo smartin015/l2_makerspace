@@ -19,6 +19,8 @@ from webots_ros2_core.joint_state_publisher import JointStatePublisher
 
 import rclpy
 from sensor_msgs.msg import JointState
+from std_msgs import Float32
+from rclpy.qos import qos_profile_sensor_data
 
 class ExampleController(WebotsNode):
 
@@ -28,10 +30,14 @@ class ExampleController(WebotsNode):
         self.motor = self.robot.getMotor('motor1')
         self.motor.setPosition(float('inf'))
         self.motor.setVelocity(3.14/4)
+        self.sub = self.create_subscription(Float32, "cmd_vel", self.set_vel, qos_profile=qos_profile_sensor_data)
         self.motor.getPositionSensor().enable(100)
         self.jsp = JointStatePublisher(self.robot, "", self)
         self.timer = self.create_timer(0.01 * self.timestep, self.jsp.publish)
         self.get_logger().info("Ready")
+
+    def set_vel(self, vel):
+        self.motor.setVelocity(vel.data)
 
 def main(args=None):
     rclpy.init(args=args)

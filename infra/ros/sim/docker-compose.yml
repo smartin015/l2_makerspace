@@ -15,16 +15,6 @@ services:
       - "PYTHONUNBUFFERED=1"
     command: /ros_entrypoint.sh ros2 run l2_sim node --ros-args -p report_path:=/test -p object_config:=single_motor -r __ns:=/l2
   
-  webots_nogpu:
-    image: l2sim
-    volumes:
-      - "webots:/tmp"
-      - "./tmp:/cfg"
-      - "/tmp/.X11-unix:/tmp/.X11-unix"
-    environment:
-      - "DISPLAY=$DISPLAY"
-    command: /webots_ros2/install/webots_ros2_desktop/share/webots_ros2_desktop/webots/webots --no-sandbox --stdout --stderr /cfg/single_motor.wbt
-
   example_controller:
     image: l2sim
     volumes:
@@ -39,45 +29,17 @@ services:
     depends_on:
       - sim
 
-  gzweb:
-    image: docker.io/osrf/gazebo:gzweb8
-    command: npm start
-    pid: "host" # TODO(https://github.com/ros2/rmw_fastrtps/issues/349)
+  pendant_controller:
+    image: l2sim
+    volumes:
+      - "/tmp:/tmp"
     networks:
       - l2
     environment:
-      - "GAZEBO_MASTER_URI=http://172.104.130.198:11345"
-    ports:
-      - "8080:8080"
-      - "80:80"
-    links:
-      - gz
-
-  sdf_control_zone:
-    image: l2sim:latest
-    pid: "host" # TODO(https://github.com/ros2/rmw_fastrtps/issues/349)
-    volumes:
-      - /home/smartin015/l2_makerspace/infra/ros/sim/sdf:/sdf
-    command: bash -i -c "PYTHONUNBUFFERED=1 /sdf/spawn_object3d.sh control_zone /sdf/control_zone.sdf 1.0 0.5 0.5 0.5"
-    networks: 
-     - l2
-
-  sdf_testbox:
-    image: l2sim:latest
-    pid: "host" # TODO(https://github.com/ros2/rmw_fastrtps/issues/349)
-    volumes:
-      - /home/smartin015/l2_makerspace/infra/ros/sim/sdf:/sdf
-    command: bash -i -c "PYTHONUNBUFFERED=1 /sdf/spawn_object3d.sh testbox /sdf/testbox.sdf 1.0 0.5 0.5 0.5"
-    networks:
-      - l2
-  gz:
-    image: l2sim:latest
-    pid: "host" # TODO(https://github.com/ros2/rmw_fastrtps/issues/349)
-    command: bash -i -c "source /usr/share/gazebo/setup.sh && gzserver --verbose -s libgazebo_ros_factory.so -s libgazebo_ros_init.so /default.world"
-    ports:
-      - "11345:11345"
-    networks:
-      - l2
+      - "WEBOTS_HOME=/webots_ros2/install/webots_ros2_desktop/share/webots_ros2_desktop/webots/"
+      - "LD_LIBRARY_PATH=/webots_ros2/install/webots_ros2_desktop/share/webots_ros2_desktop/webots/lib/controller"
+    command: /ros_entrypoint.sh ros2 run l2_sim pendant_controller --ros-args -p synchronization:=False -r __ns:=/l2
+    restart: always
 
 networks:
   l2:

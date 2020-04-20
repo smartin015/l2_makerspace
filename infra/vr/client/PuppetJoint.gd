@@ -28,6 +28,8 @@ func apply(pos, vel: float):
       print("Unsupported joint type ", type)
 
 func _process(delta):
+  if axis == Vector3.ZERO:
+    return
   match type:
     REVOLUTE:
       transform = transform.rotated(axis, vel * delta)

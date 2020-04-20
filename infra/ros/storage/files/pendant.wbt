@@ -15,6 +15,7 @@ Background {
   ]
 }
 PointLight {
+  attenuation 0 0 1
   ambientIntensity 0.54
   intensity 0.5
   location 0 1 0
@@ -22,9 +23,11 @@ PointLight {
 DEF EXAMPLE Robot {
   name "pendant"
   controller "<extern>"
-  translation 0 2 -2
+  translation 0 0 0
+  supervisor TRUE
   children [
     Solid {
+      name "s1"
       translation 0 0.025 0
       children [
         DEF CONE_SHAPE Shape {
@@ -41,6 +44,7 @@ DEF EXAMPLE Robot {
       ]
     }
     Solid {
+      name "s2"
       translation 0 -0.025 0
       rotation 1 0 0 3.14159
       children [ USE CONE_SHAPE ]

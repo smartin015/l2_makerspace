@@ -77,14 +77,17 @@ func _fillHingeJoint(parent, n):
   #    c.free()
   var jp = n.data.get("jointParameters")
   var ep = n.data.get("endPoint")
+  var dv = n.data.get("device", [])
   n.data = {"_type": "HingeJoint"}
+  # https://cyberbotics.com/doc/reference/hingejointparameters
+  # TODO also anchor
   if jp != null:
-    var v = jp.data.get("anchor", [1,1,1])
+    var v = jp.data.get("axis", [1,0,0])
     n.data["axis"] = Vector3(v[0], v[1], v[2])
-  for c in n.get_children():
+  for c in dv:
     # Get motor name
-    if c.data["_type"] == "device":
-      n.data["name"] = c.get_child(0).data.get("name").trim_prefix("\"").trim_suffix("\"")
+    if c.data["_type"] == "RotationalMotor":
+      n.data["name"] = c.data.get("name")
     c.free()
   if ep != null:
     n.add_child(ep)
@@ -103,7 +106,7 @@ func _fillNode(parent, n):
     "HingeJoint":
       _fillHingeJoint(parent, n)
     _:
-      print("Ignoring: " + n.data["_type"])
+      print("PROTO: ignored " + n.data["_type"])
       n.free()
 
 func ParseAttrs(s):
