@@ -12,18 +12,28 @@ var axis: Vector3
 # var child: Spatial
 # Initial child position
 var origin: Transform
+var vel: float = 0
 
 func _ready():
   origin = transform
   
-func apply(val: float):
+func apply(pos, vel: float):
+  self.vel = vel
   match type:
     REVOLUTE:
-      transform = origin.rotated(axis, val)
+      transform = origin.rotated(axis, pos)
     PRISMATIC:
-      transform = origin.translated(val * axis)
+      transform = origin.translated(pos * axis)
     _:
       print("Unsupported joint type ", type)
+
+func _process(delta):
+  match type:
+    REVOLUTE:
+      transform = transform.rotated(axis, vel * delta)
+    PRISMATIC:
+      transform = transform.translated(axis * vel * delta)
+  
 
 func toString():
   return "type: %s axis: %s origin: %s" % [type, axis, origin]

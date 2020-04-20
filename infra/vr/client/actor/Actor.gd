@@ -70,17 +70,9 @@ func setup_controls():
     self, "_handle_joint_states", 
     "joint_state_sub")
     
-func _update_joints(js):
-  for j in js.keys():
-    if !joints.get(j):
-      continue
-    joints[j].apply(js[j])
-    print("Set joint ", j, " to ", js[j])
-    
 func _handle_joint_states(msg, id):
   for i in len(msg['name']):
     var j = joints.get(msg['name'][i])
     if j != null:
-      j.apply(msg["position"][i])
-      # TODO also use msg.message.velocity
+      j.apply(msg["position"][i], msg["velocity"][i])
   
