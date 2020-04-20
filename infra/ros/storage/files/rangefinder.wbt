@@ -1,0 +1,79 @@
+#VRML_SIM V8.5 utf8
+WorldInfo {
+  info [
+    "Rangefinder test"
+    "Q2 2020"
+  ]
+}
+Viewpoint {
+  orientation 0.499381 -0.818431 -0.284234 5.27326
+  position 6.72542 4.06712 4.38375
+}
+Background {
+  skyColor [
+    0.4 0.7 1.0
+  ]
+}
+PointLight {
+  ambientIntensity 1
+  intensity 0
+}
+DEF CYLINDER Transform {
+  translation -1 0 -1
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0.972549 0.0901961 0.0901961
+          emissiveColor 0.67451 0.0823529 0.0823529
+        }
+      }
+      geometry Cylinder {
+        height 0.1
+        radius 0.13
+      }
+    }
+  ]
+}
+DEF GROUND Transform {
+  translation 0 -0.1 0
+  children [
+    Shape {
+      geometry Plane {
+        size 15 15
+      }
+    }
+  ]
+}
+Solid {
+  name "testbox"
+  translation 0 0 -0.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.2 0.8 0.2
+        roughness 1
+        metalness 0
+      }
+      geometry Box {
+        size 0.05 0.05 0.1
+      }
+    }
+  ]
+}
+DEF EXAMPLE Robot {
+  name "testrobot"
+  controller "<extern>"
+  translation 0 0 0
+  supervisor TRUE
+  children [
+    RangeFinder {
+      name "rangefinder"
+      fieldOfView 3.14159
+      width 128
+      height 128
+      spherical TRUE
+      maxRange 10
+    }
+  ]
+}
