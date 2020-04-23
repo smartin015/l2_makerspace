@@ -17,6 +17,7 @@
 from webots_ros2_core.webots_node import WebotsNode
 from geometry_msgs.msg import Pose, TransformStamped
 from tf2_msgs.msg import TFMessage
+from sensor_msgs.msg import Image
 from builtin_interfaces.msg import Time
 from rclpy.qos import qos_profile_sensor_data
 import rclpy
@@ -39,6 +40,8 @@ class Rangefinder(WebotsNode):
             return
         self.robot.step(self.timestep)
         img = self.range.getRangeImage()
+        msg = Image(height=self.range.getHeight(), width=self.range.getWidth(), encoding="RVL")
+        
         # TODO convert image array to RVL and send over UDP
         self.lastUpdate = self.robot.getTime()
 

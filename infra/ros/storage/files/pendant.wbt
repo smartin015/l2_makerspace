@@ -23,6 +23,7 @@ PointLight {
 DEF EXAMPLE Robot {
   name "pendant"
   controller "<extern>"
+  customData "pendant"
   translation 0 0 0
   supervisor TRUE
   children [
