@@ -3,7 +3,8 @@ version: '3.5'
 services:
   sim:
     image: l2sim
-    pid: "host" # TODO(https://github.com/ros2/rmw_fastrtps/issues/349)
+    pid: host # TODO(https://github.com/ros2/rmw_fastrtps/issues/349)
+    ipc: host
     networks:
       - l2
     volumes:
@@ -13,7 +14,8 @@ services:
     environment:
       - "DISPLAY=$DISPLAY"
       - "PYTHONUNBUFFERED=1"
-    command: /ros_entrypoint.sh ros2 run l2_sim node --ros-args -p report_path:=/test -p object_config:=single_motor -r __ns:=/l2
+      - "OBJCONFIG=$OBJCONFIG"
+    command: /ros_entrypoint.sh ros2 run l2_sim node --ros-args -p report_path:=/test -p object_config:=$OBJCONFIG -r __ns:=/l2
   
   example_controller:
     image: l2sim
@@ -45,7 +47,7 @@ services:
     ipc: host
     pid: host
     volumes:
-      - "/tmp:/tmp"
+      - "webots:/tmp"
     networks:
       - l2
     environment:
