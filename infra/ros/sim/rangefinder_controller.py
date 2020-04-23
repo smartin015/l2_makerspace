@@ -40,6 +40,7 @@ class Rangefinder(WebotsNode):
             return
         self.robot.step(self.timestep)
         img = self.range.getRangeImage()
+        self.get_logger().info("%f vs %f" % (img[0], img[-1]), throttle_duration_sec=1.0)
         msg = Image(height=self.range.getHeight(), width=self.range.getWidth(), encoding="RVL")
         
         # TODO convert image array to RVL and send over UDP
