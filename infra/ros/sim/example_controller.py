@@ -19,7 +19,7 @@ from webots_ros2_core.joint_state_publisher import JointStatePublisher
 
 import rclpy
 from sensor_msgs.msg import JointState
-from std_msgs import Float32
+from std_msgs.msg import Float32
 from rclpy.qos import qos_profile_sensor_data
 
 class ExampleController(WebotsNode):

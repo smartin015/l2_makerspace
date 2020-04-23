@@ -24,6 +24,7 @@ services:
     environment:
       - "WEBOTS_HOME=/webots_ros2/install/webots_ros2_desktop/share/webots_ros2_desktop/webots/"
       - "LD_LIBRARY_PATH=/webots_ros2/install/webots_ros2_desktop/share/webots_ros2_desktop/webots/lib/controller"
+      - "WEBOTS_ROBOT_NAME=single_motor"
     command: /ros_entrypoint.sh ros2 run l2_sim example_controller --ros-args -p synchronization:=False -r __ns:=/l2
     restart: always
     depends_on:
@@ -32,12 +33,13 @@ services:
   pendant_controller:
     image: l2sim
     volumes:
-      - "/tmp:/tmp"
+      - "webots:/tmp"
     networks:
       - l2
     environment:
       - "WEBOTS_HOME=/webots_ros2/install/webots_ros2_desktop/share/webots_ros2_desktop/webots/"
       - "LD_LIBRARY_PATH=/webots_ros2/install/webots_ros2_desktop/share/webots_ros2_desktop/webots/lib/controller"
+      - "WEBOTS_ROBOT_NAME=pendant"
     command: /ros_entrypoint.sh ros2 run l2_sim pendant_controller --ros-args -p synchronization:=False -r __ns:=/l2
 
   range_controller:
@@ -45,7 +47,7 @@ services:
     ipc: host
     pid: host
     volumes:
-      - "/tmp:/tmp"
+      - "webots:/tmp"
     networks:
       - l2
     environment:
@@ -53,6 +55,7 @@ services:
       - "LD_LIBRARY_PATH=/webots_ros2/install/webots_ros2_desktop/share/webots_ros2_desktop/webots/lib/controller"
       - "PYTHONFAULTHANDLER=1"
       - "PYTHONUNBUFFERED=1"
+      - "WEBOTS_ROBOT_NAME=range"
     command: /ros_entrypoint.sh ros2 run l2_sim rangefinder_controller --ros-args -p synchronization:=False -r __ns:=/l2
 
 networks:

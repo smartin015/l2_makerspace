@@ -20,7 +20,7 @@ PointLight {
   location 0 1 0
 }
 DEF EXAMPLE Robot {
-  name "example"
+  name "single_motor"
   controller "<extern>"
   translation 0 2 -2
   children [

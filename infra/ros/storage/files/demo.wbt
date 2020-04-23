@@ -1,0 +1,131 @@
+#VRML_SIM V8.5 utf8
+WorldInfo {
+  info [
+    "Pendant, single motor, and rangefinder test"
+    "Q2 2020"
+  ]
+}
+Viewpoint {
+  orientation 0.499381 -0.818431 -0.284234 5.27326
+  position 6.72542 4.06712 4.38375
+}
+Background {
+  skyColor [
+    0.4 0.7 1.0
+  ]
+}
+PointLight {
+  ambientIntensity 0.54
+  intensity 0.5
+  location 0 1 0
+}
+DEF MOTOR Robot {
+  name "single_motor"
+  controller "<extern>"
+  translation 0 0.3 -1
+  children [
+    HingeJoint {
+      jointParameters HingeJointParameters {
+        anchor 0 0 0
+      }
+      device [
+        RotationalMotor {
+          name "motor1"
+        }
+        PositionSensor {
+          name "motor1_sensor"
+        }
+      ]
+      endPoint Solid {
+        translation 0 0 0
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 1 0.8 1
+              roughness 1
+              metalness 0
+            }
+            geometry Box {
+              size 0.1 0.1 0.1
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
+DEF PENDANT Robot {
+  name "pendant"
+  controller "<extern>"
+  customData "pendant"
+  translation 0 0.35 -0.5
+  supervisor TRUE
+  children [
+    Solid {
+      name "s1"
+      translation 0 0.025 0
+      children [
+        DEF CONE_SHAPE Shape {
+          appearance PBRAppearance {
+            baseColor 0.2 0.8 0.2
+            roughness 1
+            metalness 0
+          }
+          geometry Cone {
+            bottomRadius 0.03
+            height 0.05
+          }
+        }
+      ]
+    }
+    Solid {
+      name "s2"
+      translation 0 -0.025 0
+      rotation 1 0 0 3.14159
+      children [ USE CONE_SHAPE ]
+    }
+  ]
+}
+DEF RANGE Robot {
+  name "range"
+  controller "<extern>"
+  translation 0 0 0
+  supervisor TRUE
+  children [
+    RangeFinder {
+      name "rangefinder"
+      fieldOfView 3.14159
+      width 128
+      height 128
+      spherical TRUE
+      maxRange 10
+    }
+  ]
+}
+DEF CYLINDER Transform {
+  translation -1 0 -1
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0.972549 0.0901961 0.0901961
+          emissiveColor 0.67451 0.0823529 0.0823529
+        }
+      }
+      geometry Cylinder {
+        height 0.1
+        radius 0.13
+      }
+    }
+  ]
+}
+DEF GROUND Transform {
+  translation 0 -0.1 0
+  children [
+    Shape {
+      geometry Plane {
+        size 15 15
+      }
+    }
+  ]
+}
