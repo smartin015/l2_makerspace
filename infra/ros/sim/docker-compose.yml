@@ -57,7 +57,7 @@ services:
       - "PYTHONFAULTHANDLER=1"
       - "PYTHONUNBUFFERED=1"
       - "WEBOTS_ROBOT_NAME=range"
-    command: /ros_entrypoint.sh ros2 run l2_sim rangefinder_controller --ros-args -p synchronization:=False -r __ns:=/l2
+    command: /ros_entrypoint.sh ros2 run l2_sim rangefinder_controller --ros-args -p synchronization:=False -r __ns:=/l2/vr
 
   gen_example_rvl:
     image: l2sim
@@ -66,7 +66,7 @@ services:
       - l2
     environment:
       - "PYTHONUNBUFFERED=1"
-    command: /ros_entrypoint.sh ros2 run l2_sim gen_example_rvl
+    command: /ros_entrypoint.sh ros2 run l2_sim gen_example_rvl --ros-args -r __ns:=/l2/vr
 
 networks:
   l2:

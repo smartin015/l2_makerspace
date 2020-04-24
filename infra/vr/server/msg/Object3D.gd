@@ -5,7 +5,7 @@
 extends Node
 
 var polltmr
-const TOPIC_TYPE = "l2_msgs/Object3DArray"
+const TOPIC_TYPE = "l2_msgs/msg/Object3DArray"
 onready var actors = get_node("/root/World/Actors")
 
 func _ready():

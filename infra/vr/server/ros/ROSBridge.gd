@@ -4,6 +4,7 @@
 extends Node
 
 const WS_PORT = 4243
+const MAX_WS_MSG = 4096
 
 # For isolation, only subscription to topics within
 # a certain namespace are allowed for the VR server.
@@ -89,6 +90,7 @@ remote func subscribe(topic, type, id: String):
     "op": "subscribe",
     "topic": topic,
     "type": type,
+    "fragment_size": MAX_WS_MSG,
   })
 
 func unsubscribe(topic, id: String):
@@ -182,6 +184,7 @@ func _on_data(id):
             result.get("id", ""))
         else:
           # Clear out the listener if the user is no longer present
+          print("Clearing unused listener %s" % l)
           ls.erase(l)
 
       if len(ls) == 0:

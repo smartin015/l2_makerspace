@@ -5,7 +5,7 @@
 extends Node
 
 var polltmr
-const TOPIC_TYPE = "l2_msgs/VRPlayers"
+const TOPIC_TYPE = "l2_msgs/msg/VRPlayers"
 onready var players = find_node('/root/World/Players')
 
 func _ready():

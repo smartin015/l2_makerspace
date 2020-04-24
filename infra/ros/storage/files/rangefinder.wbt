@@ -35,16 +35,6 @@ DEF CYLINDER Transform {
     }
   ]
 }
-DEF GROUND Transform {
-  translation 0 -0.1 0
-  children [
-    Shape {
-      geometry Plane {
-        size 15 15
-      }
-    }
-  ]
-}
 Solid {
   name "testbox"
   translation 0 0 -0.5
@@ -70,8 +60,8 @@ DEF EXAMPLE Robot {
     RangeFinder {
       name "rangefinder"
       fieldOfView 3.14159
-      width 128
-      height 128
+      width 32
+      height 32
       spherical TRUE
       maxRange 10
     }

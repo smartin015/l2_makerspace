@@ -25,11 +25,11 @@ from rvl import rvl
 import rclpy
 import math
 import struct
+import base64
 
 class Rangefinder(WebotsNode):
     FRAME_ID = "range"
     MAX_RANGE = 10.0
-    FMT = "ii%dB"
 
     def __init__(self, args):
         super().__init__('pendant_controller', args)
@@ -55,9 +55,8 @@ class Rangefinder(WebotsNode):
             return
         rvl.plain = [int(65535 * px / self.MAX_RANGE) for px in raw]
         rvl.CompressRVL()
-        packed = struct.pack(self.FMT % len(rvl.encoded), 20, len(raw), *rvl.encoded)
         header = Header(frame_id=self.FRAME_ID, stamp=Time(sec=int(now), nanosec=int((now-int(now)) * 1.0e+6)))
-        msg = CompressedImage(header=header, format="RVL", data=packed)
+        msg = CompressedImage(header=header, format="RVL", data=base64.b64encode(rvl.encoded))
         self.pub.publish(msg)
         self.lastUpdate = self.robot.getTime()
 

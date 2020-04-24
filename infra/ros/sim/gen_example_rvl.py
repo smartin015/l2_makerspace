@@ -10,6 +10,7 @@ import time
 import sys
 from os import path
 from rvl import rvl
+import base64
 
 # from l2_msgs.srv import GetProject
 import os
@@ -20,7 +21,7 @@ from std_msgs.msg import Header
 
 class GenRVL(Node):
     SCALE_FACTOR = 1000
-    FMT = "ii%dB"
+    FMT = "%dB"
     PUBLISH_PD = 0.1  # seconds
     FRAME_ID = "range"
 
@@ -33,7 +34,7 @@ class GenRVL(Node):
     def gen_and_send(self):
         ts = time.time()
         data = []
-        w = 128
+        w = 16
         nvecs = w*w
         for i in range(w):
             for j in range(w):
@@ -42,8 +43,8 @@ class GenRVL(Node):
         rvl.Clear()
         rvl.plain = data
         rvl.CompressRVL()
-        packed = struct.pack(self.FMT % len(rvl.encoded), 20, nvecs, *rvl.encoded)
-        msg = CompressedImage(header=Header(frame_id=self.FRAME_ID, stamp=self.get_clock().now().to_msg()), format="RVL", data=packed)
+        packed = struct.pack(self.FMT % len(rvl.encoded), *rvl.encoded)
+        msg = CompressedImage(header=Header(frame_id=self.FRAME_ID, stamp=self.get_clock().now().to_msg()), format="RVL", data=base64.b64encode(packed))
         self.pub.publish(msg)
 
 

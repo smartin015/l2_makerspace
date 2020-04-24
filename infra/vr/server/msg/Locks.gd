@@ -5,7 +5,7 @@
 extends Node
 
 var polltmr
-const TOPIC_TYPE = "l2_msgs/VRLockStatus"
+const TOPIC_TYPE = "l2_msgs/msg/VRLockStatus"
 
 func _ready():
   ROSBridge.topics.push_back(self)

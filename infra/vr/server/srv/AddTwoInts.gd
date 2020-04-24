@@ -14,7 +14,7 @@ func _ready():
 func advertisement(id):
   return { 
     "op": "advertise_service",
-    "type": "example_interfaces/AddTwoInts",
+    "type": "example_interfaces/srv/AddTwoInts",
     "service": srvname,
     "id": "%s_addtwoints" % id,
   }

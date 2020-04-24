@@ -14,7 +14,7 @@ func advertisement(id):
   return { 
     "op": "advertise_service",
     "service": srvname,
-    "type": "l2_msgs/RemoveObject3D",
+    "type": "l2_msgs/srv/RemoveObject3D",
     "id": "%s_rmobject3d" % id,
   }
 
