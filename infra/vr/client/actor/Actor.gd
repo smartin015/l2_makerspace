@@ -2,16 +2,22 @@ extends Spatial
 
 const PENDANT_NAME = "pendant"
 const HINGE_JOINT_NAME = "HingeJoint"
-const DEPTH_RENDER_NAME = "depth_render"
+const DEPTH_RENDER_NAME = "RangeFinder"
 const CONTROL_ZONE_NAME = "control_zone"
 const TYPE_ATTR = "_type"
-#const CONTROL_ATTR = "l2control"
 
-var Pendant = load("res://Pendant.tscn")
-var DepthRender = load("res://DepthRender.tscn")
-var ControlZone = load("res://ControlZone.gd")
-var PuppetJoint = load("res://PuppetJoint.gd")
+var Pendant = load("res://actor/Pendant.tscn")
+var DepthRender = load("res://actor/DepthRender.tscn")
+var ControlZone = load("res://actor/ControlZone.gd")
+var PuppetJoint = load("res://actor/PuppetJoint.gd")
 var ExampleControlPreset = load("res://ExampleControlPreset.tscn")
+
+func _replace(old, new):
+  old.get_parent().add_child(new)
+  for c in old.get_children():
+    old.remove_child(c)
+    new.add_child(c)
+  old.free()
 
 func _setupPendant(n):
   # Pendants in SDF are "empty links". We fill them
@@ -24,7 +30,12 @@ func _setupDepthRender(n):
   # TODO: set the stream ID for this depthrender so it streams
   # from the server
   var inst = DepthRender.instance()
-  n.add_child(inst)
+  inst.setup(16, 16, "rvl")
+  
+  # TODO remove
+  inst.translate(Vector3(0, 1, 0))
+  
+  _replace(n, inst)
 
 func _setupControlZone(n):
   n.set_script(ControlZone)
@@ -38,11 +49,7 @@ func _setupHingeJoint(n):
   var axis = n.data.get("axis", [0,1,0])
   j.axis = Vector3(axis[0], axis[2], axis[1]).normalized()
   joints[n.data.get("name")] = j
-  n.get_parent().add_child(j)
-  for c in n.get_children():
-    n.remove_child(c)
-    j.add_child(c)
-  n.free()
+  _replace(n, j)
   return j
 
 var root = null
@@ -55,7 +62,7 @@ func _postprocess(n: Node):
       HINGE_JOINT_NAME:
         n = _setupHingeJoint(n)
       DEPTH_RENDER_NAME:
-        _setupDepthRender(n)
+        n = _setupDepthRender(n)
       CONTROL_ZONE_NAME:
         _setupControlZone(n)
   if n == null:

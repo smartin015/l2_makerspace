@@ -95,6 +95,23 @@ func _fillHingeJoint(parent, n):
   else: 
     print("WARNING no endPoint")
   
+func _fillTransform(parent, n):
+  var t = n.data.get("translation")
+  if t != null:
+    n.transform.origin = Vector3(t[0], t[1], t[2])
+  t = n.data.get("rotation")
+  if t != null:
+    n.rotate(Vector3(t[0], t[1], t[2]), t[3])
+  t = n.data.get("scale")
+  if t != null:
+    n.scale = Vector3(t[0], t[1], t[2])
+  for c in n.get_children():
+    _fillNode(n, c)
+  
+func _fillRangeFinder(parent, n):
+  # No action needed
+  return
+  
 func _fillNode(parent, n):
   match n.data["_type"]:
     "Solid":
@@ -105,6 +122,10 @@ func _fillNode(parent, n):
       _fillRobot(parent, n)
     "HingeJoint":
       _fillHingeJoint(parent, n)
+    "Transform":
+      _fillTransform(parent, n)
+    "RangeFinder":
+      _fillRangeFinder(parent, n)
     _:
       print("PROTO: ignored " + n.data["_type"])
       n.free()

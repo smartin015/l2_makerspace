@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=2]
 
-[ext_resource path="res://DepthRender.gd" type="Script" id=1]
+[ext_resource path="res://actor/DepthRender.gd" type="Script" id=1]
 
 [sub_resource type="SpatialMaterial" id=1]
 flags_use_point_size = true
