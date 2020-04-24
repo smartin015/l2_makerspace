@@ -17,18 +17,25 @@
 from webots_ros2_core.webots_node import WebotsNode
 from geometry_msgs.msg import Pose, TransformStamped
 from tf2_msgs.msg import TFMessage
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import CompressedImage
+from std_msgs.msg import Header
 from builtin_interfaces.msg import Time
 from rclpy.qos import qos_profile_sensor_data
+from rvl import rvl
 import rclpy
 import math
+import struct
 
 class Rangefinder(WebotsNode):
+    FRAME_ID = "range"
+    MAX_RANGE = 10.0
+    FMT = "ii%dB"
+
     def __init__(self, args):
         super().__init__('pendant_controller', args)
         self.get_logger().info("Init")
         self.timestep = int(self.robot.getBasicTimeStep())
-        self.pub = self.create_publisher(TFMessage, "tf", 10)
+        self.pub = self.create_publisher(CompressedImage, "rvl", 10)
         self.range = self.robot.getRangeFinder("rangefinder")
         self.range.enable(self.timestep)
         self.timer = self.create_timer(0.001 * self.timestep, self.publish_rvl)
@@ -36,14 +43,22 @@ class Rangefinder(WebotsNode):
         self.lastUpdate = -100
 
     def publish_rvl(self):
-        if self.robot.getTime() - self.lastUpdate < (self.range.getSamplingPeriod() / 1000.0):
+        now = self.robot.getTime()
+        if now - self.lastUpdate < (self.range.getSamplingPeriod() / 1000.0):
             return
         self.robot.step(self.timestep)
-        img = self.range.getRangeImage()
-        self.get_logger().info("%f vs %f" % (img[0], img[-1]), throttle_duration_sec=1.0)
-        msg = Image(height=self.range.getHeight(), width=self.range.getWidth(), encoding="RVL")
-        
-        # TODO convert image array to RVL and send over UDP
+        rvl.Clear()
+        # Remap to 16-bit integer
+        raw = self.range.getRangeImage()
+        if raw is None:
+            self.get_logger().info("No range image", throttle_duration_sec=3)
+            return
+        rvl.plain = [int(65535 * px / self.MAX_RANGE) for px in raw]
+        rvl.CompressRVL()
+        packed = struct.pack(self.FMT % len(rvl.encoded), 20, len(raw), *rvl.encoded)
+        header = Header(frame_id=self.FRAME_ID, stamp=Time(sec=int(now), nanosec=int((now-int(now)) * 1.0e+6)))
+        msg = CompressedImage(header=header, format="RVL", data=packed)
+        self.pub.publish(msg)
         self.lastUpdate = self.robot.getTime()
 
 def main(args=None):

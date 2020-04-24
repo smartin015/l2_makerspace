@@ -1,5 +1,6 @@
 from setuptools import setup
 from os import environ
+from setuptools import find_packages
 
 package_name = environ['L2PKG']
 node_files = "$NODES"
@@ -8,7 +9,7 @@ nodes = [node.split('.')[0] for node in node_files.split(' ')]
 setup(
     name=package_name,
     version='0.0.0',
-    packages=[package_name],
+    packages=find_packages(exclude=['test']),
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),

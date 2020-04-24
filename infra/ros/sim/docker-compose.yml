@@ -28,7 +28,6 @@ services:
       - "LD_LIBRARY_PATH=/webots_ros2/install/webots_ros2_desktop/share/webots_ros2_desktop/webots/lib/controller"
       - "WEBOTS_ROBOT_NAME=single_motor"
     command: /ros_entrypoint.sh ros2 run l2_sim example_controller --ros-args -p synchronization:=False -r __ns:=/l2
-    restart: always
     depends_on:
       - sim
 
@@ -59,6 +58,15 @@ services:
       - "PYTHONUNBUFFERED=1"
       - "WEBOTS_ROBOT_NAME=range"
     command: /ros_entrypoint.sh ros2 run l2_sim rangefinder_controller --ros-args -p synchronization:=False -r __ns:=/l2
+
+  gen_example_rvl:
+    image: l2sim
+    pid: host
+    networks:
+      - l2
+    environment:
+      - "PYTHONUNBUFFERED=1"
+    command: /ros_entrypoint.sh ros2 run l2_sim gen_example_rvl
 
 networks:
   l2:

@@ -62,7 +62,7 @@ Solid {
   ]
 }
 DEF EXAMPLE Robot {
-  name "testrobot"
+  name "range"
   controller "<extern>"
   translation 0 0 0
   supervisor TRUE
