@@ -24,15 +24,15 @@ func advertisement(id):
   }
 
 func _poll():
-  var locks = []
-  var l = gamestate.locks.locks
+  var ls = []
+  var l = locks.locks
   for k in l:
     if l[k] != null:
-      locks.append({
-        "key": k,
-        "value": l[k],
+      ls.append({
+        "key": str(k),
+        "value": str(l[k]),
       })
   
   ROSBridge.publish("Locks", TOPIC_TYPE, {
-    locks: locks,
+    "locks": ls,
   }, "locks")

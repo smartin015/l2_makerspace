@@ -14,6 +14,7 @@ remote func acquire_lock(name):
   # Don't allow another person to take the lock if it's already held
   # by an active player
   if gamestate.players.find_node(str(held)) != null:
+    print("GDT(%s) -> ignore_lock %s" % [caller_id, name])
     return
 
   locks[name] = caller_id  
