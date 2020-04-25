@@ -49,14 +49,14 @@ func _set_control_zone(zone):
     return
   
   if zone == null and control_zone != null:
-    control_zone.get_parent().exit_zone(gamestate.my_name)
+    control_zone.get_parent().exit_zone(gamestate.player.name)
   
   control_zone = zone
   if control_zone == null:
     scale = Vector3.ONE
     transform.origin = Vector3.ZERO
   else:
-    control_zone.get_parent().enter_zone(gamestate.my_name)
+    control_zone.get_parent().enter_zone(gamestate.player.name)
 
     # Get bounding box for zone - scale so the size of the box is an arm's length
     # and put 
@@ -79,9 +79,9 @@ var grabStart
 
 func _grabProcess(_delta):
   if lgrab.is_just_grabbing:
-    grabStart = lgrab.grabbed_object.translation
+    grabStart = lgrab.grabbed_object.get_parent().translation
   elif lgrab.is_grabbing:
-    lgrab.grabbed_object.get_parent().set_pos_and_send(lgrab.grabbed_object.name, lgrab.delta_position + grabStart)
+    lgrab.grabbed_object.get_parent().translation = lgrab.delta_position + grabStart
 
 # ===================== Main functions ================================
 

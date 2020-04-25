@@ -5,11 +5,17 @@ var tree = load("res://addons/parse/proto_tree.gd").new()
 func _fillShape(parent, n):
   var n2 = MeshInstance.new()
   n2.material_override = SpatialMaterial.new()
+  var name = n.data.get("name")
+  if name != null:
+    n2.name = name
+  
   var a = n.data.get("appearance")
   if a != null:
     a = a.data
     var v = a.get("baseColor", [1,1,1])
-    var t = a.get("transparency", 0)
+    var t = a.get("transparency", 0.0)
+    if t > 0:
+      n2.material_override.flags_transparent = true
     n2.material_override.albedo_color = Color(v[0], v[1], v[2], 1.0-t)
     n2.material_override.roughness = a.get("roughness", 0)
     n2.material_override.metallic = a.get("metalness", 0)
@@ -29,7 +35,7 @@ func _fillShape(parent, n):
       "Cone":
         n2.mesh = CylinderMesh.new()
         n2.mesh.top_radius = 0
-        n2.mesh.bottom_radius = g.data.get("radius", 1)
+        n2.mesh.bottom_radius = g.data.get("bottomRadius", 1)
         n2.mesh.height = g.data.get("height", 1)
       "Cylinder":
         n2.mesh = CylinderMesh.new()

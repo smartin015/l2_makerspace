@@ -4,7 +4,6 @@ const PENDANT_NAME = "pendant"
 const HINGE_JOINT_NAME = "HingeJoint"
 const DEPTH_RENDER_NAME = "RangeFinder"
 const CONTROL_ZONE_NAME = "control_zone"
-const TYPE_ATTR = "_type"
 
 var Pendant = load("res://actor/Pendant.tscn")
 var DepthRender = load("res://actor/DepthRender.tscn")
@@ -19,12 +18,39 @@ func _replace(old, new):
     new.add_child(c)
   old.free()
 
-func _setupPendant(n):
+func _setupControlZone(zone):
+  if not (zone is MeshInstance and zone.mesh is CubeMesh):
+    print("ERROR: zone %s has no CubeMesh" % zone.name)
+    return
+  zone.set_script(ControlZone)
+  var cs = CollisionShape.new()
+  cs.shape = BoxShape.new()
+  cs.shape.extents = zone.mesh.size / 2
+  var sb = StaticBody.new()
+  sb.add_child(cs)
+  zone.add_child(sb)
+  print("Control zone created")
+  return
+
+func _setupPendant(n, custom):
   # Pendants in SDF are "empty links". We fill them
   # with an implementation-specific control option.
   var inst = Pendant.instance()
-  n.add_child(inst)
-  print("Added pendant")
+  var zone = find_node(custom["control_zone"], true, false)
+  if zone == null:
+    print("WARNING: no such control zone %s" % custom["control_zone"])
+    return null
+  
+  # Ensure control zone is scripted
+  if !zone.has_method('enter_zone'):
+    _setupControlZone(zone)
+    
+  inst.control_zone = zone
+  inst.pos_topic = custom["pos_topic"]
+  inst.transform = n.transform
+  
+  _replace(n, inst)
+  return inst
 
 func _setupDepthRender(n):
   # TODO: set the stream ID for this depthrender so it streams
@@ -36,9 +62,6 @@ func _setupDepthRender(n):
   inst.translate(Vector3(0, 1, 0))
   
   _replace(n, inst)
-
-func _setupControlZone(n):
-  n.set_script(ControlZone)
 
 func _setupHingeJoint(n):
   var j = PuppetJoint.new()
@@ -56,9 +79,20 @@ var root = null
 var joints = {}
 func _postprocess(n: Node):
   if n.get_class() == "L2Node":
-    match n.data.get(TYPE_ATTR):
+    # Can identify objects to replace either by their type
+    # or by customData if they're a Robot.
+    var nodeType = n.data.get("_type")
+    var custom = n.data.get("customData")
+    if custom != null:
+      var s1 = custom.split(",")
+      custom = {}
+      for kv in s1:
+        var s2 = kv.split(":")
+        custom[s2[0]] = s2[1]
+      nodeType = custom.get("l2")
+    match nodeType:
       PENDANT_NAME:
-        _setupPendant(n)
+        n = _setupPendant(n, custom)
       HINGE_JOINT_NAME:
         n = _setupHingeJoint(n)
       DEPTH_RENDER_NAME:
