@@ -32,12 +32,12 @@ class Rangefinder(WebotsNode):
     MAX_RANGE = 10.0
 
     def __init__(self, args):
-        super().__init__('pendant_controller', args)
+        super().__init__('range_controller', args)
         self.get_logger().info("Init")
         self.timestep = int(self.robot.getBasicTimeStep())
         self.pub = self.create_publisher(CompressedImage, "rvl", 10)
         self.range = self.robot.getRangeFinder("rangefinder")
-        self.range.enable(self.timestep)
+        self.range.enable(self.timestep * 10)
         self.timer = self.create_timer(0.001 * self.timestep, self.publish_rvl)
         self.get_logger().info("Ready")
         self.lastUpdate = -100

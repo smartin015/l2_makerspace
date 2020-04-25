@@ -95,8 +95,8 @@ DEF RANGE Robot {
     RangeFinder {
       name "rangefinder"
       fieldOfView 3.14159
-      width 128
-      height 128
+      width 16
+      height 16
       spherical TRUE
       maxRange 10
     }
