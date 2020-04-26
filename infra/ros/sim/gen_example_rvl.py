@@ -10,7 +10,6 @@ import time
 import sys
 from os import path
 from rvl import rvl
-import base64
 
 # from l2_msgs.srv import GetProject
 import os
@@ -19,22 +18,29 @@ from rclpy.node import Node
 from sensor_msgs.msg import CompressedImage
 from std_msgs.msg import Header
 
+GODOT_RAW_ARRAY_TYPE = 20
+
+import socket
+sock = socket.socket(socket.AF_INET, # Internet
+                     socket.SOCK_DGRAM) # UDP
+UDP_DEST = ("vr", 4242)
+
 class GenRVL(Node):
     SCALE_FACTOR = 1000
-    FMT = "%dB"
+    FMT = "ii%dB"
     PUBLISH_PD = 0.1  # seconds
     FRAME_ID = "range"
 
     def __init__(self):
         super().__init__('l2_example')
         self.get_logger().info("Init")
-        self.pub = self.create_publisher(CompressedImage, 'rvl', 10)
+        #self.pub = self.create_publisher(CompressedImage, 'rvl', 10)
         self.timer = self.create_timer(self.PUBLISH_PD, self.gen_and_send)
 
     def gen_and_send(self):
         ts = time.time()
         data = []
-        w = 16
+        w = 128
         nvecs = w*w
         for i in range(w):
             for j in range(w):
@@ -42,10 +48,11 @@ class GenRVL(Node):
                 data += [int(v*self.SCALE_FACTOR)]
         rvl.Clear()
         rvl.plain = data
-        rvl.CompressRVL()
-        packed = struct.pack(self.FMT % len(rvl.encoded), *rvl.encoded)
-        msg = CompressedImage(header=Header(frame_id=self.FRAME_ID, stamp=self.get_clock().now().to_msg()), format="RVL", data=base64.b64encode(packed))
-        self.pub.publish(msg)
+        rvl.CompressRVL(chan=0)
+        packed = struct.pack(self.FMT % len(rvl.encoded), GODOT_RAW_ARRAY_TYPE, len(rvl.encoded), *rvl.encoded)
+        #msg = CompressedImage(header=Header(frame_id=self.FRAME_ID, stamp=self.get_clock().now().to_msg()), format="RVL", data=packed)
+        #self.pub.publish(msg)
+        sock.sendto(packed, UDP_DEST)
 
 
 def main(args=None):

@@ -4,6 +4,7 @@
 extends Node
 
 const WS_PORT = 4243
+const RAW_PORT = 4242
 const MAX_WS_MSG = 4096
 
 # For isolation, only subscription to topics within
@@ -17,6 +18,7 @@ func _strip_ns(topic):
   return topic.trim_prefix(NS+"/")
   
 var _server = WebSocketServer.new()
+var _raw_server = PacketPeerUDP.new()
 var listeners = {} # Map of ROS topic to list of godot client IDs
 var calls = {} # Map of service call IDs to ROSCalls
 var services = []
@@ -41,10 +43,14 @@ func _ready():
   _server.connect("client_disconnected", self, "_disconnected")
   _server.connect("client_close_request", self, "_close_request")
   _server.connect("data_received", self, "_on_data")
-  if(_server.listen(WS_PORT) != OK):
+  if _server.listen(WS_PORT) != OK:
     print("An error occurred listening on port", WS_PORT)
   else:
     print("ROS listen port ", WS_PORT)
+  if _raw_server.listen(RAW_PORT, "0.0.0.0") != OK:
+    print("An error occurred listening on port", RAW_PORT)
+  else:
+    print("RAW listen port ", RAW_PORT)
 
 func _broadcast(id: String, msg):
   # Serialization done here instead of in the peers to prevent duplicate work
@@ -83,15 +89,21 @@ remote func publish(topic: String, type: String, msg, id: String):
     "msg": msg,
   })
 
-remote func subscribe(topic, type, id: String):
+remote func subscribe(topic, type, id: String, raw=false):
   listeners[topic] = listeners.get(topic, []) + [get_tree().get_rpc_sender_id()]
-  print("New listener on %s - now %s" % [topic, listeners[topic]])
+
+  if raw:
+    # Raw needs no broadcast
+    print("RAW listener on %s - now %s" % [topic, listeners[topic]])
+    return
+
   _broadcast(id, {
     "op": "subscribe",
     "topic": topic,
     "type": type,
     "fragment_size": MAX_WS_MSG,
   })
+  print("New listener on %s - now %s" % [topic, listeners[topic]])
 
 func unsubscribe(topic, id: String):
   _broadcast(id, {
@@ -143,14 +155,25 @@ func _disconnected(id, was_clean = false):
   print("ROS(%d) disconnected, clean: %s" % [id, str(was_clean)])
   send_ros_peers()
 
+func _on_raw_data(data):
+  if typeof(data) != TYPE_RAW_ARRAY:
+    print("ERR invalid raw message of type %s" % typeof(data))
+    return
+  _handle_result(0, {
+    "op": "publish",
+    "topic": str(data[0]), # First byte is the channel ID
+    "msg": data.subarray(1,-1),
+  })
+
 func _on_data(id):
   var pkt = _server.get_peer(id).get_packet()
   var result = JSON.parse(pkt.get_string_from_utf8())
   if result.error != OK:
     print("Client %s bad message: %s" % [id, result.error_string])
     return
-  
-  result = result.result
+  _handle_result(id, result.result)
+
+func _handle_result(id, result):
   match result.op:
     "status":
       print("ROS(%s) -> %s %s: %s" % [id, result.id, result.level, result.msg])
@@ -187,8 +210,11 @@ func _on_data(id):
           print("Clearing unused listener %s" % l)
           ls.erase(l)
 
-      if len(ls) == 0:
-        # Unsubscribe if nobody's listening
+      if len(ls) == 0 && !result.topic[0].is_valid_integer():
+        # Unsubscribe if nobody's listening. Topics that 
+        # start with a number are invalid to ros2-web-bridge
+        # and so are assumed to be raw topics (which cannot be
+        # unsubscribed)
         print("ROS(%s) unsub %s (unused)" % [id, result.topic])
         unsubscribe(result.topic, "unsub")
     "call_service":
@@ -203,3 +229,5 @@ func _on_data(id):
 
 func _process(delta):
   _server.poll()
+  if _raw_server.is_listening() && _raw_server.get_available_packet_count() > 0:
+    _on_raw_data(_raw_server.get_var())

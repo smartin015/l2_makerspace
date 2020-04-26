@@ -83,8 +83,9 @@ def DecodeVLE():
   return result
 
 
-def CompressRVL():
+def CompressRVL(chan):
   global plain, encoded, nibs, byte, decodeIdx
+  encoded.append(chan)
   idx = 0
   while (idx < len(plain)):
     zeros = 0
