@@ -19,7 +19,7 @@ class ROSHandler:
 
 # Subscribes to a ROS topic via the server & ros bridge, and registers a 
 # handler to call when the topic receives messages.
-func ros_connect(topic: String, type: String, node: Node, handler: String, id: String):
+func ros_connect(topic: String, type: String, node: Node, handler: String, id: String, raw=false):
   var h = handlers.get(topic)
   if !h:
     h = ROSHandler.new()
@@ -28,7 +28,7 @@ func ros_connect(topic: String, type: String, node: Node, handler: String, id: S
   h.type = type
   h.id = id
   h.callbacks.push_back([node, handler])
-  rpc_id(1, 'subscribe', topic, type, id)
+  rpc_id(1, 'subscribe', topic, type, id, raw)
 
 remote func set_ros_peers(peers):
   print("ROS peers: %s" % [peers])

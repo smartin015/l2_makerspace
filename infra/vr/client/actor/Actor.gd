@@ -56,7 +56,7 @@ func _setupDepthRender(n):
   # TODO: set the stream ID for this depthrender so it streams
   # from the server
   var inst = DepthRender.instance()
-  inst.setup(16, 16, "rvl")
+  inst.setup(128, 128, "rvl")
   
   # TODO remove
   inst.translate(Vector3(0, 1, 0))

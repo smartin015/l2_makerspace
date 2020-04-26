@@ -11,17 +11,13 @@ var dims = [16,16]
 
 func setup(width: int, height: int, topic: String):
   dims = [width, height]
-  ROSBridge.ros_connect("rvl", 
+  ROSBridge.ros_connect("0", 
     "sensor_msgs/CompressedImage", 
-    self, "_handle_compressed_image", 
-    "depth_render_sub")
+    self, "_point_data_set", 
+    "depth_render_sub", 
+    true) # Raw
 
-func _handle_compressed_image(msg, id):
-  if msg.format != "RVL":
-    print("Unknown image format " + msg.format)
-  point_data_set(Marshalls.base64_to_raw(PoolByteArray(msg.data).get_string_from_ascii()))
-
-func point_data_set(data):
+func _point_data_set(data, id):
   if typeof(data) != TYPE_RAW_ARRAY:
     print("Got wrong type:", typeof(data))
     return
