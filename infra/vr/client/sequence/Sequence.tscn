@@ -1,0 +1,45 @@
+[gd_scene load_steps=7 format=2]
+
+[ext_resource path="res://sequence/Sequence.gd" type="Script" id=1]
+[ext_resource path="res://sequence/SequenceUI.tscn" type="PackedScene" id=2]
+[ext_resource path="res://sequence/SequenceUI.shader" type="Shader" id=3]
+
+[sub_resource type="PlaneMesh" id=4]
+flip_faces = true
+subdivide_width = 10
+subdivide_depth = 10
+
+[sub_resource type="ViewportTexture" id=5]
+viewport_path = NodePath("SequenceUIPlane/Viewport")
+
+[sub_resource type="ShaderMaterial" id=6]
+resource_local_to_scene = true
+shader = ExtResource( 3 )
+shader_param/albedo = Color( 1, 1, 1, 1 )
+shader_param/specular = null
+shader_param/metallic = null
+shader_param/roughness = null
+shader_param/point_size = null
+shader_param/uv1_scale = Vector3( 1, 1, 0 )
+shader_param/uv1_offset = null
+shader_param/uv2_scale = null
+shader_param/uv2_offset = null
+shader_param/depth = 0.5
+shader_param/texture_albedo = SubResource( 5 )
+
+[node name="Sequence" type="Spatial"]
+transform = Transform( -1, 3.89414e-07, 0, -3.89414e-07, -1, 0, 0, 0, 1, -3.34685e-05, -1.30331e-11, 0 )
+script = ExtResource( 1 )
+
+[node name="SequenceUIPlane" type="MeshInstance" parent="."]
+transform = Transform( 0.999967, 1.77806e-10, 0.00811182, 0.00811182, -4.38698e-08, -0.999967, 1.77806e-10, 1, -4.38698e-08, 0, -2, 0 )
+mesh = SubResource( 4 )
+material/0 = SubResource( 6 )
+
+[node name="Viewport" type="Viewport" parent="SequenceUIPlane"]
+size = Vector2( 512, 512 )
+usage = 0
+
+[node name="SequenceItemUI" parent="SequenceUIPlane/Viewport" instance=ExtResource( 2 )]
+margin_right = 0.0
+margin_bottom = 0.0

@@ -16,6 +16,10 @@ var is_initialized = false # We have been registered to the server.
 var default_connect_timer = null
 
 func _ready():
+  if get_tree().get_current_scene().get_name() != "World":
+    print("Not in main scene; skipping connections")
+    return
+  
   var LISTENERS = {
     "connected_to_server": [get_tree(), "_connected_ok"],
     "connection_failed": [get_tree(), "_connected_fail"],

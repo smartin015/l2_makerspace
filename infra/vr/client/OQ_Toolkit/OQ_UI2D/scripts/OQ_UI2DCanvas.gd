@@ -15,7 +15,6 @@ func _get_configuration_warning():
   if (ui_control == null): return "Need a Control node as child."
   return '';
 
-
 func find_child_control():
   ui_control = null;
   for c in get_children():
@@ -30,7 +29,6 @@ func update_size():
     ui_area.scale.y = ui_size.y * vr.UI_PIXELS_TO_METER;
   if (viewport != null):
     viewport.set_size(ui_size);
-
 
 func _ready():
   if Engine.editor_hint:
@@ -51,7 +49,6 @@ func _ready():
   
   ui_collisionshape = $UIArea/UICollisionShape
   
-  
 func _editor_update_preview():
   var preview_node = ui_control.duplicate(DUPLICATE_USE_INSTANCING);
   preview_node.visible = true;
@@ -62,7 +59,6 @@ func _editor_update_preview():
   
   viewport.add_child(preview_node);
 
-
 func _process(_dt):
   if !Engine.editor_hint: # not in edtior
     # if we are invisible we need to disable the collision shape to avoid interaction with the UIRayCast
@@ -71,8 +67,6 @@ func _process(_dt):
     else:
       ui_collisionshape.disabled = false;
     return;
-    
-
 
   # Not sure if it is a good idea to do this in the _process but at the moment it seems to 
   # be the easiest to show the actual canvas size inside the editor

@@ -15,6 +15,7 @@ class ROSHandler:
   var topic = ""
   var type = ""
   var id = ""
+  var raw = false
   var callbacks = [] # [[node, handler], ...]
 
 # Subscribes to a ROS topic via the server & ros bridge, and registers a 
@@ -28,6 +29,7 @@ func ros_connect(topic: String, type: String, node: Node, handler: String, id: S
   h.type = type
   h.id = id
   h.callbacks.push_back([node, handler])
+  h.raw = raw
   rpc_id(1, 'subscribe', topic, type, id, raw)
 
 remote func set_ros_peers(peers):
@@ -37,7 +39,7 @@ remote func set_ros_peers(peers):
     for a in advertisements:
       advertise(a.topic, a.type, a.id)
     for h in handlers.values():
-      rpc_id(1, 'subscribe', h.topic, h.type, h.id)
+      rpc_id(1, 'subscribe', h.topic, h.type, h.id, h.raw)
   self.peers = peers
 
 remote func handle_ros_status(level: String, msg: String, id: String):

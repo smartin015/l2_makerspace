@@ -1,0 +1,29 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://sequence/ui_theme.tres" type="Theme" id=1]
+[ext_resource path="res://sequence/SequenceItemNode.gd" type="Script" id=2]
+
+[node name="SequenceItem" type="GraphNode"]
+margin_right = 216.0
+margin_bottom = 62.0
+title = "SequenceItem"
+show_close = true
+slot/0/left_enabled = false
+slot/0/left_type = 0
+slot/0/left_color = Color( 1, 1, 1, 1 )
+slot/0/right_enabled = false
+slot/0/right_type = 0
+slot/0/right_color = Color( 1, 1, 1, 1 )
+script = ExtResource( 2 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Label" type="Label" parent="."]
+margin_left = 16.0
+margin_top = 24.0
+margin_right = 200.0
+margin_bottom = 43.0
+theme = ExtResource( 1 )
+text = "Not Started"
+[connection signal="close_request" from="." to="." method="_on_SequenceItem_close_request"]
