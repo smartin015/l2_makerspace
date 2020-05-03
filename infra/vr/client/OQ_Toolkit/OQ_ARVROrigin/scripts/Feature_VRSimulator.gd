@@ -28,8 +28,8 @@ var info_rect = null;
 const info_text = """VR Simulator Keys:
  mouse right-click: move (camera or controller)
  W A S D: move (camera or controller)
- space:  fly mode (moves origin up)
- SHIFT: duck player
+ space: duck player
+ shift:  fly mode (moves origin up)
 
  hold CTRL/ALT: enable left/right controller for manipulation
    Keypad 8 4 2 6: analog stick
@@ -106,11 +106,17 @@ func _is_interact_right():
   return Input.is_key_pressed(KEY_ALT);
 
 
-func _interact_move_controller(dir):
+func _interact_move_controller(dir, rotate):
   if (_is_interact_left()):
-    left_controller_node.translation += dir;
+    if (left_controller_node): 
+      left_controller_node.rotate_x(rotate.x);
+      left_controller_node.rotate_y(rotate.y);
+      left_controller_node.translation += dir;
   if (_is_interact_right()):
-    right_controller_node.translation += dir;
+    if (right_controller_node): 
+      right_controller_node.rotate_x(rotate.x);
+      right_controller_node.rotate_y(rotate.y);
+      right_controller_node.translation += dir;
   _update_virtual_controller_position();
 
 
@@ -118,7 +124,7 @@ func _interact_move_controller(dir):
 
 func _update_keyboard(dt):
   
-  _fly_mode = Input.is_key_pressed(KEY_SPACE);
+  _fly_mode = Input.is_key_pressed(KEY_SHIFT);
 
   var dir = Vector3(0,0,0);
   if (Input.is_key_pressed(KEY_W)):
@@ -129,12 +135,14 @@ func _update_keyboard(dt):
     dir += Vector3(-1,0,0);
   if (Input.is_key_pressed(KEY_D)):
     dir += Vector3(1,0,0);
+  if (Input.is_key_pressed(KEY_V)):
+    dir += Vector3(0,-1,0);
+  if (Input.is_key_pressed(KEY_F)):
+    dir += Vector3(0,1,0);
 
   if (_is_interact_left() || _is_interact_right()):
-    dir.x = 0.0; # only z axis with keyboard;
     if (dir.length_squared() > 0.01):
-      dir = dir.normalized();
-      _interact_move_controller(dir * dt);
+      _interact_move_controller(Vector3(0.0, 0.0, dir.z * dt), Vector3(dir.y, dir.x, 0.0) * 8.0 * dt);
   else:
     dir = vr.vrCamera.transform.basis.xform((dir));
     if (_fly_mode): 
@@ -199,6 +207,7 @@ func _update_keyboard(dt):
 
 func _input(event):
   if vr.inVR || !active: return;
+  
 
   # basic keyboard events
   if (event is InputEventKey && event.pressed):
@@ -206,7 +215,7 @@ func _input(event):
       _reset_controller_position();
       
   _current_player_height = player_height;
-  if (Input.is_key_pressed(KEY_SHIFT)):
+  if (Input.is_key_pressed(KEY_SPACE)):
     _current_player_height = player_height * duck_multiply;
 
   vr.vrCamera.translation.y = _current_player_height;
@@ -216,7 +225,7 @@ func _input(event):
   if (event is InputEventMouseMotion && Input.is_mouse_button_pressed(2)):
     if (_is_interact_left() || _is_interact_right()):
       var move = Vector3(event.relative.x, -event.relative.y, 0.0);
-      _interact_move_controller(move * controller_move_speed);
+      _interact_move_controller(move * controller_move_speed, Vector3(0,0,0));
     else:
       var yaw = event.relative.x;
       var pitch = event.relative.y;

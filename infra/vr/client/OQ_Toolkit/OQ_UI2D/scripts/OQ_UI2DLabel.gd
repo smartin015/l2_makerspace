@@ -28,6 +28,8 @@ func _ready():
   ui_mesh = mesh_instance.mesh;
   set_label_text(text);
   
+  #mesh_material = mesh_instance.mesh.surface_get_material(0).duplicate();
+  #mesh_instance.mesh.surface_set_material(0, mesh_material);
   mesh_material = mesh_instance.mesh.surface_get_material(0);
   
   if (billboard):
@@ -56,7 +58,7 @@ func resize_auto():
   ui_viewport.set_size(res)
   ui_color_rect.set_size(res)
 
-  var aspect = res.x / res.y
+  #var aspect = res.x / res.y
 
   ui_mesh.size.x = font_size_multiplier * res.x * vr.UI_PIXELS_TO_METER
   ui_mesh.size.y = font_size_multiplier * res.y * vr.UI_PIXELS_TO_METER
@@ -77,6 +79,10 @@ func resize_fixed():
   #if new_size.x < ui_container.get_size().x or new_size.y < ui_container.get_size().y:
   #	print("Your labels text is too large and therefore might look weird. Consider decreasing the font_size_multiplier.")
 
+func get_label_text():
+  if (!ui_label): return "";
+  return ui_label.text;
+
 
 func set_label_text(t: String):
   if (!ui_label): return;
@@ -88,7 +94,7 @@ func set_label_text(t: String):
     ResizeModes.FIXED:
       resize_fixed();
       
-func _process(dt):
+func _process(_dt):
   if Engine.editor_hint:
     set_label_text(text);
       

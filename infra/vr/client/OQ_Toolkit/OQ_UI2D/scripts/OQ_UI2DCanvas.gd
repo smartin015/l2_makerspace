@@ -9,11 +9,23 @@ var ui_collisionshape = null;
 
 export var editor_live_update := false;
 
+export var transparent := false;
+
+var mesh_material = null;
+onready var mesh_instance : MeshInstance = $UIArea/UIMeshInstance
+
+
 var ui_size = Vector2();
 
 func _get_configuration_warning():
   if (ui_control == null): return "Need a Control node as child."
   return '';
+
+
+func _input(event):
+  if (event is InputEventKey):
+    viewport.input(event);
+
 
 func find_child_control():
   ui_control = null;
@@ -30,7 +42,13 @@ func update_size():
   if (viewport != null):
     viewport.set_size(ui_size);
 
+
 func _ready():
+  
+  mesh_material = mesh_instance.mesh.surface_get_material(0);
+  # only enable transparency when necessary as it is significantly slower than non-transparent rendering
+  mesh_material.flags_transparent = transparent;
+  
   if Engine.editor_hint:
     return;
 
@@ -49,6 +67,7 @@ func _ready():
   
   ui_collisionshape = $UIArea/UICollisionShape
   
+  
 func _editor_update_preview():
   var preview_node = ui_control.duplicate(DUPLICATE_USE_INSTANCING);
   preview_node.visible = true;
@@ -59,6 +78,7 @@ func _editor_update_preview():
   
   viewport.add_child(preview_node);
 
+
 func _process(_dt):
   if !Engine.editor_hint: # not in edtior
     # if we are invisible we need to disable the collision shape to avoid interaction with the UIRayCast
@@ -67,6 +87,8 @@ func _process(_dt):
     else:
       ui_collisionshape.disabled = false;
     return;
+    
+
 
   # Not sure if it is a good idea to do this in the _process but at the moment it seems to 
   # be the easiest to show the actual canvas size inside the editor

@@ -25,4 +25,4 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4937, 0, 0.271719 )
 visible = false
 
 [node name="Sequence" parent="." instance=ExtResource( 1 )]
-transform = Transform( -1, 0, -1.50996e-07, 0, 1, 0, 1.50996e-07, 0, -1, 0, 0, -1.21413 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.000293732, 1.8435, -1.21317 )

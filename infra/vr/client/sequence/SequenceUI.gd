@@ -36,7 +36,7 @@ func _set_seq_items(si):
 
 func _ready():
   _set_seq_items(["test1", "test2"])
-  $MarginContainer/VBoxContainer/Spacer/Nodes.get_zoom_hbox().visible = false
+  # $MarginContainer/VBoxContainer/Spacer/Nodes.get_zoom_hbox().visible = false
 
 func _on_GridContainer_connection_request(from, from_slot, to, to_slot):
   # TODO prevent creation of cycles

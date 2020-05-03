@@ -17,15 +17,12 @@ onready var movement_vignette_rect = $MovementVignette_ColorRect;
 export(vr.AXIS) var move_left_right = vr.AXIS.LEFT_JOYSTICK_X;
 export(vr.AXIS) var move_forward_back = vr.AXIS.LEFT_JOYSTICK_Y;
 
+enum MovementOrientation { HEAD, HAND_LEFT, HAND_RIGHT }
+export(MovementOrientation) var movement_orientation := MovementOrientation.HEAD
 
-enum TurnType {
-	CLICK,
-	SMOOTH
-}
-
-export(TurnType) var turn_type = TurnType.CLICK
-export var smooth_turn_speed = 90.0;
-export var click_turn_angle = 45.0; 
+export(vr.LocomotionStickTurnType) var turn_type = vr.LocomotionStickTurnType.CLICK
+export var smooth_turn_speed := 90.0;
+export var click_turn_angle := 45.0; 
 export(vr.AXIS) var turn_left_right = vr.AXIS.RIGHT_JOYSTICK_X;
 
 
@@ -33,6 +30,8 @@ export(vr.AXIS) var turn_left_right = vr.AXIS.RIGHT_JOYSTICK_X;
 # application. There can at the moment only be one; It will be overwritten
 # when the Feature_PlayerCollision is used; so be careful there.
 var move_checker = null;
+
+var is_moving = false;
 
 
 func _show_debug_information():
@@ -59,6 +58,7 @@ func _ready():
 
 
 func move(dt):
+	is_moving = false;
 	var dx = vr.get_controller_axis(move_left_right);
 	var dy = vr.get_controller_axis(move_forward_back);
 	
@@ -67,8 +67,19 @@ func move(dt):
 		
 	if (enable_vignette) : movement_vignette_rect.visible = true;
 		
-	var view_dir = -vr.vrCamera.global_transform.basis.z;
-	var strafe_dir = vr.vrCamera.global_transform.basis.x;
+	var view_dir: Vector3
+	var strafe_dir: Vector3
+	
+	match movement_orientation:
+		MovementOrientation.HEAD:
+			view_dir = -vr.vrCamera.global_transform.basis.z;
+			strafe_dir = vr.vrCamera.global_transform.basis.x;
+		MovementOrientation.HAND_RIGHT:
+			view_dir = -vr.rightController.global_transform.basis.z;
+			strafe_dir = vr.rightController.global_transform.basis.x;
+		MovementOrientation.HAND_LEFT:
+			view_dir = -vr.leftController.global_transform.basis.z;
+			strafe_dir = vr.leftController.global_transform.basis.x;
 	
 	view_dir.y = 0.0;
 	strafe_dir.y = 0.0;
@@ -83,6 +94,8 @@ func move(dt):
 		actual_velocity = move_checker.oq_locomotion_stick_check_move(actual_velocity, dt);
 
 	vr.vrOrigin.translation += actual_velocity * dt;
+	
+	is_moving = actual_velocity.length_squared() > 0.0;
 
 var last_click_rotate = false;
 
@@ -101,13 +114,13 @@ func turn(dt):
 	var origHeadPos = vr.vrCamera.global_transform.origin;
 	
 	# click turning
-	if (turn_type == TurnType.CLICK && !last_click_rotate):
+	if (turn_type == vr.LocomotionStickTurnType.CLICK && !last_click_rotate):
 		last_click_rotate = true;
 		var dsign = sign(dlr);
 		vr.vrOrigin.rotate_y(dsign * deg2rad(click_turn_angle));
 			
 	# smooth turning
-	elif (turn_type == TurnType.SMOOTH):
+	elif (turn_type == vr.LocomotionStickTurnType.SMOOTH):
 		if (enable_vignette) : movement_vignette_rect.visible = true;
 		vr.vrOrigin.rotate_y(deg2rad(dlr * smooth_turn_speed * dt));
 
