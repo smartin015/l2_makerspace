@@ -1,0 +1,38 @@
+[gd_scene load_steps=2 format=2]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends ReferenceRect
+
+var currLine = null
+
+func _ready():
+  # Always server-owned
+  set_network_master(0)
+
+func _input(event):
+  if event is InputEventMouseButton:
+    print(event.pressed)
+    if event.pressed:
+      currLine = Line2D.new()
+      add_child(currLine)
+      currLine.add_point(event.position)
+      print(\"Beginning line\")
+    elif currLine != null:
+      print(\"Ending line; %d points\" % len(currLine.points))
+      currLine = null
+  elif event is InputEventMouseMotion:
+    if currLine != null:
+      currLine.add_point(event.position)
+"
+
+[node name="CanvasUI" type="ReferenceRect"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = -0.836243
+margin_top = 2.5087
+margin_right = -0.836243
+margin_bottom = 2.50867
+script = SubResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}

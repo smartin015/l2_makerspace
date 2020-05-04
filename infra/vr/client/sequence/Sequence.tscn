@@ -18,3 +18,5 @@ __meta__ = {
 }
 
 [node name="SequenceItemUI" parent="OQ_UI2DCanvas/ReferenceRect" instance=ExtResource( 2 )]
+[connection signal="run_sequence" from="OQ_UI2DCanvas/ReferenceRect/SequenceItemUI" to="." method="_on_SequenceItemUI_run_sequence"]
+[connection signal="stop_sequence" from="OQ_UI2DCanvas/ReferenceRect/SequenceItemUI" to="." method="_on_SequenceItemUI_stop_sequence"]

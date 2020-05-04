@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=2]
+[gd_scene load_steps=10 format=2]
 
 [ext_resource path="res://srv/SpawnObject3D.gd" type="Script" id=1]
 [ext_resource path="res://srv/AddTwoInts.gd" type="Script" id=2]
@@ -8,6 +8,7 @@
 [ext_resource path="res://srv/RemoveObject3D.gd" type="Script" id=6]
 [ext_resource path="res://msg/Locks.gd" type="Script" id=7]
 [ext_resource path="res://msg/Players.gd" type="Script" id=8]
+[ext_resource path="res://Canvas.gd" type="Script" id=9]
 
 [node name="World" type="Spatial"]
 
@@ -38,3 +39,6 @@ script = ExtResource( 7 )
 
 [node name="Players" type="Node" parent="msg"]
 script = ExtResource( 8 )
+
+[node name="Canvas" type="Node" parent="."]
+script = ExtResource( 9 )

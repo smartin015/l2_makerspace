@@ -83,6 +83,25 @@ func remove_dbg_info(key):
 	_reorder_dbg_labels();
 
 
+var _notification_scene = null;
+
+func show_notification(title, text):
+	if (_notification_scene == null): _notification_scene = load(oq_base_dir + "/OQ_UI2D/OQ_UI2DNotificationWindow.tscn");
+	var nw = _notification_scene.instance();
+	
+	nw.set_notificaiton_text(title, text);
+
+	if (scene_switch_root):
+		scene_switch_root.add_child(nw);
+	else:
+		vr.vrOrigin.get_parent().add_child(nw);
+	var pos = vr.vrCamera.global_transform.origin - vr.vrCamera.global_transform.basis.z;
+	
+	nw.look_at_from_position(pos, vr.vrCamera.global_transform.origin, Vector3(0,1,0));
+	
+	
+	
+	
 # returns the current player height based on the difference between
 # the height of origin and camera; this assumes that tracking is floor level
 func get_current_player_height():
@@ -399,21 +418,27 @@ func get_controller_angular_velocity(controller_id):
 		#return Vector3(0,0,0); # we could implement a fallback here
 		return _sim_angular_velocity[controller_id];
 	else:
-		return ovrUtilities.get_controller_angular_velocity(controller_id);
+		var v = ovrUtilities.get_controller_angular_velocity(controller_id);
+		if (v != null): return v;
+	return Vector3(0,0,0);
 
 func get_controller_angular_acceleration(controller_id):
 	if (!ovrUtilities):
 		#return Vector3(0,0,0); # we could implement a fallback here
 		return _sim_angular_acceleration[controller_id];
 	else:
-		return ovrUtilities.get_controller_angular_acceleration(controller_id);
+		var v =  ovrUtilities.get_controller_angular_acceleration(controller_id);
+		if (v != null): return v;
+	return Vector3(0,0,0);
 	
 func get_controller_linear_velocity(controller_id):
 	if (!ovrUtilities):
 		#return Vector3(0,0,0); # we could implement a fallback here
 		return _sim_linear_velocity[controller_id];
 	else:
-		return ovrUtilities.get_controller_linear_velocity(controller_id);
+		var v =  ovrUtilities.get_controller_linear_velocity(controller_id);
+		if (v != null): return v;
+	return Vector3(0,0,0);
 
 
 func get_controller_linear_acceleration(controller_id):
@@ -421,7 +446,9 @@ func get_controller_linear_acceleration(controller_id):
 		#return Vector3(0,0,0); # we could implement a fallback here
 		return _sim_linear_acceleration[controller_id];
 	else:
-		return ovrUtilities.get_controller_linear_acceleration(controller_id);
+		var v =  ovrUtilities.get_controller_linear_acceleration(controller_id);
+		if (v != null): return v;
+	return Vector3(0,0,0);
 
 
 func get_head_angular_velocity():
@@ -429,21 +456,27 @@ func get_head_angular_velocity():
 		#return Vector3(0,0,0); # we could implement a fallback here
 		return _sim_angular_velocity[0];
 	else:
-		return ovrUtilities.get_head_angular_velocity();
+		var v =  ovrUtilities.get_head_angular_velocity();
+		if (v != null): return v;
+	return Vector3(0,0,0);
 
 func get_head_angular_acceleration():
 	if (!ovrUtilities):
 		#return Vector3(0,0,0); # we could implement a fallback here
 		return _sim_angular_acceleration[0];
 	else:
-		return ovrUtilities.get_head_angular_acceleration();
+		var v = ovrUtilities.get_head_angular_acceleration();
+		if (v != null): return v;
+	return Vector3(0,0,0);
 	
 func get_head_linear_velocity():
 	if (!ovrUtilities):
 		#return Vector3(0,0,0); # we could implement a fallback here
 		return _sim_linear_velocity[0];
 	else:
-		return ovrUtilities.get_head_linear_velocity();
+		var v = ovrUtilities.get_head_linear_velocity();
+		if (v != null): return v;
+	return Vector3(0,0,0);
 
 
 func get_head_linear_acceleration():
@@ -451,7 +484,9 @@ func get_head_linear_acceleration():
 		#return Vector3(0,0,0); # we could implement a fallback here
 		return _sim_linear_acceleration[0];
 	else:
-		return ovrUtilities.get_head_linear_acceleration();
+		var v = ovrUtilities.get_head_linear_acceleration();
+		if (v != null): return v;
+	return Vector3(0,0,0);
 
 
 func get_ipd():
