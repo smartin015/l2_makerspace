@@ -7,8 +7,8 @@ signal stop_sequence
 onready var nodes = $MarginContainer/VBoxContainer/Spacer/Nodes
 onready var items = $MarginContainer/VBoxContainer/Controls/MarginContainer/Items
 onready var status = $MarginContainer/VBoxContainer/MarginContainer/HBoxContainer3/Status
-onready var seqItemNode = load("res://sequence/SequenceItemNode.tscn")
-onready var seqItem = load("res://sequence/SequenceItem.tscn")
+onready var seqItemNode = load("res://panel/sequence/SequenceItemNode.tscn")
+onready var seqItem = load("res://panel/sequence/SequenceItem.tscn")
 
 var running = false
 

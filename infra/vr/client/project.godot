@@ -39,7 +39,7 @@ locks="*res://locks.gd"
 
 [editor_plugins]
 
-enabled=PoolStringArray( "gut" )
+enabled=PoolStringArray( "GDCharts", "gut" )
 
 [gdnative]
 
