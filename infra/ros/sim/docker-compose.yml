@@ -15,7 +15,8 @@ services:
       - "DISPLAY=$DISPLAY"
       - "PYTHONUNBUFFERED=1"
       - "OBJCONFIG=$OBJCONFIG"
-    command: /ros_entrypoint.sh ros2 run l2_sim node --ros-args -p report_path:=/test -p object_config:=$OBJCONFIG -r __ns:=/l2
+      - "COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME"
+    command: /ros_entrypoint.sh ros2 run l2_sim node --ros-args -p report_path:=/test -p object_config:=$OBJCONFIG -r __ns:=/l2/$COMPOSE_PROJECT_NAME
   
   example_controller:
     image: l2sim
@@ -27,7 +28,8 @@ services:
       - "WEBOTS_HOME=/webots_ros2/install/webots_ros2_desktop/share/webots_ros2_desktop/webots/"
       - "LD_LIBRARY_PATH=/webots_ros2/install/webots_ros2_desktop/share/webots_ros2_desktop/webots/lib/controller"
       - "WEBOTS_ROBOT_NAME=single_motor"
-    command: /ros_entrypoint.sh ros2 run l2_sim example_controller --ros-args -p synchronization:=False -r __ns:=/l2
+      - "COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME"
+    command: /ros_entrypoint.sh ros2 run l2_sim example_controller --ros-args -p synchronization:=False -r __ns:=/l2/$COMPOSE_PROJECT_NAME
 
   pendant_controller:
     image: l2sim
@@ -39,11 +41,12 @@ services:
       - "WEBOTS_HOME=/webots_ros2/install/webots_ros2_desktop/share/webots_ros2_desktop/webots/"
       - "LD_LIBRARY_PATH=/webots_ros2/install/webots_ros2_desktop/share/webots_ros2_desktop/webots/lib/controller"
       - "WEBOTS_ROBOT_NAME=pendant"
-    command: /ros_entrypoint.sh ros2 run l2_sim pendant_controller --ros-args -p synchronization:=False -r __ns:=/l2
+      - "COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME"
+    command: /ros_entrypoint.sh ros2 run l2_sim pendant_controller --ros-args -p synchronization:=False -r __ns:=/l2/$COMPOSE_PROJECT_NAME
 
   range_controller:
     image: l2sim
-    ipc: host
+    ipc: container:sim
     pid: host
     volumes:
       - "webots:/tmp"
@@ -55,7 +58,8 @@ services:
       - "PYTHONFAULTHANDLER=1"
       - "PYTHONUNBUFFERED=1"
       - "WEBOTS_ROBOT_NAME=range"
-    command: /ros_entrypoint.sh ros2 run l2_sim rangefinder_controller --ros-args -p synchronization:=False -r __ns:=/l2/vr
+      - "COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME"
+    command: /ros_entrypoint.sh ros2 run l2_sim rangefinder_controller --ros-args -p synchronization:=False -r __ns:=/l2/$COMPOSE_PROJECT_NAME
 
   gen_example_rvl:
     image: l2sim
@@ -64,7 +68,8 @@ services:
       - l2
     environment:
       - "PYTHONUNBUFFERED=1"
-    command: /ros_entrypoint.sh ros2 run l2_sim gen_example_rvl --ros-args -r __ns:=/l2/vr
+      - "COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME"
+    command: /ros_entrypoint.sh ros2 run l2_sim gen_example_rvl --ros-args -r __ns:=/l2/$COMPOSE_PROJECT_NAME
 
 networks:
   l2:

@@ -2,7 +2,6 @@
 from l2_msgs.srv import GetFile, SpawnObject3D, RemoveObject3D, GetObject3D
 from l2_msgs.msg import Object3DArray, Object3D, Simulation
 from std_msgs.msg import String
-import pprint
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
@@ -26,6 +25,7 @@ class VRServer(Node):
         self.vr_object3d = Object3DArray()
         self.last_sim_msg = T0
         self.last_vr_msg = T0
+        self.last_status = None
         
         # Node's default callback group is mutually exclusive. 
         # This would prevent the client response
@@ -81,6 +81,8 @@ class VRServer(Node):
             self.get_logger().info("Remove %s" % name)
             self.call_with_deadline(self.rmcli, RemoveObject3D.Request(name=name), self.log_response)
 
+        self.log_status()
+
     def get_object3d_response(self, response):
         if response.exception() is not None:
             self.get_logger().error(str(response.exception()))
@@ -98,21 +100,24 @@ class VRServer(Node):
             return
         self.get_logger().info(str(response.result()))
         
-    def fmt_time(self, time):
-        return datetime.fromtimestamp(time.seconds_nanoseconds()[0]).isoformat()
-
     def log_status(self):
+        now = self.get_clock().now()
         status = {
-            "ts": self.fmt_time(self.get_clock().now()),
-            "sim_ts": self.fmt_time(self.last_sim_msg),
-            "vr_ts": self.fmt_time(self.last_vr_msg),
-            "sim_objs": self.sim_objset(),
-            "vr_objs": self.vr_objset(),
+            "sim": ["-%dsec" % (now-self.last_sim_msg).to_msg().sec, self.sim_objset()],
+            "vr": ["-%dsec" % (now-self.last_vr_msg).to_msg().sec, self.vr_objset()],
             "stale": self.stale(),
         }
-        self.get_logger().info(pprint.pformat(status))
+
+        # Skip if there's not really anything new to report
+        if self.last_status is not None and (
+                self.last_status["stale"] == status["stale"] 
+                and self.last_status["sim"][1] == status["sim"][1]
+                and self.last_status["vr"][1] == status["vr"][1]):
+            return
+        self.get_logger().info(str(status))
         self.vr_missing_pub.publish(Object3DArray(objects=[Object3D(name=n) for n in self.vr_objset().difference(self.sim_objset())]))
         self.vr_extra_pub.publish(Object3DArray(objects=[Object3D(name=n) for n in self.sim_objset().difference(self.vr_objset())]))
+        self.last_status = status
 
     def set_vr_state(self, msg):
         self.vr_object3d = msg

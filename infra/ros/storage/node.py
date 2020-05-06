@@ -38,7 +38,6 @@ class WatchHandler(FileSystemEventHandler):
         (name, ext) = os.path.splitext(os.path.basename(path))
         if ext not in self.EXT_LIST:
             return
-        print("Reading %s" % path)
         with open(path, 'r') as f:
             data = f.read()
         self.handler(name, ext, data)
@@ -58,7 +57,6 @@ class DBServer(Node):
         self.create_service(GetProject, 'get_project', self.get_project_callback)
         self.create_service(GetObject3D, 'get_object3d', self.get_object3d_callback)
         self.create_service(GetFile, 'get_file', self.get_file_callback)
-        self.get_logger().info("Services ready")
 
         self.watch_handler = WatchHandler(handler=self.upsert, dirpath=self.dirpath)
         self.observer = Observer()
@@ -86,7 +84,6 @@ class DBServer(Node):
         }.get(typestr, Object3D.TYPE_UNKNOWN)
 
         if objtype == Object3D.TYPE_UNKNOWN:
-            print("Skipping %s%s" % (name, typestr))
             return
 
         cursor = self.con.cursor()
@@ -101,10 +98,9 @@ class DBServer(Node):
               })
         self.con.commit()
         cursor.close()
-        print("Added %s%s to db" % (name, typestr))
+        self.get_logger().info("Added %s%s to db" % (name, typestr))
 
     def connect_to_db(self):
-        self.get_logger().info("Parsing environment...")
         from urllib.parse import urlparse
         result = urlparse(os.environ["PGRST_DB_URI"])
         username = result.username
@@ -112,13 +108,12 @@ class DBServer(Node):
         database = result.path[1:]
         hostname = result.hostname
         
-        self.get_logger().info("Connecting to host %s, database %s" % (hostname, database))
         self.con = psycopg2.connect(
                         database=database, 
                         user=username, 
                         password=password, 
                         host=hostname)
-        self.get_logger().info("Connected!")
+        self.get_logger().info("Connected (host: %s, db: %s)" % (hostname, database))
 
     def get_project_callback(self, request, response):
         self.get_logger().info(str(request))

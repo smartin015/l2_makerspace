@@ -90,7 +90,13 @@ remote func publish(topic: String, type: String, msg, id: String):
   })
 
 remote func subscribe(topic, type, id: String, raw=false):
-  listeners[topic] = listeners.get(topic, []) + [get_tree().get_rpc_sender_id()]
+  var sender = get_tree().get_rpc_sender_id()
+  # Ignore repeat subscription
+  for sub in listeners.get(topic, []):
+    if sub == sender:
+      return
+
+  listeners[topic] = listeners.get(topic, []) + [sender]
 
   if raw:
     # Raw needs no broadcast
@@ -176,7 +182,8 @@ func _on_data(id):
 func _handle_result(id, result):
   match result.op:
     "status":
-      print("ROS(%s) -> %s %s: %s" % [id, result.id, result.level, result.msg])
+      if result.level != "none":
+        print("ROS(%s) -> %s %s: %s" % [id, result.id, result.level, result.msg])
       # Forward to player if ID is prefixed with a player
       # var p = gamestate.players.get(result.get(id).split('_')[0])
       # if p != null:

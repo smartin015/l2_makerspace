@@ -2,17 +2,17 @@
 echo "TODO ensure all images are built"
 echo "Make sure you're running this script from the root of l2_makerspace"
 echo "Starting docker container ensemble (handing over to docker-compose)"
-INFRADIR=$(dirname "$0")../..
-docker-compose --abort-on-container-exit \
-  -f $INFRADIR/ros/bridge/docker-compose.yml \
+set -x
+INFRADIR=$(dirname "$0")/../..
+export COMPOSE_PROJECT_NAME=l2
+docker-compose -f $INFRADIR/ros/bridge/docker-compose.yml \
   -f $INFRADIR/app/docker-compose.yml \
   -f $INFRADIR/ros/storage/docker-compose.yml \
   -f $INFRADIR/ros/sim/docker-compose.yml \
   -f $INFRADIR/ros/vr/docker-compose.yml \
   -f $INFRADIR/vr/server/docker-compose.yml \
-  -p l2 \
-  up \
-  bridge_local vr_syncer vr_server_local
+  up --abort-on-container-exit \
+  db storage bridge_local vr_syncer vr_server_local
 # client app storage db vr_server sdf2 tf_fwd
 # echo "TODO Starting the local DB container"
 # echo "TODO vdi/ to start up the virtual desktop server container"

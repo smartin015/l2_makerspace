@@ -14,7 +14,7 @@ services:
     networks:
       - l2
     environment:
-      - PYTHONUNBUFFERED=1
+      - "PYTHONUNBUFFERED=1"
     command: ros2 run l2_vr fwd
 networks:
   l2:

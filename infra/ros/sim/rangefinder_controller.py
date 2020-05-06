@@ -54,9 +54,9 @@ class Rangefinder(WebotsNode):
             self.get_logger().info("No range image", throttle_duration_sec=3)
             return
         rvl.plain = [int(65535 * px / self.MAX_RANGE) for px in raw]
-        rvl.CompressRVL()
+        rvl.CompressRVL(chan=0)
         header = Header(frame_id=self.FRAME_ID, stamp=Time(sec=int(now), nanosec=int((now-int(now)) * 1.0e+6)))
-        msg = CompressedImage(header=header, format="RVL", data=base64.b64encode(rvl.encoded))
+        msg = CompressedImage(header=header, format="RVL", data=rvl.encoded)
         self.pub.publish(msg)
         self.lastUpdate = self.robot.getTime()
 
