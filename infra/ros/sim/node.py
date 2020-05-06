@@ -37,7 +37,7 @@ class SimWorker(Node):
             object=Object3D(name=self.get_parameter('object_config').value))
         self.sim_pub = self.create_publisher(Simulation, 'simulation', 10)
         self.sim_pub_timer = self.create_timer(self.PUBLISH_PD, self.publish_sim)
-        self.getcli = self.create_client(GetObject3D, 'storage/get_object3d')
+        self.getcli = self.create_client(GetObject3D, '/l2/storage/get_object3d')
         self.get_logger().info("Waiting for storage")
         self.getcli.wait_for_service(timeout_sec=5)
         if not self.getcli.service_is_ready():

@@ -9,7 +9,7 @@ RUN . /opt/ros/$ROS_DISTRO/setup.sh && mkdir -p /webots_ros2/src && cd /webots_r
 # TODO accept ARGs to select particular GPU type
 RUN \
   apt-get update && \
-  apt-get -y install libgl1-mesa-glx libgl1-mesa-dri libnss3 libasound2 && \
+  apt-get -y install --no-install-recommends libgl1-mesa-glx libgl1-mesa-dri libnss3 libasound2 && \
   rm -rf /var/lib/apt/lists/*
 
 COPY Webots-R2020a.conf /root/.config/Cyberbotics/

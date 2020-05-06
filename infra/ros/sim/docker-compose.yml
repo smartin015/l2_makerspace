@@ -10,13 +10,13 @@ services:
     volumes:
       - "webots:/tmp"
       - "./tmp:/cfg"
-      - "/tmp/.X11-unix:/tmp/.X11-unix"
+      # - "/tmp/.X11-unix:/tmp/.X11-unix"
     environment:
-      - "DISPLAY=$DISPLAY"
       - "PYTHONUNBUFFERED=1"
       - "OBJCONFIG=$OBJCONFIG"
       - "COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME"
-    command: /ros_entrypoint.sh ros2 run l2_sim node --ros-args -p report_path:=/test -p object_config:=$OBJCONFIG -r __ns:=/l2/$COMPOSE_PROJECT_NAME
+      # "DISPLAY=$DISPLAY"
+    command: Xvfb :99 -screen 0 640x480x16 & && DISPLAY=:99 /ros_entrypoint.sh ros2 run l2_sim node --ros-args -p report_path:=/test -p object_config:=$OBJCONFIG -r __ns:=/l2/$COMPOSE_PROJECT_NAME
   
   example_controller:
     image: l2sim
