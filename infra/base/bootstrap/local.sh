@@ -12,7 +12,7 @@ docker-compose -f $INFRADIR/ros/bridge/docker-compose.yml \
   -f $INFRADIR/ros/vr/docker-compose.yml \
   -f $INFRADIR/vr/server/docker-compose.yml \
   up --abort-on-container-exit \
-  db storage bridge_local vr_syncer vr_server_local
+  db storage bridge_local vr_syncer vr_server
 # client app storage db vr_server sdf2 tf_fwd
 # echo "TODO Starting the local DB container"
 # echo "TODO vdi/ to start up the virtual desktop server container"

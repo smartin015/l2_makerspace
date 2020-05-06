@@ -2,11 +2,14 @@ version: '3.5'
 
 services:
   vr_server:
-    image: l2vr-server:latest
-    network_mode: host
-
-  vr_server_local:
     image: l2vr-server
+    networks:
+      - l2
     ports:
       - '44444:44444/udp'
       - '4243:4243/tcp'
+
+networks:
+  l2:
+    driver: bridge
+    name: l2
