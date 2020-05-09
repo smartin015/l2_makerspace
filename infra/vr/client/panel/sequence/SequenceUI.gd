@@ -16,7 +16,6 @@ func _log(s):
   print(s)
   if status != null:
     status.text = s
-  
 
 export var seq_items = [] setget _set_seq_items
 func _set_seq_items(si):
@@ -46,8 +45,11 @@ func _on_GridContainer_connection_request(from, from_slot, to, to_slot):
   nodes.connect_node(from, from_slot, to, to_slot)
 
 func _on_sequence_item_pressed(n):
+  rpc("create_sequence_item", n)
+
+remotesync func create_sequence_item(n):
   var i = seqItemNode.instance()
-  i.title = n
+  i.title = n  
   nodes.add_child(i)
   _log("Added node %s" % n)
 

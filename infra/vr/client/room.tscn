@@ -1,0 +1,39 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://Fiversketchfab/final.dae" type="PackedScene" id=1]
+
+[node name="final" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -25.8917, 0, 7.01818 )
+
+[node name="skp_camera_Last_Saved_SketchUp_View" parent="SketchUp" index="0"]
+visible = false
+
+[node name="group_1" parent="SketchUp" index="2"]
+visible = false
+
+[node name="group_2" parent="SketchUp" index="3"]
+visible = false
+
+[node name="group_3" parent="SketchUp" index="4"]
+visible = false
+
+[node name="group_4" parent="SketchUp" index="5"]
+visible = false
+
+[node name="group_5" parent="SketchUp" index="6"]
+visible = false
+
+[node name="group_6" parent="SketchUp" index="7"]
+visible = false
+
+[node name="group_7" parent="SketchUp" index="8"]
+visible = false
+
+[node name="group_8" parent="SketchUp" index="9"]
+visible = false
+
+[node name="group_10" parent="SketchUp" index="11"]
+visible = false
+
+[node name="group_43" parent="SketchUp/group_42" index="0"]
+visible = false

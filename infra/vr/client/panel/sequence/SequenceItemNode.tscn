@@ -3,8 +3,7 @@
 [ext_resource path="res://panel/sequence/ui_theme.tres" type="Theme" id=1]
 [ext_resource path="res://panel/sequence/SequenceItemNode.gd" type="Script" id=2]
 
-
-[node name="SequenceItem" type="GraphNode"]
+[node name="SequenceItemNode" type="GraphNode"]
 margin_right = 216.0
 margin_bottom = 62.0
 title = "SequenceItem"
@@ -28,3 +27,4 @@ margin_bottom = 43.0
 theme = ExtResource( 1 )
 text = "Not Started"
 [connection signal="close_request" from="." to="." method="_on_SequenceItem_close_request"]
+[connection signal="dragged" from="." to="." method="_on_SequenceItem_dragged"]
