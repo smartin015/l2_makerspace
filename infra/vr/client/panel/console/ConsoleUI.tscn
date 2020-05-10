@@ -1,0 +1,88 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://OQ_Toolkit/OQ_UI2D/theme/oq_ui2d_standard.theme" type="Theme" id=1]
+[ext_resource path="res://panel/console/ConsoleUI.gd" type="Script" id=2]
+
+[node name="ConsoleUI" type="ReferenceRect"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = -0.836243
+margin_top = 2.5087
+margin_right = -0.836243
+margin_bottom = 2.50867
+theme = ExtResource( 1 )
+script = ExtResource( 2 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+custom_constants/margin_right = 10
+custom_constants/margin_top = 10
+custom_constants/margin_left = 10
+custom_constants/margin_bottom = 10
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+margin_left = 10.0
+margin_top = 10.0
+margin_right = 1014.0
+margin_bottom = 589.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="RichTextLabel" type="RichTextLabel" parent="MarginContainer/VBoxContainer"]
+margin_right = 1004.0
+margin_bottom = 536.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Example text!
+
+More text
+
+Text and stuff!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ADSDSFSDFSDF"
+scroll_following = true
+
+[node name="Button" type="Button" parent="MarginContainer/VBoxContainer"]
+margin_top = 540.0
+margin_right = 1004.0
+margin_bottom = 579.0
+size_flags_horizontal = 3
+text = "Clear Console"
+[connection signal="pressed" from="MarginContainer/VBoxContainer/Button" to="." method="_on_Button_pressed"]

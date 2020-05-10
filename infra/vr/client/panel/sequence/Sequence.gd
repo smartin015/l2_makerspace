@@ -18,7 +18,6 @@ func _on_SequenceItemUI_run_sequence(seq):
   }, "seq")
   print("Published seq to run")
 
-
 func _on_SequenceItemUI_stop_sequence():
   ROSBridge.publish(topic, topic_type, {
     "items": [],
