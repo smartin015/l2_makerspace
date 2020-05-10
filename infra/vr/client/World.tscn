@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=2]
+[gd_scene load_steps=13 format=2]
 
 [ext_resource path="res://panel/sequence/Sequence.tscn" type="PackedScene" id=1]
 [ext_resource path="res://Player.tscn" type="PackedScene" id=2]
@@ -8,18 +8,19 @@
 [ext_resource path="res://addons/mesh/MeshStreamer.gd" type="Script" id=6]
 [ext_resource path="res://room.tscn" type="PackedScene" id=7]
 [ext_resource path="res://NavCone.tscn" type="PackedScene" id=8]
+[ext_resource path="res://panel/console/Console.tscn" type="PackedScene" id=9]
 [ext_resource path="res://Players.gd" type="Script" id=10]
 
-[sub_resource type="ProceduralSky" id=2]
-sky_top_color = Color( 0, 0, 0, 1 )
-sky_horizon_color = Color( 0.0980392, 0.0980392, 0.0980392, 1 )
+[sub_resource type="ProceduralSky" id=1]
+sky_top_color = Color( 0.729412, 0.729412, 0.729412, 1 )
+sky_horizon_color = Color( 0.576471, 0.576471, 0.576471, 1 )
+sun_latitude = -10.0
 sun_energy = 0.0
 
-[sub_resource type="Environment" id=1]
+[sub_resource type="Environment" id=2]
 background_mode = 2
-background_sky = SubResource( 2 )
+background_sky = SubResource( 1 )
 ambient_light_color = Color( 1, 1, 1, 1 )
-ambient_light_energy = 0.4
 
 [node name="World" type="Spatial"]
 
@@ -36,14 +37,16 @@ script = ExtResource( 6 )
 
 [node name="Room" parent="." instance=ExtResource( 7 )]
 
-[node name="Sequence" parent="." instance=ExtResource( 1 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1.95672, 1.78037, -3.2991 )
+[node name="Lighting" type="Node" parent="."]
 
-[node name="Canvas" parent="." instance=ExtResource( 3 )]
-transform = Transform( 0.999989, 0, -0.00467751, 0.00269013, 0.818069, 0.575113, 0.00382653, -0.575119, 0.81806, -1.95471, 1.05477, -2.87563 )
+[node name="SpotLight" type="SpotLight" parent="Lighting"]
+transform = Transform( 1, 0, 0, 0, -1.62921e-07, 1, 0, -1, -1.62921e-07, -3.58757, 3.68037, -1.63411 )
 
-[node name="Chart" parent="." instance=ExtResource( 4 )]
-transform = Transform( -4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, -0.479194, 1.91496, -2.12403 )
+[node name="SpotLight2" type="SpotLight" parent="Lighting"]
+transform = Transform( 1, 0, 0, 0, -1.62921e-07, 1, 0, -1, -1.62921e-07, 2.35463, 3.68037, -1.63411 )
+
+[node name="SpotLight3" type="SpotLight" parent="Lighting"]
+transform = Transform( 1, 0, 0, 0, -1.62921e-07, 1, 0, -1, -1.62921e-07, 2.35463, 3.68037, 2.26141 )
 
 [node name="Nav" type="Node" parent="."]
 
@@ -62,13 +65,18 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 3.65673, 0, -2.26799 )
 [node name="NavCone2" parent="Nav" instance=ExtResource( 8 )]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource( 1 )
+environment = SubResource( 2 )
 
-[node name="SpotLight" type="SpotLight" parent="."]
-transform = Transform( 1, 0, 0, 0, -1.62921e-07, 1, 0, -1, -1.62921e-07, -3.58757, 3.68037, -1.63411 )
+[node name="Panels" type="Node" parent="."]
 
-[node name="SpotLight2" type="SpotLight" parent="."]
-transform = Transform( 1, 0, 0, 0, -1.62921e-07, 1, 0, -1, -1.62921e-07, 2.35463, 3.68037, -1.63411 )
+[node name="Sequence" parent="Panels" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1.95672, 1.78037, -3.2991 )
 
-[node name="SpotLight3" type="SpotLight" parent="."]
-transform = Transform( 1, 0, 0, 0, -1.62921e-07, 1, 0, -1, -1.62921e-07, 2.35463, 3.68037, 2.26141 )
+[node name="Canvas" parent="Panels" instance=ExtResource( 3 )]
+transform = Transform( 0.999989, 0, -0.00467751, 0.00269013, 0.818069, 0.575113, 0.00382653, -0.575119, 0.81806, -1.95471, 1.05477, -2.87563 )
+
+[node name="Chart" parent="Panels" instance=ExtResource( 4 )]
+transform = Transform( -4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, -0.479194, 1.91496, -2.12403 )
+
+[node name="Console" parent="Panels" instance=ExtResource( 9 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0590944, 1.78062, -1.47972 )
