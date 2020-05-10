@@ -9,13 +9,14 @@ FROM l2base:latest
 # # ros2-web-bridge; no fragment handling
 RUN apt-get update && apt-get install -y --no-install-recommends wget unzip && apt-get clean
 # Install nvm, Node.js and node-gyp
-ENV NODE_VERSION v10.16.1
+# ENV NODE_VERSION v10.16.1
+ENV NODE_VERSION v12.16.3
 RUN wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash \
     && . $HOME/.nvm/nvm.sh \
     && nvm install $NODE_VERSION && nvm alias default $NODE_VERSION
 ENV PATH /bin/versions/node/$NODE_VERSION/bin:$PATH
-RUN git clone https://github.com/RobotWebTools/rclnodejs.git && cd rclnodejs && git submodule update --init --recursive && npm install
-RUN cd / && wget https://github.com/smartin015/ros2-web-bridge/archive/develop.zip \
+RUN git clone --single-branch --branch eloquent-elusor https://github.com/RobotWebTools/rclnodejs.git && cd rclnodejs && git submodule update --init --recursive && npm install
+RUN cd / && wget https://github.com/RobotWebTools/ros2-web-bridge/archive/develop.zip \
   && unzip develop.zip && rm develop.zip \
   && mv ros2-web-bridge-develop ros2-web-bridge
 RUN cd /ros2-web-bridge \

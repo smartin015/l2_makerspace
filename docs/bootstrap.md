@@ -2,7 +2,7 @@
 
 This doc outlines how to spin up a new physical (and virtual) Level 2 space for people to use.
 
-Note: This hasn't really been attempted before, so consider these steps mostly untested until told otherwise.
+Note: This hasn't really been attempted before, so consider these steps mostly untested.
 
 ## Requirements/Materials
 
@@ -12,11 +12,11 @@ Several odds and ends are needed which don't scale with the complexity of your s
 
 - A Google cloud developer account for starting up containers via GKE that need to be externally visible.
   Some of this may be hosted by the original L2 makerspace, so reach out to contact@fabricate.io before going much further.
-- A github user used or forking this repository to modify it to suit your space (and to issue pull requests, *wink wink*)
-- A local server handle large, ephemeral data storage, data at rest, and high-bandwidth communication. 
+- A github user or forking this repository to modify it to suit your space (and to issue pull requests please!)
+- A local server to handle large, ephemeral data storage, data at rest, and high-bandwidth communication. 
   - Recommend something like >1T of storage, >8G ram, a decent (i7?) CPU and a recent (<2yr old) GPU for simulation and machine learning. 
   - You can skimp on the GPU or even the storage and instead rely on GCE storage and GPU/TPU, but that can 
-    get pricy in the long run. It's handy to have a local source.
+    become expensive in the long run.
 - A wired LAN network with >1Gbps network switch with as many ports as you have displays in the makerspace.
 
 ### Packages 
@@ -42,15 +42,20 @@ Robotic / teleoperated workstation
 
 ### Bootstrapping
 
+#### Dev environment
+
+Use `build_local.sh` to build all the docker images for local development and running.
+The latest images may not be uploaded to be cloud-runnable.
+
 #### Server
 
 The server hosts several containers which may be tricky to set up right. 
-Use `local_bootstrap.sh` in the base directory of this repo for this to be set up automatically.
+Use `run_local.sh` in the base directory of this repo for this to be set up automatically.
 
 #### Google cloud
 
 The cloud hosts several containers which may be tricky to set up right. 
-Use `cloud_bootstrap.sh` in the base directory of this repo for this to be set up automatically.
+Use `run_cloud.sh` in the base directory of this repo for this to be set up automatically.
 
 #### Embedded displays
 

@@ -38,7 +38,6 @@ App/server requirements
 *   Integration with dependencies
     *   [Todoist API](https://developer.todoist.com/sync/v8/)
     *   Need to reverse engineer instructables editing API (and Fiverr API?)
-    *   
 
 Bootstrapping
 
@@ -90,7 +89,7 @@ Existing user enters the space, opens project application
 ## Microprojects
 
 *   Build a simple server with REST endpoints for
-    *   Updating closets iBeacon to user
+    *   Updating closest iBeacon to user
     *   Updating active project for user
     *   Adds/edits/archives maker project information to a postgres db
 *   Build a cross-platform app that 

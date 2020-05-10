@@ -1,6 +1,7 @@
 # This node handles ROS-side logic for the VR server
 from l2_msgs.srv import GetFile, SpawnObject3D, RemoveObject3D, GetObject3D
 from l2_msgs.msg import Object3DArray, Object3D, Simulation
+from rcl_interfaces.msg import ParameterDescriptor
 from std_msgs.msg import String
 import rclpy
 from rclpy.node import Node
@@ -18,9 +19,12 @@ class VRServer(Node):
     def __init__(self, ns="/l2"):
         super().__init__('l2_vr', namespace=ns)
         self.get_logger().info("Init")
+        self.declare_parameter('extra_names', [], ParameterDescriptor())
         T0 = Time(clock_type=self.get_clock().clock_type)
 
         self.ignore_names = set(['ground_plane'])
+        self.extra_names = set(self.get_parameter('extra_names').value)
+        self.get_logger().info("Ignoring %s, appending %s" % (self.ignore_names, self.extra_names))
         self.sim_state = Simulation() # TODO support multiple simulations
         self.vr_object3d = Object3DArray()
         self.last_sim_msg = T0
