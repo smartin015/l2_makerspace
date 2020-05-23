@@ -31,10 +31,11 @@ var prev = PoolIntArray() #PYRM
 var nibs = 0
 var byte = 0
 var decodeIdx = 0
+var min_delta = 0
 
 # You can skip specifying keyframe_period if using decode only
-func Init(w: int, h: int, channel: int, keyframe_period: int = 0):
-  #PYTHON: global plain, encoded, nibs, byte, decodeIdx, init, keyframe_pd, chan
+func Init(w: int, h: int, channel: int, keyframe_period: int = 0, min_distance_delta: int = 0):
+  #PYTHON: global plain, encoded, nibs, byte, decodeIdx, init, keyframe_pd, chan, min_delta
   #PYTHON: init = bytearray(int(w*h))
   init = PoolByteArray() #PYRM
   for i in range(w*h): #PYRM
@@ -47,6 +48,7 @@ func Init(w: int, h: int, channel: int, keyframe_period: int = 0):
   _clear_decode()
   keyframe_pd = keyframe_period
   chan = channel
+  min_delta = min_distance_delta
 
 func _clear_decode():
   #PYTHON: global nibs, byte, decodeIdx
@@ -133,7 +135,7 @@ func _decodeVLE():
   return result
 
 func Compress():
-  #PYTHON: global plain, encoded, nibs, byte, decodeIdx, chan, keyframe_pd, last_keyframe, prev
+  #PYTHON: global plain, encoded, nibs, byte, decodeIdx, chan, keyframe_pd, last_keyframe, prev, min_delta
   #PYTHON: encoded = bytearray()
   #PYTHON: encoded.append(chan)
   encoded = PoolByteArray() #PYRM
@@ -153,27 +155,26 @@ func Compress():
   var idx = 0
   while (idx < len(plain)):
     var zeros = 0
-    while idx < len(plain) and (plain[idx] - prev[idx]) == 0:
+    while idx < len(plain) and (plain[idx] == 0 or abs(int(plain[idx]) - int(prev[idx])) < min_delta):
       idx += 1
       zeros += 1
     _encodeVLE(zeros);
 
     var nonzeros = 0
-    while idx+nonzeros < len(plain) and (plain[idx+nonzeros] - prev[idx+nonzeros]) != 0:
+    while idx+nonzeros < len(plain) and abs(int(plain[idx+nonzeros]) - int(prev[idx+nonzeros])) >= min_delta:
       nonzeros += 1
     _encodeVLE(nonzeros);
 
     var i = 0
     while i < nonzeros:
-      var delta = plain[idx] - prev[idx]
+      var delta = int(plain[idx]) - int(prev[idx])
+      prev[idx] = plain[idx]
       idx += 1
       var zigzag = (delta << 1) ^ (delta >> 31)
       _encodeVLE(zigzag)
       i += 1
   
   _flush()
-  # Update our cache
-  prev = plain
 
 func Decompress():
   #PYTHON: global plain, encoded, nibs, byte, decodeIdx

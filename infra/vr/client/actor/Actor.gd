@@ -60,6 +60,7 @@ func _setupDepthRender(n):
   
   # TODO do this in simulation
   inst.translate(Vector3(0, 1, 0))
+  inst.rotate(Vector3(1,0,0), -PI/2)
   _replace(n, inst)
 
 func _setupHingeJoint(n):

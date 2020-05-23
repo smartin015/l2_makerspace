@@ -21,7 +21,7 @@ func setup(width: int, height: int, topic: String):
     "depth_render_sub", 
     true) # Raw
 
-func _point_data_set(data, id):
+func _point_data_set(data, _id):
   if typeof(data) != TYPE_RAW_ARRAY:
     print("Got wrong type:", typeof(data))
     return
@@ -38,11 +38,14 @@ func _point_data_set(data, id):
   var row = 0
   var col = 0
   for v in rvl.plain: #list of Vector3s
-    geom.add_vertex(Vector3(row*SCALE, v*SCALE_FACTOR, col*SCALE))
-    row += 1
-    if row >= dims[0]:
-      row = 0
-      col += 1
-    if col >= dims[1]:
+    if col >= dims[0]:
+      col = 0
+      row += 1
+    if row >= dims[1]:
       break
+    if v != 0:
+      # Only show "nonzero distance" pixels
+      geom.add_vertex(Vector3((row-(dims[0]/2))*SCALE, v*SCALE_FACTOR, (col-(dims[1]/2))*SCALE))
+    col += 1
+    
   geom.end()

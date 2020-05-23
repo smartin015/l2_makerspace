@@ -31,10 +31,11 @@ chan = 0
 nibs = 0
 byte = 0
 decodeIdx = 0
+min_delta = 0
 
 # You can skip specifying keyframe_period if using decode only
-def Init(w: int, h: int, channel: int, keyframe_period: int = 0):
-  global plain, encoded, nibs, byte, decodeIdx, init, keyframe_pd, chan
+def Init(w: int, h: int, channel: int, keyframe_period: int = 0, min_distance_delta: int = 0):
+  global plain, encoded, nibs, byte, decodeIdx, init, keyframe_pd, chan, min_delta
   init = bytearray(int(w*h))
 
 
@@ -47,6 +48,7 @@ def Init(w: int, h: int, channel: int, keyframe_period: int = 0):
   _clear_decode()
   keyframe_pd = keyframe_period
   chan = channel
+  min_delta = min_distance_delta
 
 def _clear_decode():
   global nibs, byte, decodeIdx
@@ -133,7 +135,7 @@ def _decodeVLE():
   return result
 
 def Compress():
-  global plain, encoded, nibs, byte, decodeIdx, chan, keyframe_pd, last_keyframe, prev
+  global plain, encoded, nibs, byte, decodeIdx, chan, keyframe_pd, last_keyframe, prev, min_delta
   encoded = bytearray()
   encoded.append(chan)
 
@@ -153,27 +155,26 @@ def Compress():
   idx = 0
   while (idx < len(plain)):
     zeros = 0
-    while idx < len(plain) and (plain[idx] - prev[idx]) == 0:
+    while idx < len(plain) and (plain[idx] == 0 or abs(int(plain[idx]) - int(prev[idx])) < min_delta):
       idx += 1
       zeros += 1
     _encodeVLE(zeros);
 
     nonzeros = 0
-    while idx+nonzeros < len(plain) and (plain[idx+nonzeros] - prev[idx+nonzeros]) != 0:
+    while idx+nonzeros < len(plain) and abs(int(plain[idx+nonzeros]) - int(prev[idx+nonzeros])) >= min_delta:
       nonzeros += 1
     _encodeVLE(nonzeros);
 
     i = 0
     while i < nonzeros:
-      delta = plain[idx] - prev[idx]
+      delta = int(plain[idx]) - int(prev[idx])
+      prev[idx] = plain[idx]
       idx += 1
       zigzag = (delta << 1) ^ (delta >> 31)
       _encodeVLE(zigzag)
       i += 1
   
   _flush()
-  # Update our cache
-  prev = plain
 
 def Decompress():
   global plain, encoded, nibs, byte, decodeIdx
