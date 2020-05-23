@@ -1,38 +1,45 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=3 format=2]
 
-[sub_resource type="GDScript" id=1]
-script/source = "extends ReferenceRect
+[ext_resource path="res://OQ_Toolkit/OQ_UI2D/theme/oq_ui2d_standard.theme" type="Theme" id=1]
+[ext_resource path="res://panel/canvas/CanvasUIContainer.gd" type="Script" id=2]
 
-var currLine = null
-
-func _ready():
-  # Always server-owned
-  set_network_master(0)
-
-func _input(event):
-  if event is InputEventMouseButton:
-    print(event.pressed)
-    if event.pressed:
-      currLine = Line2D.new()
-      add_child(currLine)
-      currLine.add_point(event.position)
-      print(\"Beginning line\")
-    elif currLine != null:
-      print(\"Ending line; %d points\" % len(currLine.points))
-      currLine = null
-  elif event is InputEventMouseMotion:
-    if currLine != null:
-      currLine.add_point(event.position)
-"
-
-[node name="CanvasUI" type="ReferenceRect"]
+[node name="CanvasUIContainer" type="VBoxContainer"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_left = -0.836243
-margin_top = 2.5087
-margin_right = -0.836243
-margin_bottom = 2.50867
-script = SubResource( 1 )
+theme = ExtResource( 1 )
+script = ExtResource( 2 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
+
+[node name="CanvasUI" type="ReferenceRect" parent="."]
+margin_right = 1024.0
+margin_bottom = 557.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+margin_top = 561.0
+margin_right = 1024.0
+margin_bottom = 600.0
+size_flags_horizontal = 3
+custom_constants/separation = 200
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Clear" type="Button" parent="HBoxContainer"]
+margin_right = 78.0
+margin_bottom = 39.0
+text = "Clear"
+
+[node name="Save" type="Button" parent="HBoxContainer"]
+margin_left = 278.0
+margin_right = 351.0
+margin_bottom = 39.0
+text = "Save"
+[connection signal="pressed" from="HBoxContainer/Clear" to="." method="_on_Clear_pressed"]
+[connection signal="pressed" from="HBoxContainer/Save" to="." method="_on_Save_pressed"]

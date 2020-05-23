@@ -1,24 +1,70 @@
-var plain = PoolIntArray()
-var encoded = PoolByteArray()
+# RVL depth camera compression impl
+# See https://www.microsoft.com/en-us/research/uploads/prod/2018/09/p100-wilson.pdf
+# for the original research paper.
+# 
+# This implementation uses the same zigzag + variable-length encoding
+# scheme, but with a custom packet:
+# 
+# - 
+#
+# NOTE: This file can be converted into a 
+# python3-compatible module when build_py.sh
+# is invoked.
+# 
+# For lines where conversion isn't easy,
+# use "#PYTHON: " to prefix a python  line
+# and #PYRM to remove a line
+
+#PYTHON: init = []
+#PYTHON: plain = []
+#PYTHON: encoded = bytearray()
+#PYTHON: prev = []
+var keyframe_pd = 0
+var last_keyframe = 0
+var chan = 0
+var init
+var plain = PoolIntArray() #PYRM
+var encoded = PoolByteArray() #PYRM
+var prev = PoolIntArray() #PYRM
 var nibs = 0
 var byte = 0
 var decodeIdx = 0
 
-func Clear():
-  plain = PoolIntArray()
-  encoded = PoolByteArray()
+
+func Init(w: int, h: int, channel: int, keyframe_period: int):
+  #PYTHON: global plain, encoded, nibs, byte, decodeIdx, init, keyframe_pd, chan
+  #PYTHON: xzz = bytearray(int(w*h))
+  init = PoolByteArray() #PYRM
+  for i in range(w*h): #PYRM
+    init.push_back(0) #PYRM
+  
+  #PYTHON: plain = []
+  plain = PoolIntArray() #PYRM
+  #PYTHON: encoded = bytearray()
+  encoded = PoolByteArray() #PYRM
+  _clear_prev()
   nibs = 0
   byte = 0
   decodeIdx = 0
+  keyframe_pd = keyframe_period
+  chan = channel
 
-func Flush():
+func _clear_prev():
+  prev = PoolByteArray() #PYRM
+  prev.append_array(init) #PYRM
+  #PYTHON: prev[:] = init
+
+func _flush():
+  #PYTHON: global nibs, byte
   if nibs == 0:
     return
   elif nibs == 2:
     # print("flushed x%02x" % byte)
-    encoded.push_back(byte)
+    #PYTHON: encoded.append(byte)
+    encoded.push_back(byte) #PYRM
   elif nibs == 1:
-    encoded.push_back((byte << 4) & 0xff)
+    #PYTHON: encoded.append((byte << 4) & 0xff)
+    encoded.push_back((byte << 4) & 0xff) #PYRM
   nibs = 0
   byte = 0
 
@@ -33,11 +79,13 @@ func Flush():
 # 010 --> 1010 -> a
 # 101 --> 0101 -> 5
 # Precondition: value must be positive or zero
-func EncodeVLE(value: int):
-  if value == 0 && nibs == 2:
-    Flush()
+func _encodeVLE(value: int):
+  #PYTHON: global plain, encoded, nibs, byte, decodeIdx
+  if value == 0 and nibs == 2:
+    _flush()
 
-  var ct = true
+  #PYTHON: ct = True
+  var ct = true #PYRM
   while ct:
     var nibble = value & 0x7 # lower 3 bits
     value >>= 3
@@ -46,7 +94,7 @@ func EncodeVLE(value: int):
     byte = (byte << 4) | nibble
     nibs += 1
     if nibs == 2:
-      Flush()
+      _flush()
     ct = (value != 0)
 
 # Decodes the variable length encoding scheme described above.
@@ -55,7 +103,8 @@ func EncodeVLE(value: int):
 # 010 --> 1010 -> a
 # 101 --> 0101 -> 5
 # Returns [result value, nibbles consumed]
-func DecodeVLE():
+func _decodeVLE():
+  #PYTHON: global plain, encoded, nibs, byte, decodeIdx
   var result = 0
   var bits = 29
   while true:
@@ -73,26 +122,42 @@ func DecodeVLE():
     # print("byte now %02x" % byte)
     nibs -= 1
     bits -= 3
-    if !ct:
+    if not ct:
       break
   return result
 
-
-func CompressRVL():
+func Compress():
+  #PYTHON: global plain, encoded, nibs, byte, decodeIdx, chan, keyframe_pd, last_keyframe
+  #PYTHON: encoded = bytearray()
+  #PYTHON: encoded.append(chan)
+  encoded = PoolByteArray() #PYRM
+  encoded.push_back(chan) #PYRM
+  if last_keyframe == 0:
+    #PYTHON: encoded.append(1)
+    encoded.push_back(1) #PYRM
+    _clear_prev()
+  else:
+    #PYTHON: encoded.append(0)
+    encoded.push_back(0) #PYRM
+    
+  last_keyframe += 1
+  if last_keyframe > keyframe_pd:
+    last_keyframe = 0
+  
   var idx = 0
   while (idx < len(plain)):
     var zeros = 0
-    while idx < len(plain) && plain[idx] == 0:
+    while idx < len(plain) and plain[idx] == 0:
       idx += 1
       zeros += 1
     # print("Encoded %d x 0" % zeros)
-    EncodeVLE(zeros);
+    _encodeVLE(zeros);
 
     var nonzeros = 0
-    while idx+nonzeros < len(plain) && plain[idx+nonzeros] != 0:
+    while idx+nonzeros < len(plain) and plain[idx+nonzeros] != 0:
       nonzeros += 1
     # print("Encoded %d ! 0" % nonzeros)
-    EncodeVLE(nonzeros);
+    _encodeVLE(nonzeros);
 
     var i = 0
     while i < nonzeros:
@@ -102,30 +167,28 @@ func CompressRVL():
 
       var zigzag = (delta << 1) ^ (delta >> 31)
       # print("Encoded %02x zigzag (%d)" % [zigzag, delta])
-      EncodeVLE(zigzag)
+      _encodeVLE(zigzag)
       i += 1
   
   #if nibs: # last few values
   #  encoded[idx] = byte << 4 * (8 - nibs)
   #  idx += 1
-  Flush()
+  _flush()
 
-func DecompressRVL(numVals: int):
-  plain.resize(numVals)
-  var idx = 0
-  while idx < numVals && decodeIdx < len(encoded):
-    var zeros = DecodeVLE()
-    # print("Zeros %d" % zeros)
-    for i in range(zeros):
-      plain[idx] = 0
-      idx += 1
-    var nonzeros = DecodeVLE()
-    # print("Nonzeros %d" % nonzeros)
+func Decompress():
+  #PYTHON: global plain, encoded, nibs, byte, decodeIdx
+  plain.resize(len(init))
+  var idx = 2 # Skip first two bytes (channel & keframe detection)
+  while idx < len(init) and decodeIdx < len(encoded):
+    # No need to set zero values since we're applying deltas
+    var zeros = _decodeVLE()
+    var nonzeros = _decodeVLE()
     for i in range(nonzeros):
-      var zigzag = DecodeVLE()
+      if idx >= len(plain):
+        return false # Decompression failed (overrun)
+      var zigzag = _decodeVLE()
       var delta = (zigzag >> 1) ^ -(zigzag & 1)
       # print("Got %02x zigzag (%d)" % [zigzag, delta])
-      # TODO current = previous + delta
-      plain[idx] = delta
+      plain[idx] += delta
       idx += 1
-      # previous = current
+  return true

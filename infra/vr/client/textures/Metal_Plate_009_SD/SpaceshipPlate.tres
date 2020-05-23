@@ -1,0 +1,25 @@
+[gd_resource type="SpatialMaterial" load_steps=6 format=2]
+
+[ext_resource path="res://textures/Metal_Plate_009_SD/Metal_Plate_009_COLOR.jpg" type="Texture" id=1]
+[ext_resource path="res://textures/Metal_Plate_009_SD/Metal_Plate_009_ROUGH.jpg" type="Texture" id=2]
+[ext_resource path="res://textures/Metal_Plate_009_SD/Metal_Plate_009_OCC.jpg" type="Texture" id=3]
+[ext_resource path="res://textures/Metal_Plate_009_SD/Metal_Plate_009_NORM.jpg" type="Texture" id=4]
+[ext_resource path="res://textures/Metal_Plate_009_SD/Metal_Plate_009_DISP.png" type="Texture" id=5]
+
+[resource]
+albedo_texture = ExtResource( 1 )
+metallic = 0.72
+metallic_specular = 0.7
+metallic_texture = ExtResource( 5 )
+metallic_texture_channel = 4
+roughness_texture = ExtResource( 2 )
+roughness_texture_channel = 4
+normal_enabled = true
+normal_scale = 1.0
+normal_texture = ExtResource( 4 )
+ao_enabled = true
+ao_light_affect = 0.0
+ao_texture = ExtResource( 3 )
+ao_on_uv2 = false
+ao_texture_channel = 4
+uv1_scale = Vector3( 10, 10, 10 )

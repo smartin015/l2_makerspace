@@ -8,9 +8,17 @@ export var invisible_on_start = true;
 
 var _uis = [null, "BasicUI"]
 var _i = 0
+var last_press = 0
 
 func _process(_dt):
   if vr.button_just_pressed(toggle_button) || Input.is_action_just_pressed("ui_cycle_mode"):
+    # Debounce, because button pressing is buggy
+    var now_msec = OS.get_system_time_msecs()
+    print(now_msec)
+    if last_press > now_msec - 300:
+      return
+    last_press = now_msec
+    
     _i = (_i + 1) % _uis.size()
     
     var prev = _i

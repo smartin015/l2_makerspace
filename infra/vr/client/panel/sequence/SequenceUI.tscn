@@ -54,7 +54,7 @@ margin_right = 1002.0
 margin_bottom = 471.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
-scroll_offset = Vector2( -12, -112 )
+scroll_offset = Vector2( -12, -424 )
 
 [node name="Controls" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
 margin_top = 487.0

@@ -1,6 +1,15 @@
+# NOTE: This file can be converted into a 
+# python3-compatible module when build_py.sh
+# is invoked.
+# 
+# For lines where conversion isn't easy,
+# use "" to prefix a python  line
+
 
 plain = []
+
 encoded = bytearray()
+
 nibs = 0
 byte = 0
 decodeIdx = 0
@@ -8,20 +17,24 @@ decodeIdx = 0
 def Clear():
   global plain, encoded, nibs, byte, decodeIdx
   plain = []
+
   encoded = bytearray()
+
   nibs = 0
   byte = 0
   decodeIdx = 0
 
 def Flush():
-  global plain, encoded, nibs, byte, decodeIdx
+  global nibs, byte
   if nibs == 0:
     return
   elif nibs == 2:
     # print("flushed x%02x" % byte)
     encoded.append(byte)
+
   elif nibs == 1:
     encoded.append((byte << 4) & 0xff)
+
   nibs = 0
   byte = 0
 
@@ -32,7 +45,7 @@ def Flush():
 # until all set bits are consumed. A fourth continuation bit is
 # added to each group of three indicating whether it is the last
 # group. For example, the 16 bit value 42 is encoded as 8 bits:
-# 42 = 0000000000101010 -> 0010, 1101
+# 42 = 0000000000101010 → 0010, 1101
 # 010 --> 1010 -> a
 # 101 --> 0101 -> 5
 # Precondition: value must be positive or zero
@@ -42,6 +55,7 @@ def EncodeVLE(value: int):
     Flush()
 
   ct = True
+
   while ct:
     nibble = value & 0x7 # lower 3 bits
     value >>= 3
@@ -63,7 +77,7 @@ def DecodeVLE():
   global plain, encoded, nibs, byte, decodeIdx
   result = 0
   bits = 29
-  while True:
+  while true:
     if nibs <= 0:
       if decodeIdx >= len(encoded):
         return result
@@ -81,7 +95,6 @@ def DecodeVLE():
     if not ct:
       break
   return result
-
 
 def CompressRVL():
   global plain, encoded, nibs, byte, decodeIdx
@@ -118,21 +131,18 @@ def CompressRVL():
 
 def DecompressRVL(numVals: int):
   global plain, encoded, nibs, byte, decodeIdx
-  plain = [0] * numVals
-  idx = 0
+  plain.resize(numVals)
+  idx = 2 # Skip first two bytes (channel & keframe detection)
   while idx < numVals and decodeIdx < len(encoded):
+    # No need to set zero values since we're applying deltas
     zeros = DecodeVLE()
-    # print("Zeros %d" % zeros)
-    for i in range(zeros):
-      plain[idx] = 0
-      idx += 1
     nonzeros = DecodeVLE()
-    # print("Nonzeros %d" % nonzeros)
     for i in range(nonzeros):
+      if idx >= len(plain):
+        return false # Decompression failed (overrun)
       zigzag = DecodeVLE()
       delta = (zigzag >> 1) ^ -(zigzag & 1)
       # print("Got %02x zigzag (%d)" % [zigzag, delta])
-      # TODO current = previous + delta
-      plain[idx] = delta
+      plain[idx] += delta
       idx += 1
-      # previous = current
+  return true
