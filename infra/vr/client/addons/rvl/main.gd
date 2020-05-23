@@ -21,6 +21,7 @@
 #PYTHON: plain = []
 #PYTHON: encoded = bytearray()
 #PYTHON: prev = []
+var SETTINGS_PACKET_ID = 0x7f
 var keyframe_pd = 0
 var last_keyframe = 0
 var chan = 0
