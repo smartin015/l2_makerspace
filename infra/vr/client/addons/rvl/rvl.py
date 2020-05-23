@@ -1,3 +1,14 @@
+# RVL depth camera compression impl
+# See https://www.microsoft.com/en-us/research/uploads/prod/2018/09/p100-wilson.pdf
+# for the original research paper.
+# 
+# This implementation uses the same zigzag + variable-length encoding
+# scheme, but with a custom packet:
+# 
+# - 1 byte channel ID
+# - 1 byte keyframe status (0 == use delta, nonzero == treat as absolute values)
+# - n bytes data
+#
 # NOTE: This file can be converted into a 
 # python3-compatible module when build_py.sh
 # is invoked.
@@ -6,25 +17,51 @@
 # use "" to prefix a python  line
 
 
+init = []
 plain = []
-
 encoded = bytearray()
+prev = []
+keyframe_pd = 0
+last_keyframe = 0
+chan = 0
+
+
+
 
 nibs = 0
 byte = 0
 decodeIdx = 0
 
-def Clear():
-  global plain, encoded, nibs, byte, decodeIdx
-  plain = []
+def Init(w: int, h: int, channel: int, keyframe_period: int):
+  global plain, encoded, nibs, byte, decodeIdx, init, keyframe_pd, chan
+  init = bytearray(int(w*h))
 
+
+
+  
   encoded = bytearray()
 
+  _clear_prev()
+  _clear_plain()
   nibs = 0
   byte = 0
   decodeIdx = 0
+  keyframe_pd = keyframe_period
+  chan = channel
 
-def Flush():
+def _clear_prev():
+  global prev, init
+  prev = list(init)
+
+
+
+def _clear_plain():
+  global plain, init
+  plain = list(init)
+
+
+
+def _flush():
   global nibs, byte
   if nibs == 0:
     return
@@ -49,13 +86,12 @@ def Flush():
 # 010 --> 1010 -> a
 # 101 --> 0101 -> 5
 # Precondition: value must be positive or zero
-def EncodeVLE(value: int):
+def _encodeVLE(value: int):
   global plain, encoded, nibs, byte, decodeIdx
   if value == 0 and nibs == 2:
-    Flush()
+    _flush()
 
   ct = True
-
   while ct:
     nibble = value & 0x7 # lower 3 bits
     value >>= 3
@@ -64,7 +100,7 @@ def EncodeVLE(value: int):
     byte = (byte << 4) | nibble
     nibs += 1
     if nibs == 2:
-      Flush()
+      _flush()
     ct = (value != 0)
 
 # Decodes the variable length encoding scheme described above.
@@ -73,11 +109,11 @@ def EncodeVLE(value: int):
 # 010 --> 1010 -> a
 # 101 --> 0101 -> 5
 # Returns [result value, nibbles consumed]
-def DecodeVLE():
+def _decodeVLE():
   global plain, encoded, nibs, byte, decodeIdx
   result = 0
   bits = 29
-  while true:
+  while True:
     if nibs <= 0:
       if decodeIdx >= len(encoded):
         return result
@@ -96,53 +132,73 @@ def DecodeVLE():
       break
   return result
 
-def CompressRVL():
-  global plain, encoded, nibs, byte, decodeIdx
+def Compress():
+  global plain, encoded, nibs, byte, decodeIdx, chan, keyframe_pd, last_keyframe, prev
+  encoded = bytearray()
+  encoded.append(chan)
+
+
+  if last_keyframe == 0:
+    encoded.append(1)
+
+    _clear_prev()
+  else:
+    encoded.append(0)
+
+    
+  last_keyframe += 1
+  if last_keyframe > keyframe_pd:
+    last_keyframe = 0
+  
   idx = 0
   while (idx < len(plain)):
     zeros = 0
-    while idx < len(plain) and plain[idx] == 0:
+    while idx < len(plain) and (plain[idx] - prev[idx]) == 0:
       idx += 1
       zeros += 1
     # print("Encoded %d x 0" % zeros)
-    EncodeVLE(zeros);
+    _encodeVLE(zeros);
 
     nonzeros = 0
-    while idx+nonzeros < len(plain) and plain[idx+nonzeros] != 0:
+    while idx+nonzeros < len(plain) and (plain[idx+nonzeros] - prev[idx+nonzeros]) != 0:
       nonzeros += 1
     # print("Encoded %d ! 0" % nonzeros)
-    EncodeVLE(nonzeros);
+    _encodeVLE(nonzeros);
 
     i = 0
     while i < nonzeros:
-      # TODO delta = current - previous, update prior frame
-      delta = plain[idx]
+      delta = plain[idx] - prev[idx]
       idx += 1
 
       zigzag = (delta << 1) ^ (delta >> 31)
       # print("Encoded %02x zigzag (%d)" % [zigzag, delta])
-      EncodeVLE(zigzag)
+      _encodeVLE(zigzag)
       i += 1
   
   #if nibs: # last few values
   #  encoded[idx] = byte << 4 * (8 - nibs)
   #  idx += 1
-  Flush()
+  _flush()
+  # Update our cache
+  prev = plain
 
-def DecompressRVL(numVals: int):
+def Decompress():
   global plain, encoded, nibs, byte, decodeIdx
-  plain.resize(numVals)
-  idx = 2 # Skip first two bytes (channel & keframe detection)
-  while idx < numVals and decodeIdx < len(encoded):
-    # No need to set zero values since we're applying deltas
-    zeros = DecodeVLE()
-    nonzeros = DecodeVLE()
+  if encoded[1] != 0:
+    _clear_plain()
+  
+  plainIdx = 0 
+  decodeIdx = 2 # Header length
+  while plainIdx < len(init) and decodeIdx < len(encoded):
+    zeros = _decodeVLE()
+    plainIdx += zeros
+    nonzeros = _decodeVLE()
     for i in range(nonzeros):
-      if idx >= len(plain):
-        return false # Decompression failed (overrun)
-      zigzag = DecodeVLE()
+      if plainIdx >= len(plain):
+        return False # Decompression failed (overrun)
+      zigzag = _decodeVLE()
       delta = (zigzag >> 1) ^ -(zigzag & 1)
       # print("Got %02x zigzag (%d)" % [zigzag, delta])
-      plain[idx] += delta
-      idx += 1
-  return true
+      plain[plainIdx] += delta
+      plainIdx += 1
+  return True

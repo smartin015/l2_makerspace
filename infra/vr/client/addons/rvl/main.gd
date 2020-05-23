@@ -24,7 +24,7 @@
 var keyframe_pd = 0
 var last_keyframe = 0
 var chan = 0
-var init
+var init #PYRM
 var plain = PoolIntArray() #PYRM
 var encoded = PoolByteArray() #PYRM
 var prev = PoolIntArray() #PYRM
@@ -34,16 +34,15 @@ var decodeIdx = 0
 
 func Init(w: int, h: int, channel: int, keyframe_period: int):
   #PYTHON: global plain, encoded, nibs, byte, decodeIdx, init, keyframe_pd, chan
-  #PYTHON: xzz = bytearray(int(w*h))
+  #PYTHON: init = bytearray(int(w*h))
   init = PoolByteArray() #PYRM
   for i in range(w*h): #PYRM
     init.push_back(0) #PYRM
   
-  #PYTHON: plain = []
-  plain = PoolIntArray() #PYRM
   #PYTHON: encoded = bytearray()
   encoded = PoolByteArray() #PYRM
   _clear_prev()
+  _clear_plain()
   nibs = 0
   byte = 0
   decodeIdx = 0
@@ -51,14 +50,16 @@ func Init(w: int, h: int, channel: int, keyframe_period: int):
   chan = channel
 
 func _clear_prev():
+  #PYTHON: global prev, init
+  #PYTHON: prev = list(init)
   prev = PoolByteArray() #PYRM
   prev.append_array(init) #PYRM
-  #PYTHON: prev[:] = init
 
 func _clear_plain():
+  #PYTHON: global plain, init
+  #PYTHON: plain = list(init)
   plain = PoolByteArray() #PYRM
   plain.append_array(init) #PYRM
-  #PYTHON: plain[:] = init
 
 func _flush():
   #PYTHON: global nibs, byte
@@ -90,8 +91,7 @@ func _encodeVLE(value: int):
   if value == 0 and nibs == 2:
     _flush()
 
-  #PYTHON: ct = True
-  var ct = true #PYRM
+  var ct = true
   while ct:
     var nibble = value & 0x7 # lower 3 bits
     value >>= 3
@@ -133,7 +133,7 @@ func _decodeVLE():
   return result
 
 func Compress():
-  #PYTHON: global plain, encoded, nibs, byte, decodeIdx, chan, keyframe_pd, last_keyframe
+  #PYTHON: global plain, encoded, nibs, byte, decodeIdx, chan, keyframe_pd, last_keyframe, prev
   #PYTHON: encoded = bytearray()
   #PYTHON: encoded.append(chan)
   encoded = PoolByteArray() #PYRM
@@ -201,4 +201,5 @@ func Decompress():
       # print("Got %02x zigzag (%d)" % [zigzag, delta])
       plain[plainIdx] += delta
       plainIdx += 1
+    
   return true
