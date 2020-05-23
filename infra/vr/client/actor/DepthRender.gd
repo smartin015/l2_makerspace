@@ -6,9 +6,10 @@ var rvl = load("res://addons/rvl/main.gd").new()
 # using the camera matrix intrincic values.
 # See rs2_deproject_pixel_to_point():
 # https://github.com/IntelRealSense/librealsense/blob/master/include/librealsense2/rsutil.h#L67
-const SCALE = 0.01
+const SCALE = 0.1
 const FLT_EPSILON = 0.0000001
 
+onready var ind = $Indicator
 onready var geom = $Geometry
 var stride = 1
 var width = 0
@@ -19,13 +20,59 @@ var ppy
 var fx
 var fy
 var coeffs
+var success = null
+var arr = []
+var verts = PoolVector3Array()
+var vertsUpdated = false
 
 func setup(topic: String):
   ROSBridge.ros_connect("0", 
     "sensor_msgs/CompressedImage", 
-    self, "_point_data_set", 
+    self, "_point_data_received", 
     "depth_render_sub", 
     true) # Raw
+
+func _ready():
+  ind.material_override = SpatialMaterial.new()
+
+func _process(_delta):
+  if success != null:
+    if success:
+      ind.material_override.albedo_color = Color(0, 1, 0)
+    else:
+      ind.material_override.albedo_color = Color(1, 0, 0)
+    success = null
+  
+  if vertsUpdated:
+    geom.mesh.surface_remove(0)
+    arr[Mesh.ARRAY_VERTEX] = verts
+    geom.mesh.add_surface_from_arrays(Mesh.PRIMITIVE_POINTS, arr)
+    vertsUpdated = false
+
+func _init_mesh():
+  arr.resize(Mesh.ARRAY_MAX)
+  var l = (width/stride)*(height/stride)
+  verts.resize(l)
+  var uvs = PoolVector2Array()
+  uvs.resize(l)
+  var normals = PoolVector3Array()
+  normals.resize(l)
+  var indices = PoolIntArray()
+  indices.resize(l)
+  for r in range(height/stride):
+    for c in range(width/stride):
+      var i = int(r*(width/stride) + c)
+      indices.set(i, i)
+      verts.set(i, Vector3.ZERO)
+
+  # Assign arrays to mesh array.
+  arr[Mesh.ARRAY_VERTEX] = verts
+  arr[Mesh.ARRAY_TEX_UV] = uvs
+  arr[Mesh.ARRAY_NORMAL] = normals
+  arr[Mesh.ARRAY_INDEX] = indices
+
+  # Create mesh surface from mesh array.
+  geom.mesh.add_surface_from_arrays(Mesh.PRIMITIVE_POINTS, arr)
 
 func _handle_settings_packet(data):
   var p = JSON.parse(data.subarray(2,-1).get_string_from_utf8())
@@ -41,7 +88,8 @@ func _handle_settings_packet(data):
     fx = p.result['fx']
     fy = p.result['fy']
     coeffs = p.result['coeffs']
-    rvl.Init(width, height, 0)
+    rvl.Init((width/stride)*(height/stride), 0)
+    _init_mesh()
 
 # Given pixel coordinates and depth in an image with no distortion 
 # or inverse distortion coefficients, compute the corresponding 
@@ -52,25 +100,24 @@ func rs2_deproject_pixel_to_point(x, y, depth) -> Vector3:
   
   # Assume RS2_DISTORTION_KANNALA_BRANDT4
   # See https://github.com/hiroMTB/ofxRealsense2/pull/4/files
-  var rd = sqrt(x*x + y*y);
-  if rd < FLT_EPSILON:
-    rd = FLT_EPSILON
-  var theta = rd;
-  var theta2 = rd*rd;
-  for i in range(4):
-    var f = theta*(1 + theta2*(coeffs[0] + theta2*(coeffs[1] + theta2*(coeffs[2] + theta2*coeffs[3])))) - rd;
-    if abs(f) < FLT_EPSILON:
-      break
-    var df = 1 + theta2*(3 * coeffs[0] + theta2*(5 * coeffs[1] + theta2*(7 * coeffs[2] + 9 * theta2*coeffs[3])));
-    theta -= f / df;
-    theta2 = theta*theta;
-  var r = tan(theta);
-  x *= r / rd;
-  y *= r / rd;
-  
+  #  var rd = sqrt(x*x + y*y);
+  #  if rd < FLT_EPSILON:
+  #    rd = FLT_EPSILON
+  #  var theta = rd;
+  #  var theta2 = rd*rd;
+  #  for i in range(4):
+  #    var f = theta*(1 + theta2*(coeffs[0] + theta2*(coeffs[1] + theta2*(coeffs[2] + theta2*coeffs[3])))) - rd;
+  #    if abs(f) < FLT_EPSILON:
+  #      break
+  #    var df = 1 + theta2*(3 * coeffs[0] + theta2*(5 * coeffs[1] + theta2*(7 * coeffs[2] + 9 * theta2*coeffs[3])));
+  #    theta -= f / df;
+  #    theta2 = theta*theta;
+  #  var r = tan(theta);
+  #  x *= r / rd;
+  #  y *= r / rd;
   return Vector3(depth * x, depth, depth * y)
 
-func _point_data_set(data, _id):
+func _point_data_received(data, _id):
   if typeof(data) != TYPE_RAW_ARRAY:
     print("Got wrong type:", typeof(data))
     return
@@ -83,26 +130,17 @@ func _point_data_set(data, _id):
   if width == 0 or height == 0:
     return # Not yet configured
 
-  # print("%d: %d %d %d" % [len(data), data[0], data[1], data[2]])
-  # Second byte in the frame is whether this is a keyframe
-  # If so, clear all past data
   rvl.encoded = data
-  if !rvl.Decompress():
-    print("Failed decompression")
-  geom.clear()
-  geom.begin(Mesh.PRIMITIVE_POINTS, null)
-  var row = 0
-  var col = 0
-  for v in rvl.plain: #list of Vector3s
-    if col >= width/stride:
-      col = 0
-      row += 1
-    if row >= height/stride:
-      break
-    if v != 0:
-      # Only show "nonzero distance" pixels
-      # Y axis is inverted (image is y-down, godot is y-up)
-      geom.add_vertex(rs2_deproject_pixel_to_point(col*stride, height-(row*stride), v*depth_scale))
-    col += 1
+  success = rvl.Decompress()
+  for i in range(len(rvl.plain)):
+    verts[i] = rs2_deproject_pixel_to_point(
+      (i % int(width/stride)) * stride, 
+      height - (int(i / (width/stride)) * stride), 
+      rvl.plain[i] * depth_scale)
+  vertsUpdated = true
+#    verts[i] = Vector3(
+#        (x-(width/stride/2))*SCALE, 
+#        rvl.plain[i]*depth_scale, 
+#        ((height/stride/2)-y)*SCALE)
+
     
-  geom.end()

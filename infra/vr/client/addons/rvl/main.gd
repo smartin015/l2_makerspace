@@ -25,7 +25,7 @@ var SETTINGS_PACKET_ID = 0x7f
 var keyframe_pd = 0
 var last_keyframe = 0
 var chan = 0
-var init #PYRM
+var init = PoolByteArray() #PYRM
 var plain = PoolIntArray() #PYRM
 var encoded = PoolByteArray() #PYRM
 var prev = PoolIntArray() #PYRM
@@ -35,12 +35,14 @@ var decodeIdx = 0
 var min_delta = 0
 
 # You can skip specifying keyframe_period if using decode only
-func Init(w: int, h: int, channel: int, keyframe_period: int = 0, min_distance_delta: int = 0):
+func Init(l: int, channel: int, keyframe_period: int = 0, min_distance_delta: int = 0):
   #PYTHON: global plain, encoded, nibs, byte, decodeIdx, init, keyframe_pd, chan, min_delta
   #PYTHON: init = bytearray(int(w*h))
-  init = PoolByteArray() #PYRM
-  for i in range(w*h): #PYRM
-    init.push_back(0) #PYRM
+  init.resize(l) #PYRM
+  plain.resize(l) #PYRM
+  for i in range(l): #PYRM
+    init.set(i, 0) #PYRM
+    plain.set(i, 0) # PYRM
   
   #PYTHON: encoded = bytearray()
   encoded = PoolByteArray() #PYRM
@@ -60,12 +62,14 @@ func _clear_decode():
 func _clear_prev():
   #PYTHON: global prev, init
   #PYTHON: prev = list(init)
-  prev = PoolByteArray(Array(init)) #PYRM
+  for i in range(len(prev)): #PYRM
+    prev[i] = init[i] #PYRM
 
 func _clear_plain():
   #PYTHON: global plain, init
   #PYTHON: plain = list(init)
-  plain = PoolIntArray(Array(init)) #PYRM
+  for i in range(len(plain)): #PYRM
+    plain[i] = init[i] #PYRM
 
 func _flush():
   #PYTHON: global nibs, byte
@@ -197,5 +201,4 @@ func Decompress():
       var delta = (zigzag >> 1) ^ -(zigzag & 1)
       plain[plainIdx] += delta
       plainIdx += 1
-    
   return true
