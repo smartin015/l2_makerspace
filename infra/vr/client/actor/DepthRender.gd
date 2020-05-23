@@ -9,13 +9,12 @@ var rvl = load("res://addons/rvl/main.gd").new()
 const SCALE = 0.01
 const SCALE_FACTOR = 0.0010000000474974513
 
-const KEYFRAME_IDX = 1
-
 onready var geom = $Geometry
 var dims = [0,0]
 
 func setup(width: int, height: int, topic: String):
   dims = [width, height]
+  rvl.Init(width, height, 0)
   ROSBridge.ros_connect("0", 
     "sensor_msgs/CompressedImage", 
     self, "_point_data_set", 
@@ -31,12 +30,9 @@ func _point_data_set(data, id):
   # print("%d: %d %d %d" % [len(data), data[0], data[1], data[2]])
   # Second byte in the frame is whether this is a keyframe
   # If so, clear all past data
-  if data[KEYFRAME_IDX] != 0:
-    rvl.Clear()
   rvl.encoded = data
-  if !rvl.DecompressRVL(dims[0]*dims[1]):
+  if !rvl.Decompress():
     print("Failed decompression")
-    return
   geom.clear()
   geom.begin(Mesh.PRIMITIVE_POINTS, null)
   var row = 0

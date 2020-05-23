@@ -58,9 +58,8 @@ func _setupDepthRender(n):
   var inst = DepthRender.instance()
   inst.setup(int(256/4),int(144/4), "rvl")
   
-  # TODO remove
+  # TODO do this in simulation
   inst.translate(Vector3(0, 1, 0))
-  
   _replace(n, inst)
 
 func _setupHingeJoint(n):

@@ -32,7 +32,8 @@ var nibs = 0
 var byte = 0
 var decodeIdx = 0
 
-func Init(w: int, h: int, channel: int, keyframe_period: int):
+# You can skip specifying keyframe_period if using decode only
+func Init(w: int, h: int, channel: int, keyframe_period: int = 0):
   #PYTHON: global plain, encoded, nibs, byte, decodeIdx, init, keyframe_pd, chan
   #PYTHON: init = bytearray(int(w*h))
   init = PoolByteArray() #PYRM
@@ -43,23 +44,25 @@ func Init(w: int, h: int, channel: int, keyframe_period: int):
   encoded = PoolByteArray() #PYRM
   _clear_prev()
   _clear_plain()
+  _clear_decode()
+  keyframe_pd = keyframe_period
+  chan = channel
+
+func _clear_decode():
+  #PYTHON: global nibs, byte, decodeIdx
   nibs = 0
   byte = 0
   decodeIdx = 0
-  keyframe_pd = keyframe_period
-  chan = channel
 
 func _clear_prev():
   #PYTHON: global prev, init
   #PYTHON: prev = list(init)
-  prev = PoolByteArray() #PYRM
-  prev.append_array(init) #PYRM
+  prev = PoolByteArray(Array(init)) #PYRM
 
 func _clear_plain():
   #PYTHON: global plain, init
   #PYTHON: plain = list(init)
-  plain = PoolByteArray() #PYRM
-  plain.append_array(init) #PYRM
+  plain = PoolIntArray(Array(init)) #PYRM
 
 func _flush():
   #PYTHON: global nibs, byte
@@ -174,6 +177,7 @@ func Compress():
 
 func Decompress():
   #PYTHON: global plain, encoded, nibs, byte, decodeIdx
+  _clear_decode()
   if encoded[1] != 0:
     _clear_plain()
   
@@ -185,6 +189,7 @@ func Decompress():
     var nonzeros = _decodeVLE()
     for i in range(nonzeros):
       if plainIdx >= len(plain):
+        print("%s of %s | %s of %s | %d z %d nz" % [plainIdx, len(plain), decodeIdx, len(encoded), zeros, nonzeros])
         return false # Decompression failed (overrun)
       var zigzag = _decodeVLE()
       var delta = (zigzag >> 1) ^ -(zigzag & 1)
