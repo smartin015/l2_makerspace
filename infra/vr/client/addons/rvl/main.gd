@@ -5,7 +5,9 @@
 # This implementation uses the same zigzag + variable-length encoding
 # scheme, but with a custom packet:
 # 
-# - 
+# - 1 byte channel ID
+# - 1 byte keyframe status (0 == use delta, nonzero == treat as absolute values)
+# - n bytes data
 #
 # NOTE: This file can be converted into a 
 # python3-compatible module when build_py.sh
@@ -29,8 +31,6 @@ var prev = PoolIntArray() #PYRM
 var nibs = 0
 var byte = 0
 var decodeIdx = 0
-const HEADER_LEN = 2
-
 
 func Init(w: int, h: int, channel: int, keyframe_period: int):
   #PYTHON: global plain, encoded, nibs, byte, decodeIdx, init, keyframe_pd, chan
@@ -153,14 +153,14 @@ func Compress():
   var idx = 0
   while (idx < len(plain)):
     var zeros = 0
-    while idx < len(plain) and plain[idx] == 0:
+    while idx < len(plain) and (plain[idx] - prev[idx]) == 0:
       idx += 1
       zeros += 1
     # print("Encoded %d x 0" % zeros)
     _encodeVLE(zeros);
 
     var nonzeros = 0
-    while idx+nonzeros < len(plain) and plain[idx+nonzeros] != 0:
+    while idx+nonzeros < len(plain) and (plain[idx+nonzeros] - prev[idx+nonzeros]) != 0:
       nonzeros += 1
     # print("Encoded %d ! 0" % nonzeros)
     _encodeVLE(nonzeros);
@@ -188,7 +188,7 @@ func Decompress():
     _clear_plain()
   
   var plainIdx = 0 
-  decodeIdx = HEADER_LEN
+  decodeIdx = 2 # Header length
   while plainIdx < len(init) and decodeIdx < len(encoded):
     var zeros = _decodeVLE()
     plainIdx += zeros

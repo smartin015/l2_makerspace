@@ -54,3 +54,38 @@ func test_rvl_decompress():
     rvl.encoded = PoolByteArray(v[1])
     rvl.Decompress()
     assert_bytes_eq(rvl.plain, v[0])
+
+func test_rvl_keyframe_compress():
+  rvl.Init(1,1,0,1) #Keyframe every other frame
+  var enc4 = [0x01, 0x81]
+  rvl.plain = [4]
+  rvl.Compress()
+  # Keyframe on first frame
+  assert_bytes_eq(rvl.encoded, [0, 1] + enc4)
+  
+  rvl.Compress()
+  # Zero delta from last frame
+  assert_bytes_eq(rvl.encoded, [0, 0, 0x10])
+  
+  rvl.Compress()
+  # Keyframe again
+  assert_bytes_eq(rvl.encoded, [0, 1] + enc4)
+
+func test_rvl_keyframe_decompress():
+  #Note: Keyframe setting here doesn't matter
+  # since the packet itself has the keyframe flag
+  rvl.Init(1,1,0,0) 
+  var enc4 = [0x01, 0x81]
+  rvl.encoded = [0, 1] + enc4
+  rvl.Decompress()
+  assert_bytes_eq(rvl.plain, [4])
+
+  # Delta should add
+  rvl.encoded = [0, 0] + enc4
+  rvl.Decompress()
+  assert_bytes_eq(rvl.plain, [8])
+
+  # Keyframe should clear
+  rvl.encoded = [0, 1] + enc4
+  rvl.Decompress()
+  assert_bytes_eq(rvl.plain, [4])
