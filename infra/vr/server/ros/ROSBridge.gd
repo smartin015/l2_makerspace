@@ -168,7 +168,7 @@ func _on_raw_data(data):
   _handle_result(0, {
     "op": "publish",
     "topic": str(data[0]), # First byte is the channel ID
-    "msg": data.subarray(1,-1),
+    "msg": data,
   })
 
 func _on_data(id):
