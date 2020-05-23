@@ -66,7 +66,6 @@ func _flush():
   if nibs == 0:
     return
   elif nibs == 2:
-    # print("flushed x%02x" % byte)
     #PYTHON: encoded.append(byte)
     encoded.push_back(byte) #PYRM
   elif nibs == 1:
@@ -96,7 +95,7 @@ func _encodeVLE(value: int):
     var nibble = value & 0x7 # lower 3 bits
     value >>= 3
     if value:
-      nibble |= 0x8 # more to come
+      nibble |= 0x8 # more bytes incoming
     byte = (byte << 4) | nibble
     nibs += 1
     if nibs == 2:
@@ -123,9 +122,7 @@ func _decodeVLE():
     var nibble = byte & 0x70
     var ct = byte & 0x80
     result |= (nibble << 25) >> bits
-    # print("byte %02x nibble %02x result %02x ctd %s" % [byte, nibble, result, ct])
     byte = (byte << 4) & 0xff
-    # print("byte now %02x" % byte)
     nibs -= 1
     bits -= 3
     if not ct:
@@ -156,28 +153,21 @@ func Compress():
     while idx < len(plain) and (plain[idx] - prev[idx]) == 0:
       idx += 1
       zeros += 1
-    # print("Encoded %d x 0" % zeros)
     _encodeVLE(zeros);
 
     var nonzeros = 0
     while idx+nonzeros < len(plain) and (plain[idx+nonzeros] - prev[idx+nonzeros]) != 0:
       nonzeros += 1
-    # print("Encoded %d ! 0" % nonzeros)
     _encodeVLE(nonzeros);
 
     var i = 0
     while i < nonzeros:
       var delta = plain[idx] - prev[idx]
       idx += 1
-
       var zigzag = (delta << 1) ^ (delta >> 31)
-      # print("Encoded %02x zigzag (%d)" % [zigzag, delta])
       _encodeVLE(zigzag)
       i += 1
   
-  #if nibs: # last few values
-  #  encoded[idx] = byte << 4 * (8 - nibs)
-  #  idx += 1
   _flush()
   # Update our cache
   prev = plain
@@ -198,7 +188,6 @@ func Decompress():
         return false # Decompression failed (overrun)
       var zigzag = _decodeVLE()
       var delta = (zigzag >> 1) ^ -(zigzag & 1)
-      # print("Got %02x zigzag (%d)" % [zigzag, delta])
       plain[plainIdx] += delta
       plainIdx += 1
     

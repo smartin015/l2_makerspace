@@ -56,7 +56,7 @@ func test_rvl_decompress():
     assert_bytes_eq(rvl.plain, v[0])
 
 func test_rvl_keyframe_compress():
-  rvl.Init(1,1,0,1) #Keyframe every other frame
+  rvl.Init(1,1,0,1) # Keyframe every other frame
   var enc4 = [0x01, 0x81]
   rvl.plain = [4]
   rvl.Compress()
@@ -72,7 +72,7 @@ func test_rvl_keyframe_compress():
   assert_bytes_eq(rvl.encoded, [0, 1] + enc4)
 
 func test_rvl_keyframe_decompress():
-  #Note: Keyframe setting here doesn't matter
+  # Note: Keyframe setting here doesn't matter
   # since the packet itself has the keyframe flag
   rvl.Init(1,1,0,0) 
   var enc4 = [0x01, 0x81]
