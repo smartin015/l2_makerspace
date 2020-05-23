@@ -56,11 +56,11 @@ func _setupDepthRender(n):
   # TODO: set the stream ID for this depthrender so it streams
   # from the server
   var inst = DepthRender.instance()
-  inst.setup(32, 32, "rvl")
+  inst.setup(int(256/4),int(144/4), "rvl")
   
-  # TODO remove
+  # TODO do this in simulation
   inst.translate(Vector3(0, 1, 0))
-  
+  inst.rotate(Vector3(1,0,0), -PI/2)
   _replace(n, inst)
 
 func _setupHingeJoint(n):
