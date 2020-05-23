@@ -29,6 +29,7 @@ var prev = PoolIntArray() #PYRM
 var nibs = 0
 var byte = 0
 var decodeIdx = 0
+const HEADER_LEN = 2
 
 
 func Init(w: int, h: int, channel: int, keyframe_period: int):
@@ -53,6 +54,11 @@ func _clear_prev():
   prev = PoolByteArray() #PYRM
   prev.append_array(init) #PYRM
   #PYTHON: prev[:] = init
+
+func _clear_plain():
+  plain = PoolByteArray() #PYRM
+  plain.append_array(init) #PYRM
+  #PYTHON: plain[:] = init
 
 func _flush():
   #PYTHON: global nibs, byte
@@ -161,8 +167,7 @@ func Compress():
 
     var i = 0
     while i < nonzeros:
-      # TODO delta = current - previous, update prior frame
-      var delta = plain[idx]
+      var delta = plain[idx] - prev[idx]
       idx += 1
 
       var zigzag = (delta << 1) ^ (delta >> 31)
@@ -174,21 +179,26 @@ func Compress():
   #  encoded[idx] = byte << 4 * (8 - nibs)
   #  idx += 1
   _flush()
+  # Update our cache
+  prev = plain
 
 func Decompress():
   #PYTHON: global plain, encoded, nibs, byte, decodeIdx
-  plain.resize(len(init))
-  var idx = 2 # Skip first two bytes (channel & keframe detection)
-  while idx < len(init) and decodeIdx < len(encoded):
-    # No need to set zero values since we're applying deltas
+  if encoded[1] != 0:
+    _clear_plain()
+  
+  var plainIdx = 0 
+  decodeIdx = HEADER_LEN
+  while plainIdx < len(init) and decodeIdx < len(encoded):
     var zeros = _decodeVLE()
+    plainIdx += zeros
     var nonzeros = _decodeVLE()
     for i in range(nonzeros):
-      if idx >= len(plain):
+      if plainIdx >= len(plain):
         return false # Decompression failed (overrun)
       var zigzag = _decodeVLE()
       var delta = (zigzag >> 1) ^ -(zigzag & 1)
       # print("Got %02x zigzag (%d)" % [zigzag, delta])
-      plain[idx] += delta
-      idx += 1
+      plain[plainIdx] += delta
+      plainIdx += 1
   return true
