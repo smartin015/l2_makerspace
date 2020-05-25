@@ -34,6 +34,10 @@ func _multiplayerProcess(delta):
   last_left = left.transform
   last_right = right.transform
 
+remote func set_origin(origin: Vector3):
+  transform.origin = origin
+  rset("puppet_transform", global_transform)
+
 # ==================== Control Zone ===================================
 
 var control_zone

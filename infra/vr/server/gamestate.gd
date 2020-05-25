@@ -21,16 +21,17 @@ func _ready():
 func _peer_connected(id):
   print("GDT(%s) connected; pushing %d players %d actors" % [id, len(players.get_children()), len(actors.get_children())])
   
-  # Spawn all currently active dynamic elements for new r
+  # Spawn all currently active dynamic elements on new client
   for p in players.get_children():
-    players.rpc_id(id, "spawn", p.get_network_master())
+    players.rpc_id(id, "spawn", p.get_network_master(), p.transform.origin)
   for a in actors.get_children():
     actors.rpc_id(id, "spawn", a.name, a.objtype, a.config, a.transform, a.peer_id)
   
   # Let user know about ROS peers
   ROSBridge.send_ros_peers()
   
-  players.rpc("spawn", id) # Spawn new peer everywhere
+  # Spawn new peer everywhere
+  players.rpc("spawn", id, Vector3.ZERO) 
 
 func _peer_disconnected(id):
   players.rpc("remove", id) # Remove peer everywhere
