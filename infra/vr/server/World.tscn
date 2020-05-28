@@ -52,6 +52,7 @@ script = ExtResource( 9 )
 [node name="Canvas2" type="Spatial" parent="Tools"]
 transform = Transform( -0.999989, -1.09859e-05, 0.00468288, 0.00268426, 0.818065, 0.575119, -0.00383722, 0.575126, -0.818056, -5.077, 1.055, 1.774 )
 script = ExtResource( 9 )
+workspace = "1"
 
 [node name="Sequence" parent="Tools" instance=ExtResource( 10 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1.957, 1.78, -3.299 )

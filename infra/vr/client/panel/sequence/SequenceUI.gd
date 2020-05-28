@@ -33,6 +33,12 @@ func _set_seq_items(si):
     
   seq_items = items
 
+func clear():
+  for c in nodes.get_children():
+    if c is GraphNode:
+      c.queue_free()
+  nodes.clear_connections()
+
 func _ready():
   _set_seq_items(["test1", "test2"])
   # $MarginContainer/VBoxContainer/Spacer/Nodes.get_zoom_hbox().visible = false
@@ -42,16 +48,24 @@ func _on_GridContainer_connection_request(from, from_slot, to, to_slot):
   if running:
     _log("Cannot change connections while running")
     return
+    
+  rpc("connect_node", from, from_slot, to, to_slot)
+
+remotesync func connect_node(from, from_slot, to, to_slot):
   nodes.connect_node(from, from_slot, to, to_slot)
 
 func _on_sequence_item_pressed(n):
-  rpc("create_sequence_item", n)
+  # ID from msec ticks is sloppy and could cause problems
+  # later on. But hey, it's test code :)
+  rpc("create_sequence_item", n, str(OS.get_ticks_msec()))
 
-remotesync func create_sequence_item(n):
+remotesync func create_sequence_item(n, uid):
   var i = seqItemNode.instance()
+  i.name = uid
   i.title = n  
   nodes.add_child(i)
   _log("Added node %s" % n)
+  return i
 
 func _on_Left_pressed():
   print("left")
@@ -99,6 +113,4 @@ func _on_Stop_pressed():
   emit_signal("stop_sequence")
 
 func _on_Clear_pressed():
-  for c in nodes.get_children():
-    if c is GraphNode:
-      c.queue_free()
+  clear()

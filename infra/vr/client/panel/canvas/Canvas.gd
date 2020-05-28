@@ -11,7 +11,6 @@ func _ready():
   set_network_master(0)
 
 remote func setup(linesList: Array):
-  print("Setup called for canvas - %s lines" % len(linesList))
   for line in linesList:
     var nl = Line2D.new()
     for pt in line:

@@ -1,7 +1,7 @@
 extends Spatial
 
 const objtype = "CANVAS"
-puppet var workspace = gamestate.DEFAULT_WORKSPACE
+export var workspace = gamestate.DEFAULT_WORKSPACE
 var currLine = {}
 
 remote func clear():

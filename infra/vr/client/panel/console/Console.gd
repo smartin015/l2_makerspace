@@ -3,15 +3,15 @@ extends Spatial
 export var topic = "/console"
 var cui
 
+remote func setup(text: PoolStringArray):
+  cui.text = ""
+  for t in text:
+    on_console(t)
+
 func _ready():
   cui = find_node("ConsoleUI", true, false)
   # Always server-owned
   set_network_master(0)
   
-  ROSBridge.ros_connect("console", 
-    "std_msgs/String", 
-    self, "_on_console", 
-    "console_sub")
-
-func _on_console(msg, _id):
-  cui.text = cui.text + "\n" + msg.data
+remote func on_console(text):
+  cui.text = cui.text + "\n" + text

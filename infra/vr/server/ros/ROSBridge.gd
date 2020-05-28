@@ -19,6 +19,7 @@ func _strip_ns(topic):
   
 var _server = WebSocketServer.new()
 var _raw_server = PacketPeerUDP.new()
+var handlers = {} # Server-side handlers or specific topics
 var listeners = {} # Map of ROS topic to list of godot client IDs
 var calls = {} # Map of service call IDs to ROSCalls
 var services = []
@@ -30,6 +31,16 @@ func connection_msgs(id):
     result.push_back(s.advertisement(id))
   for t in topics:
     result.push_back(t.advertisement(id))
+  for h in handlers:
+    if !h.raw:
+      result.push_back({
+        "op": "subscribe",
+        "topic": h.topic,
+        "type": h.type,
+        "id": h.id,
+        "fragment_size": MAX_WS_MSG,
+      })
+    
 
   for r in result:
     if r.get("topic"):
@@ -73,6 +84,27 @@ func _broadcast(id: String, msg):
       _disconnected(c.name)
       continue
     c.socket.put_packet(packet)
+
+class ROSHandler:
+  var topic = ""
+  var type = ""
+  var id = ""
+  var raw = false
+  var callbacks = [] # [[node, handler], ...]
+
+# Subscribes to a ROS topic via the server & ros bridge, and registers a 
+# handler to call when the topic receives messages.
+func ros_connect(topic: String, type: String, node: Node, handler: String, id: String, raw=false):
+  var h = handlers.get(topic)
+  if !h:
+    h = ROSHandler.new()
+    handlers[topic] = h
+  h.topic = topic
+  h.type = type
+  h.id = id
+  h.callbacks.push_back([node, handler])
+  h.raw = raw
+  subscribe(topic, type, id, raw)
 
 remote func advertise(topic: String, type: String, id: String):
   _broadcast(id, {
@@ -216,6 +248,11 @@ func _handle_result(id, result):
           # Clear out the listener if the user is no longer present
           print("Clearing unused listener %s" % l)
           ls.erase(l)
+
+      var h = handlers.get(result.topic)
+      if h != null:
+        for cb in h.callbacks:
+          cb[0].call(cb[1], result.get("msg", ""), result.get("id", ""))
 
       if len(ls) == 0 && !result.topic[0].is_valid_integer():
         # Unsubscribe if nobody's listening. Topics that 
