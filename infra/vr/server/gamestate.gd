@@ -44,11 +44,21 @@ func _peer_connected(id):
   
 func _populate_workspace_for_player(id, ws):
   # Spawn all currently active dynamic elements on new client
+  # Note that (puppet) players are never removed, so aren't
+  # re-populated here.
+  
   for a in actors.get_children():
     if a.workspace != ws:
       continue
     actors.rpc_id(id, "spawn", a.name, a.objtype, a.config, a.transform, a.peer_id)
-  # TODO same for tools
+  
+  for t in tools.get_children():
+    if t.workspace != ws:
+      continue
+    if !t.get("objtype"):
+      # TODO some tools not yet set up for workspaces
+      continue
+    tools.rpc_id(id, "spawn", t.name, t.objtype, t.transform)
   
 
 func _peer_disconnected(id):

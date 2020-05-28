@@ -10,6 +10,14 @@ func _ready():
   # Always server-owned
   set_network_master(0)
 
+remote func setup(linesList: Array):
+  print("Setup called for canvas - %s lines" % len(linesList))
+  for line in linesList:
+    var nl = Line2D.new()
+    for pt in line:
+      nl.add_point(pt)
+    cui.add_child(nl)
+
 remotesync func clear():
   if cui == null:
     return

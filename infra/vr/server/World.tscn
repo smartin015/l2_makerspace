@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=2]
+[gd_scene load_steps=13 format=2]
 
 [ext_resource path="res://srv/SpawnObject3D.gd" type="Script" id=1]
 [ext_resource path="res://srv/AddTwoInts.gd" type="Script" id=2]
@@ -8,8 +8,10 @@
 [ext_resource path="res://srv/RemoveObject3D.gd" type="Script" id=6]
 [ext_resource path="res://msg/Locks.gd" type="Script" id=7]
 [ext_resource path="res://msg/Players.gd" type="Script" id=8]
-[ext_resource path="res://Canvas.gd" type="Script" id=9]
+[ext_resource path="res://panel/Canvas.gd" type="Script" id=9]
 [ext_resource path="res://panel/sequence/Sequence.tscn" type="PackedScene" id=10]
+[ext_resource path="res://panel/Chart.gd" type="Script" id=11]
+[ext_resource path="res://panel/Console.gd" type="Script" id=12]
 
 [node name="World" type="Spatial"]
 
@@ -43,10 +45,21 @@ script = ExtResource( 8 )
 
 [node name="Tools" type="Node" parent="."]
 
-[node name="Canvas" type="Node" parent="Tools"]
+[node name="Canvas" type="Spatial" parent="Tools"]
+transform = Transform( 0.00383738, -0.575126, 0.818056, 0.00268426, 0.818065, 0.575119, -0.999989, -1.10795e-05, 0.00468302, -6.435, 1.055, 0.458 )
 script = ExtResource( 9 )
 
-[node name="Canvas2" type="Node" parent="Tools"]
+[node name="Canvas2" type="Spatial" parent="Tools"]
+transform = Transform( -0.999989, -1.09859e-05, 0.00468288, 0.00268426, 0.818065, 0.575119, -0.00383722, 0.575126, -0.818056, -5.077, 1.055, 1.774 )
 script = ExtResource( 9 )
 
 [node name="Sequence" parent="Tools" instance=ExtResource( 10 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1.957, 1.78, -3.299 )
+
+[node name="Chart" type="Spatial" parent="Tools"]
+transform = Transform( -1.62921e-07, 0, -1, 0, 1, 0, 1, 0, -1.62921e-07, -0.479, 1.915, -2.124 )
+script = ExtResource( 11 )
+
+[node name="Console" type="Spatial" parent="Tools"]
+transform = Transform( 0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 3.504, 1.781, -2.574 )
+script = ExtResource( 12 )

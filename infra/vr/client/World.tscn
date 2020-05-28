@@ -2,11 +2,11 @@
 
 [ext_resource path="res://panel/sequence/Sequence.tscn" type="PackedScene" id=1]
 [ext_resource path="res://Player.tscn" type="PackedScene" id=2]
-[ext_resource path="res://panel/canvas/Canvas.tscn" type="PackedScene" id=3]
 [ext_resource path="res://panel/chart/Chart.tscn" type="PackedScene" id=4]
 [ext_resource path="res://actor/actor.gd" type="Script" id=5]
 [ext_resource path="res://addons/mesh/MeshStreamer.gd" type="Script" id=6]
 [ext_resource path="res://textures/Metal_Plate_009_SD/SpaceshipPlate.tres" type="Material" id=7]
+[ext_resource path="res://Tools.gd" type="Script" id=8]
 [ext_resource path="res://panel/console/Console.tscn" type="PackedScene" id=9]
 [ext_resource path="res://Players.gd" type="Script" id=10]
 [ext_resource path="res://stars_panorama.png" type="Texture" id=11]
@@ -41,15 +41,10 @@ script = ExtResource( 10 )
 script = ExtResource( 5 )
 
 [node name="Tools" type="Node" parent="."]
+script = ExtResource( 8 )
 
 [node name="Sequence" parent="Tools" instance=ExtResource( 1 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1.95672, 1.78037, -3.2991 )
-
-[node name="Canvas" parent="Tools" instance=ExtResource( 3 )]
-transform = Transform( 0.00382649, -0.575119, 0.81806, 0.00269013, 0.818069, 0.575113, -0.999989, 2.51393e-08, 0.00467747, -6.43476, 1.05477, 0.458059 )
-
-[node name="Canvas2" parent="Tools" instance=ExtResource( 3 )]
-transform = Transform( -0.999989, 5.02786e-08, 0.00467743, 0.00269013, 0.818069, 0.575113, -0.00382645, 0.575119, -0.81806, -5.07725, 1.05477, 1.7742 )
 
 [node name="Chart" parent="Tools" instance=ExtResource( 4 )]
 transform = Transform( -4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, -0.479194, 1.91496, -2.12403 )
