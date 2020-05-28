@@ -6,7 +6,7 @@ extends Node
 
 var polltmr
 const TOPIC_TYPE = "l2_msgs/msg/VRPlayers"
-onready var players = find_node('/root/World/Players')
+onready var players = get_tree().get_root().get_node('World/Players')
 
 func _ready():
   ROSBridge.topics.push_back(self)
@@ -15,6 +15,7 @@ func _ready():
   polltmr.connect("timeout", self, "_poll") 
   add_child(polltmr)
   polltmr.start()
+  _poll()
 
 func advertisement(id):
   return { 

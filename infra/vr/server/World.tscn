@@ -41,12 +41,12 @@ script = ExtResource( 7 )
 [node name="Players" type="Node" parent="msg"]
 script = ExtResource( 8 )
 
-[node name="Panels" type="Node" parent="."]
+[node name="Tools" type="Node" parent="."]
 
-[node name="Canvas" type="Node" parent="Panels"]
+[node name="Canvas" type="Node" parent="Tools"]
 script = ExtResource( 9 )
 
-[node name="Canvas2" type="Node" parent="Panels"]
+[node name="Canvas2" type="Node" parent="Tools"]
 script = ExtResource( 9 )
 
-[node name="Sequence" parent="Panels" instance=ExtResource( 10 )]
+[node name="Sequence" parent="Tools" instance=ExtResource( 10 )]

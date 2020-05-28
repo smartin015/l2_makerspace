@@ -2,8 +2,10 @@ extends Node
 
 const PORT = 44444
 const MAX_PLAYERS = 12
+const DEFAULT_WORKSPACE = "0"
 onready var actors = get_node("/root/World/Actors")
 onready var players = get_node("/root/World/Players")
+onready var tools = get_node("/root/World/Tools")
 
 func _ready():
   var err = get_tree().connect("network_peer_connected", self, "_peer_connected")
@@ -18,20 +20,36 @@ func _ready():
   get_tree().set_network_peer(host)
   print("GDT listen port ", PORT)
 
+remote func set_workspace(ws):
+  var sender = get_tree().get_rpc_sender_id()
+  var p = players.find_node(str(sender), true, false)
+  if p == null:
+    print("Could not set workspace for %s to %s: player not found" % [sender, ws])
+  p.rpc("set_workspace", ws)
+  _populate_workspace_for_player(sender, ws)
+  
 func _peer_connected(id):
   print("GDT(%s) connected; pushing %d players %d actors" % [id, len(players.get_children()), len(actors.get_children())])
+  _populate_workspace_for_player(id, DEFAULT_WORKSPACE)
   
-  # Spawn all currently active dynamic elements on new client
+  # Spawn other players for new peer
   for p in players.get_children():
-    players.rpc_id(id, "spawn", p.get_network_master(), p.transform.origin)
-  for a in actors.get_children():
-    actors.rpc_id(id, "spawn", a.name, a.objtype, a.config, a.transform, a.peer_id)
+    players.rpc_id(id, "spawn", p.get_network_master(), p.transform.origin, p.workspace)
+  
+  # Spawn new peer for all players
+  players.rpc("spawn", id, Vector3.ZERO, DEFAULT_WORKSPACE)
   
   # Let user know about ROS peers
-  ROSBridge.send_ros_peers()
+  ROSBridge.send_ros_peers()  
   
-  # Spawn new peer everywhere
-  players.rpc("spawn", id, Vector3.ZERO) 
+func _populate_workspace_for_player(id, ws):
+  # Spawn all currently active dynamic elements on new client
+  for a in actors.get_children():
+    if a.workspace != ws:
+      continue
+    actors.rpc_id(id, "spawn", a.name, a.objtype, a.config, a.transform, a.peer_id)
+  # TODO same for tools
+  
 
 func _peer_disconnected(id):
   players.rpc("remove", id) # Remove peer everywhere

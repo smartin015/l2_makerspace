@@ -40,6 +40,23 @@ script = ExtResource( 10 )
 [node name="Actors" type="Node" parent="."]
 script = ExtResource( 5 )
 
+[node name="Tools" type="Node" parent="."]
+
+[node name="Sequence" parent="Tools" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1.95672, 1.78037, -3.2991 )
+
+[node name="Canvas" parent="Tools" instance=ExtResource( 3 )]
+transform = Transform( 0.00382649, -0.575119, 0.81806, 0.00269013, 0.818069, 0.575113, -0.999989, 2.51393e-08, 0.00467747, -6.43476, 1.05477, 0.458059 )
+
+[node name="Canvas2" parent="Tools" instance=ExtResource( 3 )]
+transform = Transform( -0.999989, 5.02786e-08, 0.00467743, 0.00269013, 0.818069, 0.575113, -0.00382645, 0.575119, -0.81806, -5.07725, 1.05477, 1.7742 )
+
+[node name="Chart" parent="Tools" instance=ExtResource( 4 )]
+transform = Transform( -4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, -0.479194, 1.91496, -2.12403 )
+
+[node name="Console" parent="Tools" instance=ExtResource( 9 )]
+transform = Transform( 0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 3.50358, 1.78062, -2.57357 )
+
 [node name="MeshStreamer" type="HTTPRequest" parent="."]
 script = ExtResource( 6 )
 
@@ -50,23 +67,6 @@ environment = SubResource( 2 )
 __meta__ = {
 "_editor_description_": ""
 }
-
-[node name="Panels" type="Node" parent="."]
-
-[node name="Sequence" parent="Panels" instance=ExtResource( 1 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1.95672, 1.78037, -3.2991 )
-
-[node name="Canvas" parent="Panels" instance=ExtResource( 3 )]
-transform = Transform( 0.00382649, -0.575119, 0.81806, 0.00269013, 0.818069, 0.575113, -0.999989, 2.51393e-08, 0.00467747, -6.43476, 1.05477, 0.458059 )
-
-[node name="Canvas2" parent="Panels" instance=ExtResource( 3 )]
-transform = Transform( -0.999989, 5.02786e-08, 0.00467743, 0.00269013, 0.818069, 0.575113, -0.00382645, 0.575119, -0.81806, -5.07725, 1.05477, 1.7742 )
-
-[node name="Chart" parent="Panels" instance=ExtResource( 4 )]
-transform = Transform( -4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, -0.479194, 1.91496, -2.12403 )
-
-[node name="Console" parent="Panels" instance=ExtResource( 9 )]
-transform = Transform( 0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 3.50358, 1.78062, -2.57357 )
 
 [node name="Building" type="Spatial" parent="."]
 

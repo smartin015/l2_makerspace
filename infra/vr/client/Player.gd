@@ -1,5 +1,6 @@
 extends Spatial
 
+var workspace = gamestate.DEFAULT_WORKSPACE
 onready var origin = $OQ_ARVROrigin
 onready var head = $OQ_ARVROrigin/OQ_ARVRCamera
 onready var left = $OQ_ARVROrigin/OQ_LeftController
@@ -37,6 +38,16 @@ func _multiplayerProcess(delta):
 remote func set_origin(origin: Vector3):
   transform.origin = origin
   rset("puppet_transform", global_transform)
+
+remote func set_workspace(ws):
+  print("Workspace now %s" % ws)
+  workspace = ws
+  # Update puppet visibility after the new workspace
+  # is set.
+  for p in gamestate.players.get_children():
+    if p == self:
+      continue
+    p.update_visibility()
 
 # ==================== Control Zone ===================================
 
@@ -77,6 +88,9 @@ func _controllerProcess(_delta):
         _set_control_zone(b)
         return
     _set_control_zone(null)
+  if Input.is_action_just_pressed("toggle_workspace"):
+    var ws = int(workspace)
+    gamestate.set_workspace(str((ws+1) % 9))
 
 # ==================== Grab logic =====================================
 var grabStart

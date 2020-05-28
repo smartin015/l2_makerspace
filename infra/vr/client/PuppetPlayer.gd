@@ -4,6 +4,7 @@
 
 extends Spatial
 
+var workspace
 puppet var puppet_transform
 puppet var puppet_motion
 
@@ -18,6 +19,15 @@ const PM_RIGHT = 6
 const PM_ORIGIN = 0
 const PM_QUAT = 1
 const PM_VEL = 2
+
+func update_visibility():
+  # Puppet is hidden - but not removed - to simplify
+  # transmission of puppet_motion and prevent network errors.
+  visible = (workspace == gamestate.player.workspace)
+
+remote func set_workspace(ws):
+  workspace = ws
+  update_visibility()
 
 func _ready():
   puppet_motion = [

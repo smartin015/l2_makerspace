@@ -6,11 +6,14 @@ const DEFAULT_SETTINGS = {
   "server_port": 44444,
 }
 const DEFAULT_CONNECT_TIMEOUT = 0.5
+const DEFAULT_WORKSPACE = "0"
 var settings = DEFAULT_SETTINGS
 
 var host = NetworkedMultiplayerENet.new()
 onready var player = get_node("/root/World/Players/Player")
 onready var players = get_node("/root/World/Players")
+onready var actors = get_node("/root/World/Actors")
+onready var tools = get_node("/root/World/Tools")
 
 var is_initialized = false # We have been registered to the server.
 var default_connect_timer = null
@@ -88,3 +91,18 @@ func _connected_fail():
   is_initialized = false
   get_tree().set_network_peer(null)
   connect_to_server(settings.server_ip, settings.server_port)
+
+func set_workspace(ws):
+  if ws == player.workspace:
+    return # nothing to do
+
+  # Remove all the stuff from the prior workspace
+  for a in actors.get_children():
+    a.queue_free()
+  for t in tools.get_children():
+    t.queue_free()
+    
+  # It's up to the server to fulfill the workspace change,
+  # after which it calls set_workspace() on the player node
+  rpc_id(1, "set_workspace", ws)
+  

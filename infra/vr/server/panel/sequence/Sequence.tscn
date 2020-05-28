@@ -1,8 +1,10 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=3 format=2]
 
 [ext_resource path="res://panel/sequence/SequenceUI.gd" type="Script" id=1]
+[ext_resource path="res://panel/sequence/Sequence.gd" type="Script" id=2]
 
 [node name="Sequence" type="Spatial"]
+script = ExtResource( 2 )
 
 [node name="OQ_UI2DCanvas" type="Spatial" parent="."]
 

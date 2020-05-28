@@ -1,5 +1,6 @@
 extends Node
 
+puppet var workspace = gamestate.DEFAULT_WORKSPACE
 var currLine = {}
 
 remote func handle_input(pressed, position):
