@@ -9,21 +9,21 @@
 [ext_resource path="res://stars_panorama.png" type="Texture" id=11]
 [ext_resource path="res://NavFloor.tscn" type="PackedScene" id=12]
 
-[sub_resource type="PlaneMesh" id=3]
+[sub_resource type="PlaneMesh" id=1]
 size = Vector2( 11.5, 9 )
 
-[sub_resource type="PlaneMesh" id=4]
+[sub_resource type="PlaneMesh" id=2]
 size = Vector2( 4, 0.707 )
 
-[sub_resource type="CubeMesh" id=5]
+[sub_resource type="CubeMesh" id=3]
 size = Vector3( 0.5, 3, 0.5 )
 
-[sub_resource type="PanoramaSky" id=1]
+[sub_resource type="PanoramaSky" id=4]
 panorama = ExtResource( 11 )
 
-[sub_resource type="Environment" id=2]
+[sub_resource type="Environment" id=5]
 background_mode = 2
-background_sky = SubResource( 1 )
+background_sky = SubResource( 4 )
 ambient_light_color = Color( 1, 1, 1, 1 )
 ambient_light_energy = 2.0
 
@@ -49,7 +49,7 @@ script = ExtResource( 6 )
 
 [node name="Floor" type="MeshInstance" parent="Environment"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -0.755424, 0, 0.332981 )
-mesh = SubResource( 3 )
+mesh = SubResource( 1 )
 material/0 = ExtResource( 7 )
 
 [node name="Frame" type="Spatial" parent="Environment"]
@@ -57,17 +57,17 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2.95059, 0, -4 )
 
 [node name="MeshInstance" type="MeshInstance" parent="Environment/Frame"]
 transform = Transform( 1, 0, 0, 0, 0.707107, -0.707107, 0, 0.707107, 0.707107, 0, 0.25, -0.412049 )
-mesh = SubResource( 4 )
+mesh = SubResource( 2 )
 material/0 = ExtResource( 7 )
 
 [node name="MeshInstance2" type="MeshInstance" parent="Environment/Frame"]
 transform = Transform( 1, 0, 0, 0, -0.707107, -0.707107, 0, 0.707107, -0.707107, 0, 2.75, -0.412 )
-mesh = SubResource( 4 )
+mesh = SubResource( 2 )
 material/0 = ExtResource( 7 )
 
 [node name="MeshInstance3" type="MeshInstance" parent="Environment/Frame"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.5, -0.375 )
-mesh = SubResource( 5 )
+mesh = SubResource( 3 )
 material/0 = ExtResource( 7 )
 
 [node name="Frame2" type="Spatial" parent="Environment"]
@@ -75,17 +75,17 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1.06362, 0, -4 )
 
 [node name="MeshInstance" type="MeshInstance" parent="Environment/Frame2"]
 transform = Transform( 1, 0, 0, 0, 0.707107, -0.707107, 0, 0.707107, 0.707107, 0, 0.25, -0.412049 )
-mesh = SubResource( 4 )
+mesh = SubResource( 2 )
 material/0 = ExtResource( 7 )
 
 [node name="MeshInstance2" type="MeshInstance" parent="Environment/Frame2"]
 transform = Transform( 1, 0, 0, 0, -0.707107, -0.707107, 0, 0.707107, -0.707107, 0, 2.75, -0.412 )
-mesh = SubResource( 4 )
+mesh = SubResource( 2 )
 material/0 = ExtResource( 7 )
 
 [node name="MeshInstance3" type="MeshInstance" parent="Environment/Frame2"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.5, -0.375 )
-mesh = SubResource( 5 )
+mesh = SubResource( 3 )
 material/0 = ExtResource( 7 )
 
 [node name="Frame3" type="Spatial" parent="Environment"]
@@ -93,17 +93,17 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -5.06262, 0, -4 )
 
 [node name="MeshInstance" type="MeshInstance" parent="Environment/Frame3"]
 transform = Transform( 1, 0, 0, 0, 0.707107, -0.707107, 0, 0.707107, 0.707107, 0, 0.25, -0.412049 )
-mesh = SubResource( 4 )
+mesh = SubResource( 2 )
 material/0 = ExtResource( 7 )
 
 [node name="MeshInstance2" type="MeshInstance" parent="Environment/Frame3"]
 transform = Transform( 1, 0, 0, 0, -0.707107, -0.707107, 0, 0.707107, -0.707107, 0, 2.75, -0.412 )
-mesh = SubResource( 4 )
+mesh = SubResource( 2 )
 material/0 = ExtResource( 7 )
 
 [node name="MeshInstance3" type="MeshInstance" parent="Environment/Frame3"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.5, -0.375 )
-mesh = SubResource( 5 )
+mesh = SubResource( 3 )
 material/0 = ExtResource( 7 )
 
 [node name="Frame4" type="Spatial" parent="Environment"]
@@ -111,17 +111,17 @@ transform = Transform( -4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -6.1609
 
 [node name="MeshInstance" type="MeshInstance" parent="Environment/Frame4"]
 transform = Transform( 1, 0, 0, 0, 0.707107, -0.707107, 0, 0.707107, 0.707107, 0, 0.25, -0.412049 )
-mesh = SubResource( 4 )
+mesh = SubResource( 2 )
 material/0 = ExtResource( 7 )
 
 [node name="MeshInstance2" type="MeshInstance" parent="Environment/Frame4"]
 transform = Transform( 1, 0, 0, 0, -0.707107, -0.707107, 0, 0.707107, -0.707107, 0, 2.75, -0.412 )
-mesh = SubResource( 4 )
+mesh = SubResource( 2 )
 material/0 = ExtResource( 7 )
 
 [node name="MeshInstance3" type="MeshInstance" parent="Environment/Frame4"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.5, -0.375 )
-mesh = SubResource( 5 )
+mesh = SubResource( 3 )
 material/0 = ExtResource( 7 )
 
 [node name="Frame5" type="Spatial" parent="Environment"]
@@ -129,17 +129,17 @@ transform = Transform( -4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -6.1609
 
 [node name="MeshInstance" type="MeshInstance" parent="Environment/Frame5"]
 transform = Transform( 1, 0, 0, 0, 0.707107, -0.707107, 0, 0.707107, 0.707107, 0, 0.25, -0.412049 )
-mesh = SubResource( 4 )
+mesh = SubResource( 2 )
 material/0 = ExtResource( 7 )
 
 [node name="MeshInstance2" type="MeshInstance" parent="Environment/Frame5"]
 transform = Transform( 1, 0, 0, 0, -0.707107, -0.707107, 0, 0.707107, -0.707107, 0, 2.75, -0.412 )
-mesh = SubResource( 4 )
+mesh = SubResource( 2 )
 material/0 = ExtResource( 7 )
 
 [node name="MeshInstance3" type="MeshInstance" parent="Environment/Frame5"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.5, -0.375 )
-mesh = SubResource( 5 )
+mesh = SubResource( 3 )
 material/0 = ExtResource( 7 )
 
 [node name="Frame6" type="Spatial" parent="Environment"]
@@ -147,17 +147,17 @@ transform = Transform( -1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -4.5552
 
 [node name="MeshInstance" type="MeshInstance" parent="Environment/Frame6"]
 transform = Transform( 1, 0, 0, 0, 0.707107, -0.707107, 0, 0.707107, 0.707107, 0, 0.25, -0.412049 )
-mesh = SubResource( 4 )
+mesh = SubResource( 2 )
 material/0 = ExtResource( 7 )
 
 [node name="MeshInstance2" type="MeshInstance" parent="Environment/Frame6"]
 transform = Transform( 1, 0, 0, 0, -0.707107, -0.707107, 0, 0.707107, -0.707107, 0, 2.75, -0.412 )
-mesh = SubResource( 4 )
+mesh = SubResource( 2 )
 material/0 = ExtResource( 7 )
 
 [node name="MeshInstance3" type="MeshInstance" parent="Environment/Frame6"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.5, -0.375 )
-mesh = SubResource( 5 )
+mesh = SubResource( 3 )
 material/0 = ExtResource( 7 )
 
 [node name="Frame7" type="Spatial" parent="Environment"]
@@ -165,17 +165,17 @@ transform = Transform( -1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -0.6173
 
 [node name="MeshInstance" type="MeshInstance" parent="Environment/Frame7"]
 transform = Transform( 1, 0, 0, 0, 0.707107, -0.707107, 0, 0.707107, 0.707107, 0, 0.25, -0.412049 )
-mesh = SubResource( 4 )
+mesh = SubResource( 2 )
 material/0 = ExtResource( 7 )
 
 [node name="MeshInstance2" type="MeshInstance" parent="Environment/Frame7"]
 transform = Transform( 1, 0, 0, 0, -0.707107, -0.707107, 0, 0.707107, -0.707107, 0, 2.75, -0.412 )
-mesh = SubResource( 4 )
+mesh = SubResource( 2 )
 material/0 = ExtResource( 7 )
 
 [node name="MeshInstance3" type="MeshInstance" parent="Environment/Frame7"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.5, -0.375 )
-mesh = SubResource( 5 )
+mesh = SubResource( 3 )
 material/0 = ExtResource( 7 )
 
 [node name="Frame8" type="Spatial" parent="Environment"]
@@ -183,17 +183,17 @@ transform = Transform( -1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 3.53829
 
 [node name="MeshInstance" type="MeshInstance" parent="Environment/Frame8"]
 transform = Transform( 1, 0, 0, 0, 0.707107, -0.707107, 0, 0.707107, 0.707107, 0, 0.25, -0.412049 )
-mesh = SubResource( 4 )
+mesh = SubResource( 2 )
 material/0 = ExtResource( 7 )
 
 [node name="MeshInstance2" type="MeshInstance" parent="Environment/Frame8"]
 transform = Transform( 1, 0, 0, 0, -0.707107, -0.707107, 0, 0.707107, -0.707107, 0, 2.75, -0.412 )
-mesh = SubResource( 4 )
+mesh = SubResource( 2 )
 material/0 = ExtResource( 7 )
 
 [node name="MeshInstance3" type="MeshInstance" parent="Environment/Frame8"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.5, -0.375 )
-mesh = SubResource( 5 )
+mesh = SubResource( 3 )
 material/0 = ExtResource( 7 )
 
 [node name="Frame9" type="Spatial" parent="Environment"]
@@ -201,17 +201,17 @@ transform = Transform( 1.31134e-07, 0, -1, 0, 1, 0, 1, 0, 1.31134e-07, 4.74295, 
 
 [node name="MeshInstance" type="MeshInstance" parent="Environment/Frame9"]
 transform = Transform( 1, 0, 0, 0, 0.707107, -0.707107, 0, 0.707107, 0.707107, 0, 0.25, -0.412049 )
-mesh = SubResource( 4 )
+mesh = SubResource( 2 )
 material/0 = ExtResource( 7 )
 
 [node name="MeshInstance2" type="MeshInstance" parent="Environment/Frame9"]
 transform = Transform( 1, 0, 0, 0, -0.707107, -0.707107, 0, 0.707107, -0.707107, 0, 2.75, -0.412 )
-mesh = SubResource( 4 )
+mesh = SubResource( 2 )
 material/0 = ExtResource( 7 )
 
 [node name="MeshInstance3" type="MeshInstance" parent="Environment/Frame9"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.5, -0.375 )
-mesh = SubResource( 5 )
+mesh = SubResource( 3 )
 material/0 = ExtResource( 7 )
 
 [node name="Frame10" type="Spatial" parent="Environment"]
@@ -219,21 +219,21 @@ transform = Transform( 1.31134e-07, 0, -1, 0, 1, 0, 1, 0, 1.31134e-07, 4.74295, 
 
 [node name="MeshInstance" type="MeshInstance" parent="Environment/Frame10"]
 transform = Transform( 1, 0, 0, 0, 0.707107, -0.707107, 0, 0.707107, 0.707107, 0, 0.25, -0.412049 )
-mesh = SubResource( 4 )
+mesh = SubResource( 2 )
 material/0 = ExtResource( 7 )
 
 [node name="MeshInstance2" type="MeshInstance" parent="Environment/Frame10"]
 transform = Transform( 1, 0, 0, 0, -0.707107, -0.707107, 0, 0.707107, -0.707107, 0, 2.75, -0.412 )
-mesh = SubResource( 4 )
+mesh = SubResource( 2 )
 material/0 = ExtResource( 7 )
 
 [node name="MeshInstance3" type="MeshInstance" parent="Environment/Frame10"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.5, -0.375 )
-mesh = SubResource( 5 )
+mesh = SubResource( 3 )
 material/0 = ExtResource( 7 )
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="Environment"]
-environment = SubResource( 2 )
+environment = SubResource( 5 )
 __meta__ = {
 "_editor_description_": ""
 }

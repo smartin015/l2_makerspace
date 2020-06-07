@@ -15,6 +15,9 @@ onready var players = get_node("/root/World/Players")
 onready var actors = get_node("/root/World/Actors")
 onready var tools = get_node("/root/World/Tools")
 
+# Shapes for CAD
+enum SHAPE {PENCIL, LINE, RECTANGLE, CIRCLE}
+
 var is_initialized = false # We have been registered to the server.
 var default_connect_timer = null
 

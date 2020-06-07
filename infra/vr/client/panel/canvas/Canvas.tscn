@@ -9,8 +9,6 @@
 script = ExtResource( 3 )
 
 [node name="OQ_UI2DCanvas" parent="." instance=ExtResource( 1 )]
-editor_live_update = false
-transparent = false
 
 [node name="CanvasUIContainer" parent="OQ_UI2DCanvas" instance=ExtResource( 2 )]
 
@@ -18,4 +16,5 @@ transparent = false
 stream = ExtResource( 4 )
 [connection signal="clear" from="OQ_UI2DCanvas/CanvasUIContainer" to="." method="_on_CanvasUIContainer_clear"]
 [connection signal="save" from="OQ_UI2DCanvas/CanvasUIContainer" to="." method="_on_CanvasUIContainer_save"]
+[connection signal="set_shape" from="OQ_UI2DCanvas/CanvasUIContainer" to="." method="_on_CanvasUIContainer_set_shape"]
 [connection signal="finished" from="AudioStreamPlayer2D" to="." method="_on_AudioStreamPlayer2D_finished"]

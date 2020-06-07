@@ -1,8 +1,9 @@
 extends Spatial
 
+onready var L2Shape = load("res://panel/Shape.tscn")
 const objtype = "CANVAS"
 export var workspace = gamestate.DEFAULT_WORKSPACE
-var currLine = {}
+var currShape = {}
 
 remote func clear():
   for l in get_children():
@@ -10,23 +11,24 @@ remote func clear():
 
 remote func setup_request():
   var sender = get_tree().get_rpc_sender_id()
-  var linesList = []
-  for l in get_children():
-    if l is Line2D:
-      linesList.push_back(l.points)
-  rpc_id(sender, "setup", linesList)
+  var shapesList = []
+  
+  for s in get_children():
+    if s.has_method('start_shape'):
+      shapesList.push_back([s.shapeType, s.points])
+  rpc_id(sender, "setup", shapesList)
 
-remote func handle_input(pressed, position):
+remote func handle_input(pressed, position, shapeType):
   var sender = get_tree().get_rpc_sender_id()
   if pressed != null:
     if pressed:
-      var nl = Line2D.new()
-      add_child(nl)
-      nl.add_point(position)
-      currLine[sender] = nl
-    elif currLine.get(sender) != null:
-      currLine[sender] = null
+      var n = L2Shape.instance()
+      n.start_shape(shapeType, position)
+      add_child(n)
+      currShape[sender] = n
+    elif currShape.get(sender) != null:
+      currShape[sender] = null
   else:
-    var cl = currLine.get(sender)
+    var cl = currShape.get(sender)
     if cl != null:
-      cl.add_point(position)
+      cl.handle_point(position)

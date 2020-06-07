@@ -7,6 +7,9 @@ onready var actors = get_node("/root/World/Actors")
 onready var players = get_node("/root/World/Players")
 onready var tools = get_node("/root/World/Tools")
 
+# Shapes for CAD
+enum SHAPE {PENCIL, LINE, RECTANGLE, CIRCLE}
+
 func _ready():
   var err = get_tree().connect("network_peer_connected", self, "_peer_connected")
   if err != OK:
