@@ -17,4 +17,5 @@ stream = ExtResource( 4 )
 [connection signal="clear" from="OQ_UI2DCanvas/CanvasUIContainer" to="." method="_on_CanvasUIContainer_clear"]
 [connection signal="save" from="OQ_UI2DCanvas/CanvasUIContainer" to="." method="_on_CanvasUIContainer_save"]
 [connection signal="set_shape" from="OQ_UI2DCanvas/CanvasUIContainer" to="." method="_on_CanvasUIContainer_set_shape"]
+[connection signal="undo" from="OQ_UI2DCanvas/CanvasUIContainer" to="." method="_on_CanvasUIContainer_undo"]
 [connection signal="finished" from="AudioStreamPlayer2D" to="." method="_on_AudioStreamPlayer2D_finished"]

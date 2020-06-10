@@ -27,6 +27,9 @@ func _ready():
   ]
   puppet_transform = transform
   
+remote func puppet_hands(lorient, rorient):
+  pass
+  
 func _process(delta):
   head.transform = Transform(puppet_motion[PM_HEAD+PM_QUAT], puppet_motion[PM_HEAD+PM_ORIGIN])
   head.transform = head.transform.translated(puppet_motion[PM_HEAD+PM_VEL] * delta)

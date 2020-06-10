@@ -27,9 +27,40 @@ remotesync func clear():
     if c.has_method('start_shape'):
       c.queue_free()
 
-remotesync func handle_input(pressed, position, shapeType):
+remotesync func undo():
+  # Undo hides the last unhidden shape
   if cui == null:
     return
+  var cs = cui.get_children()
+  cs.invert()
+  for c in cs:
+    if c.has_method('start_shape') and c.visible:
+      c.visible = false
+      c.pickable = false
+      return
+
+remotesync func handle_input(pressed, position, shapeType):
+  print("hi")
+  if cui == null:
+    return
+  
+  # Remove any undo (non-visible) shapes
+  var cs = cui.get_children()
+  cs.invert()
+  for c in cs:
+    if not c.has_method('start_shape'):
+      continue
+    if c.visible:
+      break
+    c.queue_free()
+  
+  match shapeType:
+    gamestate.SHAPE.DRAG:
+      # Input is already forwarded to canvas UI (Mouse > Filter == "Pass")
+      pass
+    _:
+      pass
+  
   var sender = get_tree().get_rpc_sender_id()
   if pressed != null:
     if pressed:
@@ -56,7 +87,6 @@ func _on_CanvasUI_gui_input(event):
 
 func _on_CanvasUIContainer_clear():
   rpc("clear")
-  clear()
 
 func _on_CanvasUIContainer_save():
   # TODO save
@@ -65,10 +95,19 @@ func _on_CanvasUIContainer_save():
 
 func _on_CanvasUIContainer_set_shape(shape):
   # Shape is only selected locally
+  if nextShapeType == gamestate.SHAPE.DRAG && shape != nextShapeType:
+    for c in cui.get_children():
+      if c.visible:
+        c.pickable = false
   nextShapeType = shape
+  if shape == gamestate.SHAPE.DRAG:
+    for c in cui.get_children():
+      if c.visible:
+        c.pickable = true
   print("Set next shape type to %s" % gamestate.SHAPE.keys()[shape])
 
 func _on_AudioStreamPlayer2D_finished():
   print("Audio finished")
 
-
+func _on_CanvasUIContainer_undo():
+  rpc("undo")

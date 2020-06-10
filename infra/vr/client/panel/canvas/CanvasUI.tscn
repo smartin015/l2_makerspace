@@ -32,9 +32,15 @@ margin_right = 351.0
 margin_bottom = 39.0
 text = "Save"
 
-[node name="ShapeMenu" type="MenuButton" parent="HBoxContainer"]
+[node name="Undo" type="Button" parent="HBoxContainer"]
 margin_left = 551.0
-margin_right = 642.0
+margin_right = 630.0
+margin_bottom = 39.0
+text = "Undo"
+
+[node name="ShapeMenu" type="MenuButton" parent="HBoxContainer"]
+margin_left = 830.0
+margin_right = 921.0
 margin_bottom = 39.0
 text = "Shape"
 
@@ -42,6 +48,7 @@ text = "Shape"
 margin_top = 43.0
 margin_right = 1024.0
 margin_bottom = 600.0
+mouse_filter = 1
 size_flags_horizontal = 3
 size_flags_vertical = 3
 __meta__ = {
@@ -49,3 +56,4 @@ __meta__ = {
 }
 [connection signal="pressed" from="HBoxContainer/Clear" to="." method="_on_Clear_pressed"]
 [connection signal="pressed" from="HBoxContainer/Save" to="." method="_on_Save_pressed"]
+[connection signal="pressed" from="HBoxContainer/Undo" to="." method="_on_Undo_pressed"]

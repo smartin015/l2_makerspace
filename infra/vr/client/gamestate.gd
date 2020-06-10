@@ -16,12 +16,15 @@ onready var actors = get_node("/root/World/Actors")
 onready var tools = get_node("/root/World/Tools")
 
 # Shapes for CAD
-enum SHAPE {PENCIL, LINE, RECTANGLE, CIRCLE}
+enum SHAPE {PENCIL, LINE, RECTANGLE, CIRCLE, DRAG}
 
 var is_initialized = false # We have been registered to the server.
 var default_connect_timer = null
 
 func _ready():
+  if !vr.initialize():
+    print("GDT non-VR demo mode")
+  
   if get_tree().get_current_scene().get_name() != "World":
     print("Not in main scene; skipping connections")
     return
@@ -37,9 +40,6 @@ func _ready():
     if err != OK:
       print("error registering ", k, ": ", err)
   is_initialized = false
-  if !vr.initialize():
-    print("GDT non-VR demo mode")
-
   default_connect_timer = Timer.new()
   default_connect_timer.set_one_shot(true)
   default_connect_timer.connect("timeout", self, "_default_connect_timeout")

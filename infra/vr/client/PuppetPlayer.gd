@@ -11,6 +11,8 @@ puppet var puppet_motion
 onready var left = $LeftHand
 onready var right = $RightHand
 onready var head = $Head 
+onready var lskel = $LeftHand/OculusQuestHand_Left/ArmatureLeft/Skeleton
+
 
 const PM_HEAD = 0
 const PM_LEFT = 3
@@ -36,6 +38,26 @@ func _ready():
     Vector3.ZERO, Quat.IDENTITY, Vector3.ZERO, # Right
   ]
   puppet_transform = transform
+  puppet_hands(null, null)
+  
+# Copied from Feature_HandModel.gd
+# we need to remap the bone ids from the hand model to the bone orientations we get from the vrapi and the inverse
+# This is only for the actual bones and skips the tips (vrapi 19-23) as they do not need to be updated I think
+const _vrapi2hand_bone_map = [0, 23,  1, 2, 3, 4,  6, 7, 8,  10, 11, 12,  14, 15, 16, 18, 19, 20, 21];
+  
+func _set_skeleton_orientation(skel, orient):
+  for i in range(0, len(_vrapi2hand_bone_map)):
+    skel.set_bone_pose(_vrapi2hand_bone_map[i], Transform(orient[i]));
+  
+remote func puppet_hands(lorient, rorient):
+  if lorient == null:
+    left.visible = false
+  else:
+    _set_skeleton_orientation(lskel, lorient)
+  if rorient != null:
+    right.visible = false
+    _set_skeleton_orientation(lskel, rorient)
+    
 
 func _process(delta):
   head.transform = Transform(puppet_motion[PM_HEAD+PM_QUAT], puppet_motion[PM_HEAD+PM_ORIGIN])

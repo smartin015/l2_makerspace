@@ -1,8 +1,10 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=8 format=2]
 
 [ext_resource path="res://PuppetPlayer.gd" type="Script" id=1]
 [ext_resource path="res://OQ_Toolkit/OQ_ARVRController/models3d/OculusQuestTouchController_Left.gltf" type="PackedScene" id=2]
 [ext_resource path="res://OQ_Toolkit/OQ_ARVRController/models3d/OculusQuestTouchController_Right.gltf" type="PackedScene" id=3]
+[ext_resource path="res://OQ_Toolkit/OQ_ARVRController/models3d/OculusQuestHand_Right.gltf" type="PackedScene" id=4]
+[ext_resource path="res://OQ_Toolkit/OQ_ARVRController/models3d/OculusQuestHand_Left.gltf" type="PackedScene" id=5]
 
 [sub_resource type="CubeMesh" id=1]
 size = Vector3( 0.19, 0.114, 0.114 )
@@ -24,6 +26,10 @@ material/0 = SubResource( 2 )
 
 [node name="OculusQuestTouchController_Left" parent="LeftHand" instance=ExtResource( 2 )]
 
+[node name="OculusQuestHand_Left" parent="LeftHand" instance=ExtResource( 5 )]
+
 [node name="RightHand" type="Spatial" parent="."]
 
 [node name="OculusQuestTouchController_Right" parent="RightHand" instance=ExtResource( 3 )]
+
+[node name="OculusQuestHand_Right" parent="RightHand" instance=ExtResource( 4 )]

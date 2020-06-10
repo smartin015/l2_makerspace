@@ -20,6 +20,19 @@ func _multiplayerReady():
   
 func _multiplayerProcess(delta):
   if gamestate.is_initialized && head != null && left != null && right != null:
+    
+    if vr.ovrHandTracking:
+      var lorient
+      var rorient
+      var conf
+      conf = vr.ovrHandTracking.get_hand_pose(right.controller_id, lorient);
+      if (conf <= 0.0):
+        lorient = null
+      conf = vr.ovrHandTracking.get_hand_pose(left.controller_id, rorient);
+      if (conf <= 0.0):
+        rorient = null
+      rpc_unreliable("puppet_hands", lorient, rorient)
+    
     rset_unreliable("puppet_motion", [
       head.transform.origin,
       head.transform.basis.get_rotation_quat(),

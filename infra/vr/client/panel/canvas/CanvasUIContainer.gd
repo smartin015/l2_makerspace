@@ -2,6 +2,7 @@ extends VBoxContainer
 
 signal clear
 signal save
+signal undo
 signal set_shape
 
 func _on_Clear_pressed():
@@ -9,6 +10,9 @@ func _on_Clear_pressed():
 
 func _on_Save_pressed():
   emit_signal("save")
+
+func _on_Undo_pressed():
+  emit_signal("undo")
 
 func _ready():
   var popup = $HBoxContainer/ShapeMenu.get_popup()
@@ -21,3 +25,11 @@ func _ready():
 
 func _popupMenuChoice(id):
   emit_signal("set_shape", id)
+
+
+func _on_CanvasUI_input_event(viewport, event, shape_idx):
+  if event is InputEventMouseButton:
+    if event.is_pressed():
+      print("Object clicky")
+    else:
+      print("Unclickly")

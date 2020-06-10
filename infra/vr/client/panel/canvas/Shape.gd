@@ -1,12 +1,25 @@
-extends Node2D
+extends Area2D
 
 var color: Color = Color.blue
 var stroke = 2.0
+var pickable = false setget _set_pickable
+onready var col = $CollisionShape2D
 var shapeType: int # gamestate.SHAPE
 # Interpretation differs based on shape type
 var points: PoolVector2Array
 
+func _set_pickable(p):
+  pickable = p
+  update()
+
 func _draw():
+  if pickable:
+    var radius = get_node("CollisionShape2D").shape.radius
+    # TODO Find centroid and set pickable location
+    var p = points[0]
+    draw_circle(p, radius, Color.yellowgreen)
+    col.position = p    
+    
   # https://docs.godotengine.org/en/stable/classes/class_canvasitem.html
   match shapeType:
     gamestate.SHAPE.PENCIL, gamestate.SHAPE.LINE:
@@ -49,3 +62,11 @@ func handle_point(p: Vector2):
 
 func clear():
   points = PoolVector2Array()
+
+
+func _on_Area2D_input_event(viewport, event, shape_idx):
+  if event is InputEventMouseButton:
+    if event.is_pressed():
+      print("Objecty click")
+    else:
+      print("Unclick")
