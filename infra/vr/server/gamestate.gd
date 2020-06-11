@@ -67,3 +67,7 @@ func _populate_workspace_for_player(id, ws):
 func _peer_disconnected(id):
   players.rpc("remove", id) # Remove peer everywhere
   print("GDT(%s) disconnected" % id)
+  
+remote func recv_shout(text: String):
+  var sender = get_tree().get_rpc_sender_id()
+  print("%s: %s" % [sender, text])

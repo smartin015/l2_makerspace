@@ -109,3 +109,9 @@ func set_workspace(ws):
   # after which it calls set_workspace() on the player node
   rpc_id(1, "set_workspace", ws)
   
+func shout(text: String):
+  rpc("recv_shout", text)
+  
+remote func recv_shout(text: String):
+  var sender = get_tree().get_rpc_sender_id()
+  print("%s: %s" % [sender, text])

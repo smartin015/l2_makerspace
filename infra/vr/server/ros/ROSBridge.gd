@@ -197,6 +197,7 @@ func _on_raw_data(data):
   if typeof(data) != TYPE_RAW_ARRAY:
     print("ERR invalid raw message of type %s" % typeof(data))
     return
+  print(len(data))
   _handle_result(0, {
     "op": "publish",
     "topic": str(data[0]), # First byte is the channel ID

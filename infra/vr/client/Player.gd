@@ -12,25 +12,26 @@ onready var rgrab = $OQ_ARVROrigin/OQ_RightController/Feature_StaticGrab
 var last_head = Transform()
 var last_left = Transform()
 var last_right = Transform()
-
+var lorient
+var rorient
+      
 func _multiplayerReady():
   last_head = head.transform
   last_left = left.transform
   last_right = right.transform
+  vr.log_info("Multiplayer ready")
   
 func _multiplayerProcess(delta):
   if gamestate.is_initialized && head != null && left != null && right != null:
-    
     if vr.ovrHandTracking:
-      var lorient
-      var rorient
-      var conf
-      conf = vr.ovrHandTracking.get_hand_pose(right.controller_id, lorient);
-      if (conf <= 0.0):
-        lorient = null
-      conf = vr.ovrHandTracking.get_hand_pose(left.controller_id, rorient);
-      if (conf <= 0.0):
+      if right.param_model.visible:
+        rorient = right._vrapi_bone_orientations
+      else:
         rorient = null
+      if left.param_model.visible:
+        lorient = left._vrapi_bone_orientations
+      else:
+        lorient = null
       rpc_unreliable("puppet_hands", lorient, rorient)
     
     rset_unreliable("puppet_motion", [

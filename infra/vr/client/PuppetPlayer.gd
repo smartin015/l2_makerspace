@@ -12,6 +12,7 @@ onready var left = $LeftHand
 onready var right = $RightHand
 onready var head = $Head 
 onready var lskel = $LeftHand/OculusQuestHand_Left/ArmatureLeft/Skeleton
+onready var rskel = $RightHand/OculusQuestHand_Right/ArmatureRight/Skeleton
 
 
 const PM_HEAD = 0
@@ -45,19 +46,23 @@ func _ready():
 # This is only for the actual bones and skips the tips (vrapi 19-23) as they do not need to be updated I think
 const _vrapi2hand_bone_map = [0, 23,  1, 2, 3, 4,  6, 7, 8,  10, 11, 12,  14, 15, 16, 18, 19, 20, 21];
   
-func _set_skeleton_orientation(skel, orient):
-  for i in range(0, len(_vrapi2hand_bone_map)):
-    skel.set_bone_pose(_vrapi2hand_bone_map[i], Transform(orient[i]));
-  
 remote func puppet_hands(lorient, rorient):
+  print("puppet_hands %s %s" % [lorient, rorient])
   if lorient == null:
     left.visible = false
   else:
-    _set_skeleton_orientation(lskel, lorient)
-  if rorient != null:
+    left.visible = true
+    for i in range(0, len(_vrapi2hand_bone_map)):
+      lskel.set_bone_pose(_vrapi2hand_bone_map[i], Transform(lorient[i]));
+  if rorient == null:
     right.visible = false
-    _set_skeleton_orientation(lskel, rorient)
-    
+  else:
+    right.visible = true
+    for i in range(0, len(_vrapi2hand_bone_map)):
+      rskel.set_bone_pose(_vrapi2hand_bone_map[i], Transform(rorient[i]));
+
+remote func puppet_notrack():
+  print("notrack")
 
 func _process(delta):
   head.transform = Transform(puppet_motion[PM_HEAD+PM_QUAT], puppet_motion[PM_HEAD+PM_ORIGIN])

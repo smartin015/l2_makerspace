@@ -25,11 +25,13 @@ material/0 = SubResource( 2 )
 [node name="LeftHand" type="Spatial" parent="."]
 
 [node name="OculusQuestTouchController_Left" parent="LeftHand" instance=ExtResource( 2 )]
+visible = false
 
 [node name="OculusQuestHand_Left" parent="LeftHand" instance=ExtResource( 5 )]
 
 [node name="RightHand" type="Spatial" parent="."]
 
 [node name="OculusQuestTouchController_Right" parent="RightHand" instance=ExtResource( 3 )]
+visible = false
 
 [node name="OculusQuestHand_Right" parent="RightHand" instance=ExtResource( 4 )]
