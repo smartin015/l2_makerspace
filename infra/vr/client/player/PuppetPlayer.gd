@@ -40,6 +40,8 @@ func _ready():
   ]
   puppet_transform = transform
   puppet_hands(null, null)
+  _clear_bone_rest(lskel)
+  _clear_bone_rest(rskel)
   
 # Copied from Feature_HandModel.gd
 # we need to remap the bone ids from the hand model to the bone orientations we get from the vrapi and the inverse
@@ -55,6 +57,14 @@ remote func set_hand_visibility(l: bool, r: bool):
   lcont.visible = not lhand.visible
   rhand.visible = r
   rcont.visible = not rhand.visible
+  
+# Yoinked from OQ_Toolkit Feature_HandModel.gd
+func _clear_bone_rest(skeleton : Skeleton):
+  for i in range(0, skeleton.get_bone_count()):
+    var bone_rest = skeleton.get_bone_rest(i);
+    skeleton.set_bone_pose(i, Transform(bone_rest.basis)); # use the loaded rest as start pose
+    bone_rest.basis = Basis(); # clear the rotation of the rest pose
+    skeleton.set_bone_rest(i, bone_rest); # and set this as the rest pose for the skeleton
   
 remote func puppet_hands(lorient, rorient):
   if lorient != null:

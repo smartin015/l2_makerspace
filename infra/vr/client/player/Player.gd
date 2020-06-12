@@ -4,9 +4,12 @@ var workspace = gamestate.DEFAULT_WORKSPACE
 onready var origin = $OQ_ARVROrigin
 onready var head = $OQ_ARVROrigin/OQ_ARVRCamera
 onready var left = $OQ_ARVROrigin/OQ_LeftController
+onready var lhand = $OQ_ARVROrigin/OQ_LeftController/Feature_HandModel_Left
+onready var rhand = $OQ_ARVROrigin/OQ_RightController/Feature_HandModel_Right
 onready var right = $OQ_ARVROrigin/OQ_RightController
 onready var lgrab = $OQ_ARVROrigin/OQ_LeftController/Feature_StaticGrab
 onready var rgrab = $OQ_ARVROrigin/OQ_RightController/Feature_StaticGrab
+onready var redIndicator = $OQ_ARVROrigin/OQ_RightController/RedIndicator
 
 # ===================== Networked Multiplayer ==========================
 var last_head = Transform()
@@ -38,18 +41,19 @@ func _multiplayerProcess(delta):
   # TODO send less data (deltas?)
   if gamestate.is_initialized && head != null && left != null && right != null:
     if vr.ovrHandTracking:
-      if right.param_model.visible:
-        rorient = right._vrapi_bone_orientations
+      redIndicator.visible = false
+      if rhand.tracking_confidence > 0.0:
+        rorient = rhand._vrapi_bone_orientations
       else:
-        rorient = test_pose_left_ThumbsUp
-      if left.param_model.visible:
-        lorient = left._vrapi_bone_orientations
+        rorient = null
+      if lhand.tracking_confidence > 0.0:
+        lorient = lhand._vrapi_bone_orientations
       else:
-        lorient = test_pose_left_ThumbsUp
-      gamestate.shout(str(len(lorient)))
+        lorient = null
       rpc_unreliable("puppet_hands", lorient, rorient)
     else:
-      rpc_unreliable("puppet_hands", null, null)
+      redIndicator.visible = true
+      
     
     rset_unreliable("puppet_motion", [
       head.transform.origin,
