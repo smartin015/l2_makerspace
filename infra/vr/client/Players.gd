@@ -1,6 +1,6 @@
 extends Node
 
-onready var PuppetPlayer = load("res://PuppetPlayer.tscn")
+onready var PuppetPlayer = load("res://player/PuppetPlayer.tscn")
 
 puppet func spawn(id, origin, workspace):
   if str(id) == gamestate.player.name:

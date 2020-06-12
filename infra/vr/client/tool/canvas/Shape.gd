@@ -48,7 +48,6 @@ func start_shape(shape: int, origin: Vector2):
       print("Unimplemented shape type %s" % str(shapeType))
     
 func handle_point(p: Vector2):
-  print("Handling %s" % shapeType)
   match shapeType:
     gamestate.SHAPE.PENCIL:
       points.push_back(p)
@@ -56,7 +55,6 @@ func handle_point(p: Vector2):
       points[1] = p
     gamestate.SHAPE.RECTANGLE, gamestate.SHAPE.CIRCLE:
       var w = p - points[0]
-      print("rect width %s" % w)
       points[1] = w
   update()
 

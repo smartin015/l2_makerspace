@@ -1,14 +1,9 @@
 extends Spatial
 
-onready var rect = $OQ_UI2DCanvas/ReferenceRect
 export(vr.BUTTON) var toggle_button = vr.BUTTON.Y;
 
 var idx = 0
 var buttons = []
-
-# we have this separate to see it in the editor but
-# have it hidden on actual start
-export var invisible_on_start = true;
 
 var last_action = 0
 func _process(_dt):
@@ -24,8 +19,7 @@ func _process(_dt):
     last_action = now_msec
     _update_buttons(idx - 3)
   if vr.button_just_pressed(toggle_button) || Input.is_action_just_pressed("ui_cycle_mode"):
-    last_action = now_msec
-    visible = !visible
+    queue_free()
 
 func _update_buttons(i):
   idx = (i + 9) % 9
@@ -33,8 +27,6 @@ func _update_buttons(i):
     buttons[i].text = str(idx+i)
 
 func _ready():
-  if (invisible_on_start): 
-    visible = false;
   buttons = [
     find_node("Button1", true, false),
     find_node("Button2", true, false),

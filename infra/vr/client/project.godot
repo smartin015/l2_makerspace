@@ -28,7 +28,7 @@ _global_script_class_icons={
 
 config/name="L2 Makerspace VR"
 run/main_scene="res://World.tscn"
-config/icon="res://icon.png"
+config/icon="res://textures/icon.png"
 
 [autoload]
 
@@ -109,4 +109,3 @@ quality/driver/driver_name="GLES2"
 vram_compression/import_etc=true
 vram_compression/import_etc2=false
 quality/filters/msaa=1
-environment/default_environment="res://default_env.tres"

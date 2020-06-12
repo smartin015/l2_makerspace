@@ -1,7 +1,8 @@
 [gd_scene load_steps=3 format=2]
 
-[ext_resource path="res://panel/sequence/ui_theme.tres" type="Theme" id=1]
-[ext_resource path="res://panel/sequence/SequenceItemNode.gd" type="Script" id=2]
+[ext_resource path="res://tool/sequence/ui_theme.tres" type="Theme" id=1]
+[ext_resource path="res://tool/sequence/SequenceItemNode.gd" type="Script" id=2]
+
 
 [node name="SequenceItemNode" type="GraphNode"]
 margin_right = 216.0

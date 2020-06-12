@@ -1,9 +1,10 @@
 [gd_scene load_steps=5 format=2]
 
 [ext_resource path="res://OQ_Toolkit/OQ_UI2D/OQ_UI2DCanvas.tscn" type="PackedScene" id=1]
-[ext_resource path="res://panel/canvas/CanvasUI.tscn" type="PackedScene" id=2]
-[ext_resource path="res://panel/canvas/Canvas.gd" type="Script" id=3]
+[ext_resource path="res://tool/canvas/CanvasUI.tscn" type="PackedScene" id=2]
+[ext_resource path="res://tool/canvas/Canvas.gd" type="Script" id=3]
 [ext_resource path="res://audio/2020_05_23_00_04_36.wav" type="AudioStream" id=4]
+
 
 [node name="Canvas" type="Spatial"]
 script = ExtResource( 3 )

@@ -4,7 +4,7 @@ var currShape = {}
 var cui
 var nextShapeType = gamestate.SHAPE.LINE
 onready var audio = $AudioStreamPlayer2D
-onready var L2Shape = load("res://panel/canvas/Shape.tscn")
+onready var L2Shape = load("res://tool/canvas/Shape.tscn")
 
 func _ready():
   cui = find_node("CanvasUI", true, false)
@@ -40,7 +40,6 @@ remotesync func undo():
       return
 
 remotesync func handle_input(pressed, position, shapeType):
-  print("hi")
   if cui == null:
     return
   

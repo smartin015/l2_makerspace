@@ -45,24 +45,25 @@ func _ready():
 # we need to remap the bone ids from the hand model to the bone orientations we get from the vrapi and the inverse
 # This is only for the actual bones and skips the tips (vrapi 19-23) as they do not need to be updated I think
 const _vrapi2hand_bone_map = [0, 23,  1, 2, 3, 4,  6, 7, 8,  10, 11, 12,  14, 15, 16, 18, 19, 20, 21];
+
+onready var lhand = $LeftHand/OculusQuestHand_Left
+onready var rhand = $RightHand/OculusQuestHand_Right
+onready var lcont = $LeftHand/OculusQuestTouchController_Left
+onready var rcont = $RightHand/OculusQuestTouchController_Right
+remote func set_hand_visibility(l: bool, r: bool):
+  lhand.visible = l
+  lcont.visible = not lhand.visible
+  rhand.visible = r
+  rcont.visible = not rhand.visible
   
 remote func puppet_hands(lorient, rorient):
-  print("puppet_hands %s %s" % [lorient, rorient])
-  if lorient == null:
-    left.visible = false
-  else:
-    left.visible = true
+  if lorient != null:
     for i in range(0, len(_vrapi2hand_bone_map)):
       lskel.set_bone_pose(_vrapi2hand_bone_map[i], Transform(lorient[i]));
-  if rorient == null:
-    right.visible = false
-  else:
-    right.visible = true
+  if rorient != null:
     for i in range(0, len(_vrapi2hand_bone_map)):
       rskel.set_bone_pose(_vrapi2hand_bone_map[i], Transform(rorient[i]));
-
-remote func puppet_notrack():
-  print("notrack")
+  set_hand_visibility(lorient != null, rorient != null)
 
 func _process(delta):
   head.transform = Transform(puppet_motion[PM_HEAD+PM_QUAT], puppet_motion[PM_HEAD+PM_ORIGIN])

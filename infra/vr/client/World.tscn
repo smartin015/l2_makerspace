@@ -1,13 +1,13 @@
 [gd_scene load_steps=14 format=2]
 
-[ext_resource path="res://Player.tscn" type="PackedScene" id=2]
+[ext_resource path="res://player/Player.tscn" type="PackedScene" id=2]
 [ext_resource path="res://actor/actor.gd" type="Script" id=5]
 [ext_resource path="res://addons/mesh/MeshStreamer.gd" type="Script" id=6]
 [ext_resource path="res://textures/Metal_Plate_009_SD/SpaceshipPlate.tres" type="Material" id=7]
 [ext_resource path="res://Tools.gd" type="Script" id=8]
 [ext_resource path="res://Players.gd" type="Script" id=10]
-[ext_resource path="res://stars_panorama.png" type="Texture" id=11]
-[ext_resource path="res://NavFloor.tscn" type="PackedScene" id=12]
+[ext_resource path="res://textures/stars_panorama.png" type="Texture" id=11]
+[ext_resource path="res://player/NavFloor.tscn" type="PackedScene" id=12]
 
 [sub_resource type="PlaneMesh" id=1]
 size = Vector2( 11.5, 9 )
