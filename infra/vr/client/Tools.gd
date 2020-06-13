@@ -5,7 +5,7 @@ onready var Chart = load("res://tool/chart/Chart.tscn")
 onready var Console = load("res://tool/console/Console.tscn")
 onready var Screen = load("res://tool/screen/Screen.tscn")
 onready var Sequence = load("res://tool/sequence/Sequence.tscn")
-onready var L2Control = load("res://tool/L2Control.tscn")
+onready var L2Control = load("res://tool/menu/L2Control.tscn")
 
 puppet func spawn(name, objtype, tf, local=false):
   print("%s %s @%s" % [objtype, name, tf.origin])

@@ -7,6 +7,8 @@ const DEFAULT_SETTINGS = {
 }
 const DEFAULT_CONNECT_TIMEOUT = 0.5
 const DEFAULT_WORKSPACE = "0"
+var workspaces = []
+var new_ws_cb = null
 var settings = DEFAULT_SETTINGS
 
 var host = NetworkedMultiplayerENet.new()
@@ -108,6 +110,20 @@ func set_workspace(ws):
   # It's up to the server to fulfill the workspace change,
   # after which it calls set_workspace() on the player node
   rpc_id(1, "set_workspace", ws)
+  
+remote func set_visible_workspaces(visible_ws: PoolStringArray):
+  workspaces = visible_ws
+  
+func request_new_ws(obj, method):
+  new_ws_cb = [obj, method]
+  rpc_id(1, "request_new_ws")
+  
+remote func new_ws(ws):
+  new_ws_cb[0].call(new_ws_cb[1], ws)
+  new_ws_cb = null
+  
+func edit_workspace(ws, fields):
+  rpc_id(1, "edit_workspace", ws, fields)
   
 func shout(text: String):
   rpc("recv_shout", text)
