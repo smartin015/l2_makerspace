@@ -41,3 +41,4 @@ See ./base for base image (available publicly for download at gcr.io/l2-making/b
 * Super useful librealsense docs around camera intrinsics and projection: [link](https://github.com/IntelRealSense/librealsense/wiki/Projection-in-RealSense-SDK-2.0#intrinsic-camera-parameters)
   * Remember to build with android\_arch=armv7 or else the project will fail to export.
 * Can generate space skyboxes with [link](http://wwwtyro.github.io/space-3d), but have to convert (see [link](https://www.reddit.com/r/godot/comments/baw27a/how_to_use_spacescape_skybox_in_godot/))
+* Using the Godot OVR toolkit, 2D panels (i.e. most tools in L2 VR) are rendered with the viewport size matching the device resolution. This means tools can have different sizes if they're rendered on different devices (or if you resize the window).
