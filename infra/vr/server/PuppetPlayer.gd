@@ -16,7 +16,7 @@ const PM_ORIGIN = 0
 const PM_QUAT = 1
 const PM_VEL = 2
 
-remote func set_workspace(ws):
+remotesync func set_workspace(ws):
   self.ws = ws
 
 func _ready():

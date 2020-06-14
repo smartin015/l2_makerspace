@@ -1,7 +1,7 @@
 extends ReferenceRect
 
 export var select_raycast_len = 10.0
-onready var tool_select = $VBoxContainer/ColorRect/VBoxContainer/ToolSelect
+onready var tool_select = $VBoxContainer/ColorRect/VBoxContainer/SelectButton
 onready var tools = $VBoxContainer/ColorRect/VBoxContainer/Tools
 var selecting = false
 
@@ -25,7 +25,7 @@ func _on_tool_pressed(b):
   gamestate.tools.rpc_id(1, "spawn", "newtool", b.text, tf2, gamestate.player.ws)
 
 func _on_SelectButton_pressed():
-  selecting = !selecting
+  selecting = tool_select.is_pressed()
   
   # update raycast length and allow selection, or revert
   if selecting:

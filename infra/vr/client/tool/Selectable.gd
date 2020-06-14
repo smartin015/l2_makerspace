@@ -14,7 +14,7 @@ remotesync func set_ws(ws):
 func _ready():
   center.material_override = SpatialMaterial.new()
   _update_color()
-  # visible = false # Not visible by default
+  visible = false # Not visible by default
 
 func _update_color():
   center.material_override.albedo_color = _color()

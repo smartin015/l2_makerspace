@@ -23,7 +23,7 @@ remote func request():
   ws.perm = 0x777
   workspaces.push_back(ws)
   broadcast_visible()
-  rpc_id(get_tree().get_rpc_sender_id(), "new_ws", ws.name)
+  rpc_id(get_tree().get_rpc_sender_id(), "on_new", ws.name)
 
 remote func edit(ws, fields):
   for w in workspaces:

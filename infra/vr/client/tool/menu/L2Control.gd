@@ -16,7 +16,7 @@ func _process(_dt):
 func _on_L2WorkspaceControl_workspace_action(ws, action):
   match action:
     "new":
-      gamestate.request_new_ws(self, "_new_workspace_created")
+      workspace.request(self, "_new_workspace_created")
     "enter":
       gamestate.set_workspace(ws)
     "edit":
@@ -35,7 +35,7 @@ func _new_workspace_created(ws):
   $CenterRaised.visible = true
 
 func _on_L2WorkspaceEdit_close_edit(prev, next):
-  gamestate.edit_workspace(prev.name, next)
+  workspace.edit(prev.name, next)
   $CenterRaised.visible = false
   # TODO setup so state is updated instead of reloading
   queue_free() 

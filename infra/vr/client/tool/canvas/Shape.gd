@@ -23,7 +23,7 @@ func _draw():
   # https://docs.godotengine.org/en/stable/classes/class_canvasitem.html
   match shapeType:
     gamestate.SHAPE.PENCIL, gamestate.SHAPE.LINE:
-      draw_multiline(points, color, stroke)
+      draw_polyline(points, color, stroke)
     gamestate.SHAPE.RECTANGLE:
       # 1st point position, 2nd point size
       draw_rect(Rect2(points[0], points[1]), color, false, stroke)
