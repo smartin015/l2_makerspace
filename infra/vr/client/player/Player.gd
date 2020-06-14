@@ -138,10 +138,8 @@ func _grabProcess(_delta):
 func _menuProcess(_delta):
   if vr.button_just_pressed(vr.BUTTON.Y) || Input.is_action_just_pressed("ui_cycle_mode"):
     var tf = head.global_transform
-    print(tf)
     tf = tf.translated(Vector3(0, 0, -0.6))
-    print(tf)
-    gamestate.tools.spawn("menu", "MENU", tf, true)
+    gamestate.toggle_menu(tf)
 
 func set_raycast_len(l: float):
   var uirc = find_node("Feature_UIRayCast", true, false)

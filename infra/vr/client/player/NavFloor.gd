@@ -22,7 +22,7 @@ func _ready():
 func ui_raycast_hit_event(position, click, release):
   pointing = !release
   if release:
-    if from_pos:
+    if from_pos != null:
       gamestate.move_selection(Vector3(position.x, 0, position.z))
     else:
       gamestate.player.set_origin(Vector3(

@@ -14,6 +14,7 @@ onready var players = get_node("/root/World/Players")
 onready var actors = get_node("/root/World/Actors")
 onready var tools = get_node("/root/World/Tools")
 onready var nfloor = get_node("/root/World/NavFloor")
+onready var L2Control = load("res://tool/menu/L2Control.tscn")
 
 # Shapes for CAD
 enum SHAPE {PENCIL, LINE, RECTANGLE, CIRCLE, DRAG}
@@ -122,9 +123,24 @@ func move_selection(dest):
     s[-1].handle_drag(dest)
     nfloor.from_pos = null
   
+func ws_selection(ws):
+  var s = get_tree().get_nodes_in_group("selection")
+  if len(s) > 0:
+    s[-1].handle_ws(ws)
+    nfloor.from_pos = null
+  
 func shout(text: String):
   rpc("recv_shout", text)
   
 remote func recv_shout(text: String):
   var sender = get_tree().get_rpc_sender_id()
   print("%s: %s" % [sender, text])
+
+var menu = null
+func toggle_menu(tf):
+  if menu == null:
+    menu = L2Control.instance()
+    menu.global_transform = tf
+    tools.add_child(menu)
+  else:
+    menu.queue_free()

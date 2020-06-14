@@ -11,7 +11,7 @@ func _on_SequenceItem_close_request():
 remotesync func remove():
   queue_free()
 
-func _on_SequenceItem_dragged(from, to):
+func _on_SequenceItem_dragged(_from, to):
   rpc("set_offset", to)
 
 remotesync func set_offset(offs):

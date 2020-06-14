@@ -32,7 +32,6 @@ func _on_SelectButton_pressed():
     gamestate.player.set_raycast_len(select_raycast_len)
   else:
     gamestate.player.set_raycast_len(gamestate.player.DEFAULT_RAYCAST_LEN)
-  for c in gamestate.tools.get_children():
-    var sel = c.find_node("Selectable", true, false)
-    if sel != null:
-      sel.visible = selecting
+  
+  for c in get_tree().get_nodes_in_group("selectables"):
+    c.visible = selecting

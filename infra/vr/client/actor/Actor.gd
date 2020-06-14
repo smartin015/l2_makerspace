@@ -9,7 +9,6 @@ var Pendant = load("res://actor/Pendant.tscn")
 var DepthRender = load("res://actor/DepthRender.tscn")
 var ControlZone = load("res://actor/ControlZone.gd")
 var PuppetJoint = load("res://actor/PuppetJoint.gd")
-var ExampleControlPreset = load("res://ExampleControlPreset.tscn")
 
 func _replace(old, new):
   old.get_parent().add_child(new)

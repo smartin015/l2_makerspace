@@ -2,7 +2,7 @@
 
 [ext_resource path="res://tool/screen/Screen.gd" type="Script" id=1]
 [ext_resource path="res://textures/icon.png" type="Texture" id=2]
-[ext_resource path="res://tool/Selectable.tscn" type="PackedScene" id=3]
+[ext_resource path="res://tool/selectable/Selectable.tscn" type="PackedScene" id=3]
 
 [sub_resource type="PlaneMesh" id=1]
 

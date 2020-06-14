@@ -17,8 +17,8 @@ var vel: float = 0
 func _ready():
   origin = transform
   
-func apply(pos, vel: float):
-  self.vel = vel
+func apply(pos, v: float):
+  vel = v
   match type:
     REVOLUTE:
       transform = origin.rotated(axis, pos)

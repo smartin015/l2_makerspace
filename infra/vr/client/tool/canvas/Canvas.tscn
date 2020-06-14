@@ -4,7 +4,7 @@
 [ext_resource path="res://tool/canvas/CanvasUI.tscn" type="PackedScene" id=2]
 [ext_resource path="res://tool/canvas/Canvas.gd" type="Script" id=3]
 [ext_resource path="res://audio/2020_05_23_00_04_36.wav" type="AudioStream" id=4]
-[ext_resource path="res://tool/Selectable.tscn" type="PackedScene" id=5]
+[ext_resource path="res://tool/selectable/Selectable.tscn" type="PackedScene" id=5]
 
 [node name="Canvas" type="Spatial"]
 script = ExtResource( 3 )

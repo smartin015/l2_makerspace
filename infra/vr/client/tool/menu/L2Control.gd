@@ -11,7 +11,7 @@ func _ready():
 
 func _process(_dt):
   if vr.button_just_pressed(toggle_button) || Input.is_action_just_pressed("ui_cycle_mode"):
-    queue_free()
+    visible = false
 
 func _on_L2WorkspaceControl_workspace_action(ws, action):
   match action:
@@ -38,7 +38,7 @@ func _on_L2WorkspaceEdit_close_edit(prev, next):
   workspace.edit(prev.name, next)
   $CenterRaised.visible = false
   # TODO setup so state is updated instead of reloading
-  queue_free() 
+  visible = false 
 
 func _on_Close_pressed():
-  queue_free()
+  visible = false
