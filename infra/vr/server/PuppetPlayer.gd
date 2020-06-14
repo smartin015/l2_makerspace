@@ -1,6 +1,6 @@
 extends Spatial
 
-puppet var workspace = gamestate.DEFAULT_WORKSPACE
+puppet var ws = workspace.DEFAULT
 puppet var puppet_transform
 puppet var puppet_motion
 
@@ -17,7 +17,7 @@ const PM_QUAT = 1
 const PM_VEL = 2
 
 remote func set_workspace(ws):
-  workspace = ws
+  self.ws = ws
 
 func _ready():
   puppet_motion = [

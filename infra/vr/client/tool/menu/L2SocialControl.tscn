@@ -1,12 +1,17 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=4 format=2]
 
 [ext_resource path="res://OQ_Toolkit/OQ_UI2D/theme/oq_ui2d_standard.theme" type="Theme" id=1]
+[ext_resource path="res://tool/menu/L2SocialControl.gd" type="Script" id=2]
+
+[sub_resource type="StyleBoxFlat" id=1]
+bg_color = Color( 0.121569, 0.121569, 0.121569, 1 )
 
 [node name="L2SocialControl" type="ReferenceRect"]
 margin_top = 1.0
 margin_right = 256.0
 margin_bottom = 256.0
 theme = ExtResource( 1 )
+script = ExtResource( 2 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -27,13 +32,19 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="ColorRect" type="ColorRect" parent="VBoxContainer"]
+[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
 margin_top = 37.0
 margin_right = 256.0
 margin_bottom = 255.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
-color = Color( 0.121569, 0.121569, 0.121569, 1 )
+custom_styles/bg = SubResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
+
+[node name="Players" type="VBoxContainer" parent="VBoxContainer/ScrollContainer"]
+margin_right = 256.0
+margin_bottom = 218.0
+size_flags_horizontal = 3
+size_flags_vertical = 3

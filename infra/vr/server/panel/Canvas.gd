@@ -2,7 +2,7 @@ extends Spatial
 
 onready var L2Shape = load("res://panel/Shape.tscn")
 const objtype = "CANVAS"
-export var workspace = gamestate.DEFAULT_WORKSPACE
+export var ws = workspace.DEFAULT
 var currShape = {}
 
 remote func clear():

@@ -2,6 +2,12 @@ extends Spatial
 
 var chart_node
 
+remote func set_tf(tf):
+  transform = tf
+
+remote func set_ws(ws):
+  self.ws = ws
+  
 func _ready():
   chart_node = find_node("GDCharts", true, false)
   chart_node.initialize(chart_node.LABELS_TO_SHOW.NO_LABEL,

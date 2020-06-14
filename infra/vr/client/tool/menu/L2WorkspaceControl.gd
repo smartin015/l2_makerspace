@@ -13,7 +13,7 @@ func add_workspace_item(ws):
   b.connect("pressed", self, "_on_workspace_item_pressed",[b])
   
 func _ready():
-  for ws in gamestate.workspaces:
+  for ws in workspace.workspaces:
     add_workspace_item(ws)  
 
 func _on_workspace_item_pressed(action, b):

@@ -2,14 +2,27 @@ extends ReferenceRect
 
 export var select_raycast_len = 10.0
 onready var tool_select = $VBoxContainer/ColorRect/VBoxContainer/ToolSelect
+onready var tools = $VBoxContainer/ColorRect/VBoxContainer/Tools
 var selecting = false
 
-func _tool_choice(id):
-  print("tool_choice %s" % id)
+func _ready():
+  for t in gamestate.tools.toolmap:
+    # Don't allow user creation of menus
+    if t == "MENU":
+      continue
+    var b = Button.new()
+    b.text = t
+    b.connect("pressed", self, "_on_tool_pressed", [b])
+    tools.add_child(b)
 
-func _input(ev):
-  if ev is InputEventKey and ev.scancode == KEY_K:
-    print("kayyyy")
+func _on_tool_pressed(b):
+  # TODO non-local tool spawning, be less invasive with coords
+  var tf = gamestate.player.head.global_transform
+  tf = tf.translated(Vector3(0, 0, -0.6))
+  var tf2 = Transform()
+  tf2.origin = Vector3(tf.origin.x, 0, tf.origin.z)
+  # Spawn tool on server (which propagates to all clients where it's visible)
+  gamestate.tools.rpc_id(1, "spawn", "newtool", b.text, tf2, gamestate.player.ws)
 
 func _on_SelectButton_pressed():
   selecting = !selecting

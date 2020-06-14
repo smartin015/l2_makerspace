@@ -32,15 +32,15 @@ func ros_connect(topic: String, type: String, node: Node, handler: String, id: S
   h.raw = raw
   rpc_id(1, 'subscribe', topic, type, id, raw)
 
-remote func set_ros_peers(peers):
-  print("ROS peers: %s" % [peers])
-  if len(peers) > len(self.peers):
+remote func set_ros_peers(pp):
+  print("ROS peers: %s" % [pp])
+  if len(pp) > len(peers):
     # Old peers get duplicate adverts, but it should be a no-op
     for a in advertisements:
       advertise(a.topic, a.type, a.id)
     for h in handlers.values():
       rpc_id(1, 'subscribe', h.topic, h.type, h.id, h.raw)
-  self.peers = peers
+  peers = pp
 
 remote func handle_ros_status(level: String, msg: String, id: String):
   print("ROS %s %s: %s" % [level, msg, id])

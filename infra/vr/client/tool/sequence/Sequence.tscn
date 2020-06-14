@@ -10,10 +10,11 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -3.34685e-05, -1.30331e-11, 0 
 script = ExtResource( 3 )
 
 [node name="OQ_UI2DCanvas" parent="." instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, 0 )
 
 [node name="SequenceUI" parent="OQ_UI2DCanvas" instance=ExtResource( 2 )]
 
 [node name="Selectable" parent="." instance=ExtResource( 4 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.769852, 0 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0 )
 [connection signal="run_sequence" from="OQ_UI2DCanvas/SequenceUI" to="." method="_on_SequenceItemUI_run_sequence"]
 [connection signal="stop_sequence" from="OQ_UI2DCanvas/SequenceUI" to="." method="_on_SequenceItemUI_stop_sequence"]

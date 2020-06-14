@@ -3,6 +3,12 @@ extends Spatial
 export var topic = "/console"
 var cui
 
+remote func set_tf(tf):
+  transform = tf
+
+remote func set_ws(ws):
+  self.ws = ws
+  
 remote func setup(text: PoolStringArray):
   cui.text = ""
   for t in text:

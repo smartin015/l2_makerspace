@@ -4,6 +4,12 @@ onready var mi = $MeshInstance
 onready var img = Image.new()
 onready var itex = ImageTexture.new()
 
+remote func set_tf(tf):
+  transform = tf
+
+remote func set_ws(ws):
+  self.ws = ws
+
 func _ready():
   mi.material_override = SpatialMaterial.new()
 

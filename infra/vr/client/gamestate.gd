@@ -6,9 +6,6 @@ const DEFAULT_SETTINGS = {
   "server_port": 44444,
 }
 const DEFAULT_CONNECT_TIMEOUT = 0.5
-const DEFAULT_WORKSPACE = "0"
-var workspaces = []
-var new_ws_cb = null
 var settings = DEFAULT_SETTINGS
 
 var host = NetworkedMultiplayerENet.new()
@@ -16,6 +13,7 @@ onready var player = get_node("/root/World/Players/Player")
 onready var players = get_node("/root/World/Players")
 onready var actors = get_node("/root/World/Actors")
 onready var tools = get_node("/root/World/Tools")
+onready var nfloor = get_node("/root/World/NavFloor")
 
 # Shapes for CAD
 enum SHAPE {PENCIL, LINE, RECTANGLE, CIRCLE, DRAG}
@@ -98,7 +96,7 @@ func _connected_fail():
   connect_to_server(settings.server_ip, settings.server_port)
 
 func set_workspace(ws):
-  if ws == player.workspace:
+  if ws == player.ws:
     return # nothing to do
 
   # Remove all the stuff from the prior workspace
@@ -110,20 +108,19 @@ func set_workspace(ws):
   # It's up to the server to fulfill the workspace change,
   # after which it calls set_workspace() on the player node
   rpc_id(1, "set_workspace", ws)
-  
-remote func set_visible_workspaces(visible_ws: PoolStringArray):
-  workspaces = visible_ws
-  
-func request_new_ws(obj, method):
-  new_ws_cb = [obj, method]
-  rpc_id(1, "request_new_ws")
-  
-remote func new_ws(ws):
-  new_ws_cb[0].call(new_ws_cb[1], ws)
-  new_ws_cb = null
-  
-func edit_workspace(ws, fields):
-  rpc_id(1, "edit_workspace", ws, fields)
+
+func handle_selection_change():
+  # When user selects something, update the NavFloor
+  # so we can reposition
+  var s = get_tree().get_nodes_in_group("selection")
+  if len(s) > 0:
+    nfloor.from_pos = s[-1].global_transform.origin
+
+func move_selection(dest):
+  var s = get_tree().get_nodes_in_group("selection")
+  if len(s) > 0:
+    s[-1].handle_drag(dest)
+    nfloor.from_pos = null
   
 func shout(text: String):
   rpc("recv_shout", text)

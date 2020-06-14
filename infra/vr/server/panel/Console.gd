@@ -1,7 +1,7 @@
 extends Spatial
 
 const objtype = "CONSOLE"
-var workspace = gamestate.DEFAULT_WORKSPACE
+var ws = workspace.DEFAULT
 var text = PoolStringArray()
 
 func _ready():

@@ -1,6 +1,6 @@
 extends Spatial
 
-puppet var workspace = gamestate.DEFAULT_WORKSPACE
+puppet var ws = workspace.DEFAULT
 export var objtype = ""
 export var config = ""
 export var peer_id = 0

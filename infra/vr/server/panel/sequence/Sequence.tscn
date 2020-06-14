@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=4 format=2]
 
 [ext_resource path="res://panel/sequence/SequenceUI.gd" type="Script" id=1]
 [ext_resource path="res://panel/sequence/Sequence.gd" type="Script" id=2]
+[ext_resource path="res://panel/Selectable.tscn" type="PackedScene" id=3]
 
 [node name="Sequence" type="Spatial"]
 script = ExtResource( 2 )
@@ -31,3 +32,5 @@ margin_right = 40.0
 
 [node name="Nodes" type="GraphEdit" parent="OQ_UI2DCanvas/Viewport/SequenceUI/MarginContainer/VBoxContainer/Spacer"]
 margin_right = 40.0
+
+[node name="Selectable" parent="." instance=ExtResource( 3 )]

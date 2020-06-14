@@ -14,11 +14,11 @@ script = ExtResource( 2 )
 [node name="Left" parent="." instance=ExtResource( 1 )]
 transform = Transform( 0.866025, 0, 0.5, 0, 0.999999, 0, -0.5, 0, 0.866025, -0.3, 0, 0.05 )
 
-[node name="L2ToolControl" parent="Left" instance=ExtResource( 6 )]
+[node name="L2WorkspaceControl" parent="Left" instance=ExtResource( 4 )]
 
 [node name="Center" parent="." instance=ExtResource( 1 )]
 
-[node name="L2WorkspaceControl" parent="Center" instance=ExtResource( 4 )]
+[node name="L2ToolControl" parent="Center" instance=ExtResource( 6 )]
 
 [node name="CenterRaised" parent="." instance=ExtResource( 1 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.0957865 )
@@ -32,18 +32,29 @@ transform = Transform( 0.866025, 0, -0.5, 0, 1, 0, 0.5, 0, 0.866025, 0.3, 0, 0.0
 [node name="L2SocialControl" parent="Right" instance=ExtResource( 5 )]
 
 [node name="Bottom" parent="." instance=ExtResource( 1 )]
-transform = Transform( 1, 0, -2.08616e-07, 1.70888e-07, 0.573576, 0.819152, 1.19657e-07, -0.819152, 0.573576, 0, -0.346691, 0.0924018 )
+transform = Transform( 1, 0, -2.08616e-07, 1.34096e-07, 0.766044, 0.642788, 1.59809e-07, -0.642788, 0.766044, 0, -0.346691, 0.0266754 )
 
 [node name="ReferenceRect" type="ReferenceRect" parent="Bottom"]
 anchor_right = 0.186
 anchor_bottom = 0.095
 margin_top = 1.0
-margin_right = 385.536
+margin_right = 434.536
 margin_bottom = 183.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="VirtualKeyboard" parent="Bottom/ReferenceRect" instance=ExtResource( 3 )]
-[connection signal="workspace_action" from="Center/L2WorkspaceControl" to="." method="_on_L2WorkspaceControl_workspace_action"]
+
+[node name="Close" type="Button" parent="Bottom/ReferenceRect"]
+margin_left = 590.312
+margin_top = 9.74429
+margin_right = 610.312
+margin_bottom = 29.7443
+text = "X"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+[connection signal="workspace_action" from="Left/L2WorkspaceControl" to="." method="_on_L2WorkspaceControl_workspace_action"]
 [connection signal="close_edit" from="CenterRaised/L2WorkspaceEdit" to="." method="_on_L2WorkspaceEdit_close_edit"]
+[connection signal="pressed" from="Bottom/ReferenceRect/Close" to="." method="_on_Close_pressed"]

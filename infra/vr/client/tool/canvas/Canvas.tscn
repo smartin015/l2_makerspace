@@ -10,6 +10,7 @@
 script = ExtResource( 3 )
 
 [node name="OQ_UI2DCanvas" parent="." instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 0.866025, 0.5, 0, -0.5, 0.866025, 0, 1.35, 0 )
 
 [node name="CanvasUIContainer" parent="OQ_UI2DCanvas" instance=ExtResource( 2 )]
 
@@ -17,7 +18,7 @@ script = ExtResource( 3 )
 stream = ExtResource( 4 )
 
 [node name="Selectable" parent="." instance=ExtResource( 5 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.882561, 0 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0 )
 [connection signal="clear" from="OQ_UI2DCanvas/CanvasUIContainer" to="." method="_on_CanvasUIContainer_clear"]
 [connection signal="save" from="OQ_UI2DCanvas/CanvasUIContainer" to="." method="_on_CanvasUIContainer_save"]
 [connection signal="set_shape" from="OQ_UI2DCanvas/CanvasUIContainer" to="." method="_on_CanvasUIContainer_set_shape"]

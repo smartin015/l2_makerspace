@@ -6,6 +6,12 @@ var nextShapeType = gamestate.SHAPE.LINE
 onready var audio = $AudioStreamPlayer2D
 onready var L2Shape = load("res://tool/canvas/Shape.tscn")
 
+remote func set_tf(tf):
+  transform = tf
+
+remote func set_ws(ws):
+  self.ws = ws
+
 func _ready():
   cui = find_node("CanvasUI", true, false)
   cui.connect("gui_input", self, "_on_CanvasUI_gui_input")

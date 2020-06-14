@@ -2,11 +2,11 @@ extends Node
 
 onready var PuppetPlayer = load("res://PuppetPlayer.tscn")
 
-puppetsync func spawn(id, origin, workspace):
+puppetsync func spawn(id, origin, ws):
   var p = PuppetPlayer.instance()
   p.name = str(id) # Important
   p.set_network_master(id) # Important
-  p.workspace = workspace
+  p.ws = ws
   var t = Transform.IDENTITY
   t.origin = origin
   p.puppet_transform = t

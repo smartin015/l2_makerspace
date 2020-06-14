@@ -1,8 +1,14 @@
 extends Spatial
 
 const objtype = "SEQUENCE"
-puppet var workspace = gamestate.DEFAULT_WORKSPACE
+puppet var ws = workspace.DEFAULT
 onready var nodes = $OQ_UI2DCanvas/Viewport/SequenceUI/MarginContainer/VBoxContainer/Spacer/Nodes
+
+remote func set_tf(tf):
+  transform = tf
+
+remote func set_ws(ws):
+  self.ws = ws
 
 func _pack_state():
   # Pack all node positions, node data/names, and 

@@ -24,6 +24,7 @@ config/icon="res://icon.png"
 gamestate="*res://gamestate.gd"
 ROSBridge="*res://ros/ROSBridge.gd"
 locks="*res://locks.gd"
+workspace="*res://workspace.gd"
 
 [editor_plugins]
 

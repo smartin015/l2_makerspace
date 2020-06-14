@@ -12,6 +12,7 @@
 script = ExtResource( 3 )
 
 [node name="OQ_UI2DCanvas" parent="." instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, 0 )
 
 [node name="GDCharts" type="ReferenceRect" parent="OQ_UI2DCanvas"]
 margin_right = 363.0
@@ -32,4 +33,4 @@ hovered_radius_ratio = 1.1
 chart_background_opacity = 0.334
 
 [node name="Selectable" parent="." instance=ExtResource( 7 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.748751, 0 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0 )

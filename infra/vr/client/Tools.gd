@@ -7,25 +7,22 @@ onready var Screen = load("res://tool/screen/Screen.tscn")
 onready var Sequence = load("res://tool/sequence/Sequence.tscn")
 onready var L2Control = load("res://tool/menu/L2Control.tscn")
 
-puppet func spawn(name, objtype, tf, local=false):
+onready var toolmap = {
+  "CANVAS": Canvas,
+  "CHART": Chart,
+  "CONSOLE": Console,
+  "SCREEN": Screen,
+  "SEQUENCE": Sequence,
+  "MENU": L2Control,
+ }
+
+remote func spawn(name, objtype, tf, local=false):
   print("%s %s @%s" % [objtype, name, tf.origin])
-  var inst
-  match objtype:
-    "CANVAS":
-      inst = Canvas.instance()
-    "CHART":
-      inst = Chart.instance()
-    "CONSOLE":
-      inst = Console.instance()
-    "SCREEN":
-      inst = Screen.instance()
-    "SEQUENCE":
-      inst = Sequence.instance()
-    "MENU":
-      inst = L2Control.instance()
-    _:
-      print("ERROR: unknown tool objtype " + objtype)
-      return
+  var toolscene = toolmap.get(objtype)
+  if toolscene == null:
+    print("ERROR: unknown tool objtype " + objtype)
+    return
+  var inst = toolscene.instance()
   inst.name = name
   inst.transform = tf
   add_child(inst)

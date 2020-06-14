@@ -1,7 +1,7 @@
 extends Spatial
 
 const objtype = "CHART"
-puppet var workspace = gamestate.DEFAULT_WORKSPACE
+puppet var ws = workspace.DEFAULT
 
 remote func setup_request():
   # Currently no persistent state/data

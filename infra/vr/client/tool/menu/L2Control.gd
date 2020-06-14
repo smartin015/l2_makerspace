@@ -39,3 +39,6 @@ func _on_L2WorkspaceEdit_close_edit(prev, next):
   $CenterRaised.visible = false
   # TODO setup so state is updated instead of reloading
   queue_free() 
+
+func _on_Close_pressed():
+  queue_free()

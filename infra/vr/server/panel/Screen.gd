@@ -1,7 +1,7 @@
 extends Spatial
 
 const objtype = "SCREEN"
-var workspace = gamestate.DEFAULT_WORKSPACE
+var ws = workspace.DEFAULT
 var chan = "1"
 
 func _ready():

@@ -3,6 +3,12 @@ extends Spatial
 const topic = "sequence"
 const topic_type = "l2_msgs/msg/L2Sequence"
 
+remote func set_tf(tf):
+  transform = tf
+
+remote func set_ws(ws):
+  self.ws = ws
+  
 func _ready():
   ROSBridge.advertise(topic, topic_type, "run_seq_adv")
 
