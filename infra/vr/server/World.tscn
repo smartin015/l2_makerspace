@@ -49,7 +49,7 @@ script = ExtResource( 8 )
 script = ExtResource( 14 )
 
 [node name="Canvas" parent="Tools" instance=ExtResource( 13 )]
-transform = Transform( -1.62921e-07, 0, 1, 0, 1, 0, -1, 0, -1.62921e-07, -6.5, 0, 0.5 )
+transform = Transform( -1.62921e-07, 0, 1, 0, 1, 0, -1, 0, -1.62921e-07, -6, 0, 0.5 )
 
 [node name="Canvas2" parent="Tools" instance=ExtResource( 13 )]
 transform = Transform( -1, 0, -3.25841e-07, 0, 1, 0, 3.25841e-07, 0, -1, -5, 0, 1.7 )

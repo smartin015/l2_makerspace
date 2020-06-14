@@ -20,6 +20,7 @@ albedo_color = Color( 0.866667, 0.898039, 0.333333, 1 )
 script = ExtResource( 2 )
 
 [node name="CenterArea" type="Area" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.125, 0 )
 collision_layer = 524288
 collision_mask = 0
 script = ExtResource( 1 )

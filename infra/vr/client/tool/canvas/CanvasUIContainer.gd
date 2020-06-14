@@ -3,6 +3,7 @@ extends VBoxContainer
 signal clear
 signal save
 signal undo
+signal redo
 signal set_shape
 
 func _on_Clear_pressed():
@@ -13,6 +14,9 @@ func _on_Save_pressed():
 
 func _on_Undo_pressed():
   emit_signal("undo")
+
+func _on_Redo_pressed():
+  emit_signal("redo")
 
 func _ready():
   var popup = $HBoxContainer/ShapeMenu.get_popup()

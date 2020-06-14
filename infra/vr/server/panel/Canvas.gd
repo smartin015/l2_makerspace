@@ -18,6 +18,15 @@ remotesync func undo():
       c.visible = false
       return
 
+remotesync func redo():
+  # Redo unhides the last hidden shape
+  var cs = get_children()
+  cs.invert()
+  for c in cs:
+    if not c.visible:
+      c.visible = true
+      return
+
 remote func setup_request():
   var sender = get_tree().get_rpc_sender_id()
   var shapesList = []

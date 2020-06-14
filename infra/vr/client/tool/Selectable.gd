@@ -31,7 +31,7 @@ func _color():
       return Color(0.5, 0.5, 0.5)
 
 func _on_CenterArea_hit_event(position, click, release):
-  if release:
+  if release && visible:
     selected = (selected + 1) % len(SelectState)
     _update_color()
     if selected != SelectState.NONE:

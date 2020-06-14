@@ -45,6 +45,17 @@ remotesync func undo():
       c.pickable = false
       return
 
+remotesync func redo():
+  # Redo unhides the last hidden shape
+  if cui == null:
+    return
+  var cs = cui.get_children()
+  cs.invert()
+  for c in cs:
+    if c.has_method('start_shape') and not c.visible:
+      c.visible = true
+      return
+
 remotesync func handle_input(pressed, position, shapeType):
   if cui == null:
     return
@@ -116,3 +127,6 @@ func _on_AudioStreamPlayer2D_finished():
 
 func _on_CanvasUIContainer_undo():
   rpc("undo")
+
+func _on_CanvasUIContainer_redo():
+  rpc("redo")

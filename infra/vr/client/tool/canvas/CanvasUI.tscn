@@ -1,22 +1,23 @@
 [gd_scene load_steps=3 format=2]
 
-[ext_resource path="res://OQ_Toolkit/OQ_UI2D/theme/oq_ui2d_standard.theme" type="Theme" id=1]
+[ext_resource path="res://OQ_Toolkit/OQ_Interactables/oq_ui2d_standard.theme" type="Theme" id=1]
 [ext_resource path="res://tool/canvas/CanvasUIContainer.gd" type="Script" id=2]
-
 
 [node name="CanvasUIContainer" type="VBoxContainer"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme = ExtResource( 1 )
+custom_constants/separation = 30
 script = ExtResource( 2 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
-margin_right = 1024.0
+margin_right = 1197.0
 margin_bottom = 39.0
 size_flags_horizontal = 3
+theme = ExtResource( 1 )
 custom_constants/separation = 200
 __meta__ = {
 "_edit_use_anchors_": false
@@ -39,15 +40,21 @@ margin_right = 630.0
 margin_bottom = 39.0
 text = "Undo"
 
-[node name="ShapeMenu" type="MenuButton" parent="HBoxContainer"]
+[node name="Redo" type="Button" parent="HBoxContainer"]
 margin_left = 830.0
-margin_right = 921.0
+margin_right = 906.0
+margin_bottom = 39.0
+text = "Redo"
+
+[node name="ShapeMenu" type="MenuButton" parent="HBoxContainer"]
+margin_left = 1106.0
+margin_right = 1197.0
 margin_bottom = 39.0
 text = "Shape"
 
 [node name="CanvasUI" type="ReferenceRect" parent="."]
-margin_top = 43.0
-margin_right = 1024.0
+margin_top = 69.0
+margin_right = 1197.0
 margin_bottom = 600.0
 mouse_filter = 1
 size_flags_horizontal = 3
@@ -58,3 +65,4 @@ __meta__ = {
 [connection signal="pressed" from="HBoxContainer/Clear" to="." method="_on_Clear_pressed"]
 [connection signal="pressed" from="HBoxContainer/Save" to="." method="_on_Save_pressed"]
 [connection signal="pressed" from="HBoxContainer/Undo" to="." method="_on_Undo_pressed"]
+[connection signal="pressed" from="HBoxContainer/Redo" to="." method="_on_Redo_pressed"]
