@@ -3,4 +3,3 @@ version: '3.4'
 services:
   main:
     image: l2example:latest
-    pid: "host" # TODO(https://github.com/ros2/rmw_fastrtps/issues/349)

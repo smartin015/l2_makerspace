@@ -1,9 +1,14 @@
 FROM l2base:latest
 
+# June 2020: webots_ros2_importer is removed from the repo because ROS2 Foxy doesn't 
+# yet have xacro packages and it causes an installation failure
 RUN . /opt/ros/$ROS_DISTRO/setup.sh && mkdir -p /webots_ros2/src && cd /webots_ros2/src \
-  && git clone -b $ROS_DISTRO https://github.com/cyberbotics/webots_ros2.git && cd .. \
+  && git clone -b $ROS_DISTRO https://github.com/cyberbotics/webots_ros2.git \
+  && cd webots_ros2 && rm -r webots_ros2_importer && sed -i '/webots_ros2_importer/d' webots_ros2/package.xml \
+  && cd ../.. \
+  && apt-get update && apt-get install --no-install-recommends -y python3-pip \
   && rosdep update && rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO \
-  && colcon build
+  && colcon build && apt-get clean
 
 # http://wiki.ros.org/docker/Tutorials/Hardware%20Acceleration
 # TODO accept ARGs to select particular GPU type

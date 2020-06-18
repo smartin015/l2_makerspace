@@ -2,7 +2,6 @@ version: '3.5'
 services:
   storage:
     image: l2storage:latest
-    pid: "host" # TODO(https://github.com/ros2/rmw_fastrtps/issues/349)
     environment:
       PYTHONUNBUFFERED: 1
       PGRST_DB_URI: postgres://app_user:password@db:5432/app_db
@@ -16,7 +15,6 @@ services:
       - l2
   db:
     image: postgres
-    pid: "host" # TODO(https://github.com/ros2/rmw_fastrtps/issues/349)
     ports:
       - "5432:5432"
     environment:

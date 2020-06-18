@@ -10,23 +10,20 @@ services:
       - "PYTHONUNBUFFERED=1"
   bridge_local:
     image: l2bridge:latest
-    pid: "host" # TODO(https://github.com/ros2/rmw_fastrtps/issues/349)
     network_mode: host
-    command: bash -c "source /opt/ros/eloquent/setup.bash && source /l2_msgs/install/setup.bash && cd /ros2-web-bridge && rm -r /ros2-web-bridge/node_modules/rclnodejs/generated && node bin/rosbridge.js --address=ws://127.0.0.1:4243"
+    command: bash -c "source /opt/ros/foxy/setup.bash && source /l2_msgs/install/setup.bash && cd /ros2-web-bridge && rm -r /ros2-web-bridge/node_modules/rclnodejs/generated && node bin/rosbridge.js --address=ws://127.0.0.1:4243"
   bridge_local_dev:
     image: l2bridge:latest
-    pid: "host" # TODO(https://github.com/ros2/rmw_fastrtps/issues/349)
     network_mode: host
     # DEBUG=ros2-web-bridge:index,ros2-web-bridge:Bridge,ros2-web-bridge:ResourceProvider
-    command: bash -c "source /opt/ros/eloquent/setup.bash && source /l2_msgs/install/setup.bash && cd /ros2-web-bridge && rm -r /ros2-web-bridge/node_modules/rclnodejs/generated && node bin/rosbridge.js --address=ws://127.0.0.1:4243"
+    command: bash -c "source /opt/ros/foxy/setup.bash && source /l2_msgs/install/setup.bash && cd /ros2-web-bridge && rm -r /ros2-web-bridge/node_modules/rclnodejs/generated && node bin/rosbridge.js --address=ws://127.0.0.1:4243"
     volumes:
       - ./ros2-web-bridge:/ros2-web-bridge
   bridge_server:
     image: l2bridge:latest
-    pid: "host" # TODO(https://github.com/ros2/rmw_fastrtps/issues/349)
     networks:
       - l2
-    command: bash -c "source /opt/ros/eloquent/setup.bash && source /l2_msgs/install/setup.bash && cd /ros2-web-bridge && node bin/rosbridge.js --port=4243"
+    command: bash -c "source /opt/ros/foxy/setup.bash && source /l2_msgs/install/setup.bash && cd /ros2-web-bridge && node bin/rosbridge.js --port=4243"
 
 networks:
   l2:
