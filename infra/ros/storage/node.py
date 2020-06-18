@@ -1,5 +1,6 @@
 from l2_msgs.srv import GetProject, GetFile, GetObject3D
 from l2_msgs.msg import Object3D
+import time
 
 import rclpy
 from rclpy.node import Node
@@ -108,12 +109,19 @@ class DBServer(Node):
         database = result.path[1:]
         hostname = result.hostname
         
-        self.con = psycopg2.connect(
-                        database=database, 
-                        user=username, 
-                        password=password, 
-                        host=hostname)
+        while True:
+            try:
+                self.con = psycopg2.connect(
+                            database=database, 
+                            user=username, 
+                            password=password, 
+                            host=hostname)
+                break
+            except:
+                self.get_logger().warn("Failed to connect to db; waiting a bit then retrying...")
+                time.sleep(5)
         self.get_logger().info("Connected (host: %s, db: %s)" % (hostname, database))
+        self.get_logger().info("TODO: ensure initial tables are set up")
 
     def get_project_callback(self, request, response):
         self.get_logger().info(str(request))
