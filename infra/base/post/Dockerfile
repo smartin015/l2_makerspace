@@ -1,6 +1,5 @@
-FROM ros:eloquent-ros-core
+FROM ros:foxy-ros-core
 COPY --from=l2base /l2_msgs/install /l2_msgs/install
-RUN apt-get update && apt-get install ros-eloquent-gazebo-msgs && apt-get clean
 ONBUILD ARG L2PKG
 ONBUILD ARG L2NODES
 ONBUILD ENV L2PKG=$L2PKG
