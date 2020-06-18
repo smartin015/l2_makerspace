@@ -2,7 +2,6 @@ version: '3.5'
 services:
   vr_syncer:
     image: l2vr:latest
-    pid: "host" # TODO(https://github.com/ros2/rmw_fastrtps/issues/349)
     networks:
       - l2
     environment:
@@ -10,7 +9,6 @@ services:
     command: ros2 run l2_vr node --ros-args -p extra_names:=[]
   vr_fwd:
     image: l2vr:latest
-    pid: "host" # TODO(https://github.com/ros2/rmw_fastrtps/issues/349)
     networks:
       - l2
     environment:
