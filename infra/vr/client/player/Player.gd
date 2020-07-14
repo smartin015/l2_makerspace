@@ -24,19 +24,7 @@ func _multiplayerReady():
   last_left = left.transform
   last_right = right.transform
   vr.log_info("Multiplayer ready")
-  
-# This is a test pose for the left hand used only on desktop so the hand has a proper position
-# TODO remove after testing
-const test_pose_left_ThumbsUp = [Quat(0, 0, 0, 1), Quat(0, 0, 0, 1), Quat(0.321311, 0.450518, -0.055395, 0.831098),
-Quat(0.263483, -0.092072, 0.093766, 0.955671), Quat(-0.082704, -0.076956, -0.083991, 0.990042),
-Quat(0.085132, 0.074532, -0.185419, 0.976124), Quat(0.010016, -0.068604, 0.563012, 0.823536),
-Quat(-0.019362, 0.016689, 0.8093, 0.586839), Quat(-0.01652, -0.01319, 0.535006, 0.844584),
-Quat(-0.072779, -0.078873, 0.665195, 0.738917), Quat(-0.0125, 0.004871, 0.707232, 0.706854),
-Quat(-0.092244, 0.02486, 0.57957, 0.809304), Quat(-0.10324, -0.040148, 0.705716, 0.699782),
-Quat(-0.041179, 0.022867, 0.741938, 0.668812), Quat(-0.030043, 0.026896, 0.558157, 0.828755),
-Quat(-0.207036, -0.140343, 0.018312, 0.968042), Quat(0.054699, -0.041463, 0.706765, 0.704111),
-Quat(-0.081241, -0.013242, 0.560496, 0.824056), Quat(0.00276, 0.037404, 0.637818, 0.769273),
-]
+
   
 func _multiplayerProcess(delta):
   # TODO send less data (deltas?)
@@ -135,8 +123,9 @@ func _grabProcess(_delta):
 
 # ===================== Controls & Menus ================================
 
+var menuEnabled = true
 func _menuProcess(_delta):
-  if vr.button_just_pressed(vr.BUTTON.Y) || Input.is_action_just_pressed("ui_cycle_mode"):
+  if menuEnabled and (vr.button_just_pressed(vr.BUTTON.Y) || Input.is_action_just_pressed("ui_cycle_mode")):
     var tf = head.global_transform
     tf = tf.translated(Vector3(0, 0, -0.6))
     gamestate.toggle_menu(tf)
@@ -146,6 +135,33 @@ func set_raycast_len(l: float):
   if uirc != null:
     uirc.ui_raycast_length = l
     uirc.ui_mesh_length = l
+
+const HAND_CONTROL_DEBOUNCE = 2000
+var lastHandControl = 0
+var handControlActive = false
+func _handControlProcess(_delta):
+  # Based on hand gestures in both hands, toggle
+  # the more "sensitive" controls so the user
+  # can gesticulate wildly without being surprised
+  # by menus, movement etc. 
+  var active = (vr.ovrHandTracking 
+    and lhand.detect_simple_gesture() == "Two" 
+    and rhand.detect_simple_gesture() == "Two")
+  if not active:
+    handControlActive = false
+    return
+
+  var now = OS.get_system_time_msecs()
+  if (not handControlActive and active
+      and now > lastHandControl + HAND_CONTROL_DEBOUNCE):
+    handControlActive = true
+    lastHandControl = now
+    print("Hand control active - toggling sensitive controls")
+    
+    var ray = left.find_node("Feature_UIRayCast", true, false)
+    if ray != null:
+      ray.visible = not ray.visible
+    menuEnabled = not menuEnabled
 
 # ===================== Main functions ================================
 

@@ -1,7 +1,8 @@
 [gd_scene load_steps=3 format=2]
 
 [ext_resource path="res://tool/menu/L2WorkspaceEdit.gd" type="Script" id=1]
-[ext_resource path="res://OQ_Toolkit/OQ_Interactables/oq_ui2d_standard.theme" type="Theme" id=2]
+[ext_resource path="res://OQ_Toolkit/OQ_UI2D/theme/oq_ui2d_standard.theme" type="Theme" id=2]
+
 
 
 [node name="L2WorkspaceEdit" type="ReferenceRect"]

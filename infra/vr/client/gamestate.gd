@@ -5,16 +5,20 @@ const DEFAULT_SETTINGS = {
   "server_ip": "127.0.0.1",
   "server_port": 44444,
 }
+
 const DEFAULT_CONNECT_TIMEOUT = 0.5
 var settings = DEFAULT_SETTINGS
+var config = null
 
 var host = NetworkedMultiplayerENet.new()
+onready var room = get_node("/root/World/Room")
 onready var player = get_node("/root/World/Players/Player")
 onready var players = get_node("/root/World/Players")
 onready var actors = get_node("/root/World/Actors")
 onready var tools = get_node("/root/World/Tools")
 onready var nfloor = get_node("/root/World/NavFloor")
 onready var L2Control = load("res://tool/menu/L2Control.tscn")
+onready var Config = load("res://config.gd")
 
 # Shapes for CAD
 enum SHAPE {PENCIL, LINE, RECTANGLE, CIRCLE, DRAG}
@@ -23,6 +27,9 @@ var is_initialized = false # We have been registered to the server.
 var default_connect_timer = null
 
 func _ready():
+  config = Config.load_user_config()
+  Config.save_user_config(config)
+  
   if !vr.initialize():
     print("GDT non-VR demo mode")
   
@@ -105,6 +112,20 @@ func set_workspace(ws):
     a.queue_free()
   for t in tools.get_children():
     t.queue_free()
+    
+  # Update the room theme for this workspace (from ws fields)
+  var fields = workspace.ws_fields.get(ws)
+  if fields != null and fields.has("room"):
+    if room != null:
+      room.queue_free()
+      room = null
+    
+    room = load("res://" + fields["room"]).instance()
+    room.name = "Room"
+    get_node("/root/World").add_child(room)
+    print("New room scene added: %s" % [fields["room"]])
+  else:
+    print("Couldn't fetch room field for workspace %s" % [ws])
     
   # It's up to the server to fulfill the workspace change,
   # after which it calls set_workspace() on the player node

@@ -10,8 +10,12 @@ script = ExtResource( 3 )
 
 [node name="OQ_UI2DCanvas" parent="." instance=ExtResource( 1 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, 0 )
+editor_live_update = false
+transparent = false
 
 [node name="ConsoleUI" parent="OQ_UI2DCanvas" instance=ExtResource( 2 )]
 
 [node name="Selectable" parent="." instance=ExtResource( 4 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0 )
+[connection signal="clear" from="OQ_UI2DCanvas/ConsoleUI" to="." method="_on_ConsoleUI_clear"]
+[connection signal="set_topic" from="OQ_UI2DCanvas/ConsoleUI" to="." method="_on_ConsoleUI_set_topic"]

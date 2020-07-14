@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=2]
 
-[ext_resource path="res://OQ_Toolkit/OQ_Interactables/oq_ui2d_standard.theme" type="Theme" id=1]
+[ext_resource path="res://OQ_Toolkit/OQ_UI2D/theme/oq_ui2d_standard.theme" type="Theme" id=1]
 [ext_resource path="res://tool/canvas/CanvasUIContainer.gd" type="Script" id=2]
 
 [node name="CanvasUIContainer" type="VBoxContainer"]

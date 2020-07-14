@@ -41,7 +41,7 @@ func _show_debug_information():
 
 func _ready():
 	if (not get_parent() is ARVROrigin):
-		vr.log_error("Feature_StickMovement: parent is not ARVROrigin");
+		vr.log_error("Locomotion_Stick: parent is not ARVROrigin");
 
 	movement_vignette_rect.material.set_shader_param("r0", vignette_radius_0);
 	movement_vignette_rect.material.set_shader_param("r1", vignette_radius_1);
@@ -71,15 +71,15 @@ func move(dt):
 	var strafe_dir: Vector3
 	
 	match movement_orientation:
-		MovementOrientation.HEAD:
-			view_dir = -vr.vrCamera.global_transform.basis.z;
-			strafe_dir = vr.vrCamera.global_transform.basis.x;
 		MovementOrientation.HAND_RIGHT:
 			view_dir = -vr.rightController.global_transform.basis.z;
 			strafe_dir = vr.rightController.global_transform.basis.x;
 		MovementOrientation.HAND_LEFT:
 			view_dir = -vr.leftController.global_transform.basis.z;
 			strafe_dir = vr.leftController.global_transform.basis.x;
+		MovementOrientation.HEAD, _:
+			view_dir = -vr.vrCamera.global_transform.basis.z;
+			strafe_dir = vr.vrCamera.global_transform.basis.x;
 	
 	view_dir.y = 0.0;
 	strafe_dir.y = 0.0;

@@ -3,6 +3,9 @@ extends Spatial
 export var active := true;
 export var ui_raycast_length := 3.0;
 export var ui_mesh_length := 1.0;
+
+export var adjust_left_right := true;
+
 export(vr.CONTROLLER_BUTTON) var ui_raycast_visible_button := vr.CONTROLLER_BUTTON.TOUCH_INDEX_TRIGGER;
 export(vr.CONTROLLER_BUTTON) var ui_raycast_click_button := vr.CONTROLLER_BUTTON.INDEX_TRIGGER;
 
@@ -13,6 +16,8 @@ onready var ui_raycast_mesh : MeshInstance = $RayCastPosition/RayCastMesh;
 onready var ui_raycast_hitmarker : MeshInstance = $RayCastPosition/RayCastHitMarker;
 
 const hand_click_button := vr.CONTROLLER_BUTTON.XA;
+
+var is_colliding := false;
 
 
 func _set_raycast_transform():
@@ -29,13 +34,15 @@ func _set_raycast_transform():
   else:
     ui_raycast_position.transform.basis = Basis();
     
-    ui_raycast_position.translation.y = -0.005;
-    ui_raycast_position.translation.z = -0.01;
     # center the ray cast better to the actual controller position
-    if (controller.controller_id == 1):
-      ui_raycast_position.translation.x = -0.01;
-    if (controller.controller_id == 2):
-      ui_raycast_position.translation.x =  0.01;
+    if (adjust_left_right):
+      ui_raycast_position.translation.y = -0.005;
+      ui_raycast_position.translation.z = -0.01;
+    
+      if (controller.controller_id == 1):
+        ui_raycast_position.translation.x = -0.01;
+      if (controller.controller_id == 2):
+        ui_raycast_position.translation.x =  0.01;
     
   
     
@@ -47,7 +54,8 @@ func _update_raycasts():
   if (controller.is_hand && vr.ovrHandTracking): # hand has separate logic
     ui_raycast_mesh.visible = vr.ovrHandTracking.is_pointer_pose_valid(controller.controller_id);
     if (!ui_raycast_mesh.visible): return;
-  elif (controller._button_pressed(ui_raycast_visible_button) ||
+  elif (ui_raycast_visible_button == vr.CONTROLLER_BUTTON.None ||
+      controller._button_pressed(ui_raycast_visible_button) ||
       controller._button_pressed(ui_raycast_click_button)): 
     ui_raycast_mesh.visible = true;
   else:
@@ -79,8 +87,10 @@ func _update_raycasts():
     ui_raycast_hitmarker.visible = true;
     ui_raycast_hitmarker.global_transform.origin = position;
     
-      
     c.ui_raycast_hit_event(position, click, release);
+    is_colliding = true;
+  else:
+    is_colliding = false;
 
 func _ready():
   controller = get_parent();

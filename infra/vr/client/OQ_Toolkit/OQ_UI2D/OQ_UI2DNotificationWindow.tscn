@@ -2,8 +2,7 @@
 
 [ext_resource path="res://OQ_Toolkit/OQ_UI2D/scripts/OQ_UI2DNotificationWindow.gd" type="Script" id=1]
 [ext_resource path="res://OQ_Toolkit/OQ_UI2D/OQ_UI2DCanvas.tscn" type="PackedScene" id=2]
-[ext_resource path="res://OQ_Toolkit/OQ_Interactables/oq_ui2d_standard.theme" type="Theme" id=3]
-
+[ext_resource path="res://OQ_Toolkit/OQ_UI2D/theme/oq_ui2d_standard.theme" type="Theme" id=3]
 
 [node name="OQ_UI2DNotificationWindow" type="Spatial"]
 script = ExtResource( 1 )

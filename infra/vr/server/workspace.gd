@@ -3,11 +3,13 @@ const DEFAULT = "0"
 onready var PathEnt = load("res://PathEnt.gd")
 onready var workspaces = _init_workspaces()
 
+const DEFAULT_WS_ROOMS = ["CSGSpaceRoom.tscn", "HHRoom.tscn", "room.tscn"]
+
 func _get_visible():
   # TODO visibility rules
-  var visible_ws = PoolStringArray()
+  var visible_ws = {}
   for w in workspaces:
-    visible_ws.push_back(w.name)
+    visible_ws[w.name] = w.fields
   return visible_ws
   
 func broadcast_visible(id = null):
@@ -21,6 +23,7 @@ remote func request():
   var ws = PathEnt.new()
   ws.name = "new space"
   ws.perm = 0x777
+  ws.fields["room"] = DEFAULT_WS_ROOMS[0]
   workspaces.push_back(ws)
   broadcast_visible()
   rpc_id(get_tree().get_rpc_sender_id(), "on_new", ws.name)
@@ -34,9 +37,10 @@ remote func edit(ws, fields):
     
 func _init_workspaces():
   var wss = []
-  for i in range(3):
+  for i in range(len(DEFAULT_WS_ROOMS)):
     var ws = PathEnt.new()
     ws.name = str(i)
     ws.perm = 0x777
+    ws.fields["room"] = DEFAULT_WS_ROOMS[i]
     wss.push_back(ws)
   return wss

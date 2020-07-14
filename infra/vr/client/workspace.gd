@@ -2,10 +2,12 @@ extends Node
 
 const DEFAULT = "0"
 var workspaces = []
+var ws_fields = {}
 var new_ws_cb = null
 
-remote func set_visible(visible_ws: PoolStringArray):
-  workspaces = visible_ws
+remote func set_visible(visible_ws):
+  workspaces = visible_ws.keys()
+  ws_fields = visible_ws
   
 func request(obj, method):
   new_ws_cb = [obj, method]

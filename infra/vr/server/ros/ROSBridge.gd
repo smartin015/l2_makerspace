@@ -105,6 +105,11 @@ func ros_connect(topic: String, type: String, node: Node, handler: String, id: S
   h.callbacks.push_back([node, handler])
   h.raw = raw
   subscribe(topic, type, id, raw)
+  return h
+
+func ros_disconnect(h: ROSHandler):
+  var th: Array = handlers.get(h.topic, [])
+  th.erase(h)
 
 remote func advertise(topic: String, type: String, id: String):
   _broadcast(id, {

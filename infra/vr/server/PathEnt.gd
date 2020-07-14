@@ -6,6 +6,7 @@ var perm_owner = ""
 var perm_group = ""
 var public = true
 var name = ""
+var fields = {} # Additional metadata, e.g. room skin for a workspace
 
 func check(c, a):
   return (perm >> (3*int(c))) & (0x01 << int(a)) != 0
