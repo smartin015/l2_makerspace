@@ -120,7 +120,10 @@ func set_workspace(ws):
       room.queue_free()
       room = null
     
-    room = load("res://" + fields["room"]).instance()
+    var res = load("res://rooms/" + fields["room"].replace("/", "").replace(".", "") + "/room.tscn")
+    if res == null:
+      return
+    room = res.instance()
     room.name = "Room"
     get_node("/root/World").add_child(room)
     print("New room scene added: %s" % [fields["room"]])

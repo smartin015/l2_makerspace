@@ -1,6 +1,7 @@
 [gd_scene load_steps=2 format=2]
 
-[ext_resource path="res://Workshop.obj" type="ArrayMesh" id=1]
+[ext_resource path="res://rooms/hh/Workshop.obj" type="ArrayMesh" id=1]
+
 
 [node name="MeshInstance" type="MeshInstance"]
 transform = Transform( 0.001, 0, 0, 0, -4.37114e-11, 0.001, 0, -0.001, -4.37114e-11, -5.31628, 0, -7.80967 )

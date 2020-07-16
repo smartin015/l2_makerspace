@@ -3,7 +3,7 @@ const DEFAULT = "0"
 onready var PathEnt = load("res://PathEnt.gd")
 onready var workspaces = _init_workspaces()
 
-const DEFAULT_WS_ROOMS = ["CSGSpaceRoom.tscn", "HHRoom.tscn", "room.tscn"]
+const DEFAULT_WS_ROOMS = ["csg", "concept", "hh", "spaceship"]
 
 func _get_visible():
   # TODO visibility rules
