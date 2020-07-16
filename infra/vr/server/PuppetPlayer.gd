@@ -3,6 +3,7 @@ extends Spatial
 puppet var ws = workspace.DEFAULT
 puppet var puppet_transform
 puppet var puppet_motion
+puppet var alias
 
 onready var left = $LeftHand
 onready var right = $RightHand

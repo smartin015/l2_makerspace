@@ -2,7 +2,7 @@ extends Node
 
 onready var PuppetPlayer = load("res://player/PuppetPlayer.tscn")
 
-puppet func spawn(id, origin, workspace):
+puppet func spawn(id, origin, workspace, alias):
   if str(id) == gamestate.player.name:
     print("GDT(%s) server ack; init complete" % id)
     gamestate.is_initialized = true
@@ -15,6 +15,7 @@ puppet func spawn(id, origin, workspace):
   var inst = PuppetPlayer.instance()
   # node name & network master must be the same across all peer
   inst.name = str(id) 
+  inst.alias = alias
   inst.set_network_master(id)
   inst.transform.origin = origin
   inst.set_workspace(workspace)

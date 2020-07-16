@@ -34,7 +34,7 @@ func _color():
       return Color(0.5, 0.5, 0.5)
 
 var down = false
-func _on_CenterArea_hit_event(position, click, release):
+func _on_CenterArea_hit_event(_position, click, release):
   if !visible:
     return
     

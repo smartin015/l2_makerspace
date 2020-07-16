@@ -2,6 +2,7 @@ extends Spatial
 
 const DEFAULT_RAYCAST_LEN = 5.0
 var ws = workspace.DEFAULT
+var alias setget _noset_alias, _get_alias
 onready var origin = $OQ_ARVROrigin
 onready var head = $OQ_ARVROrigin/OQ_ARVRCamera
 onready var left = $OQ_ARVROrigin/OQ_LeftController
@@ -11,6 +12,11 @@ onready var right = $OQ_ARVROrigin/OQ_RightController
 onready var lgrab = $OQ_ARVROrigin/OQ_LeftController/Feature_StaticGrab
 onready var rgrab = $OQ_ARVROrigin/OQ_RightController/Feature_StaticGrab
 onready var redIndicator = $OQ_ARVROrigin/OQ_RightController/RedIndicator
+
+func _noset_alias(_a):
+  pass
+func _get_alias():
+  return gamestate.config["alias"]
 
 # ===================== Networked Multiplayer ==========================
 var last_head = Transform()
@@ -59,13 +65,13 @@ func _multiplayerProcess(delta):
   last_left = left.transform
   last_right = right.transform
 
-remote func set_origin(origin: Vector3):
-  transform.origin = origin
+remote func set_origin(orig: Vector3):
+  transform.origin = orig
   rset("puppet_transform", global_transform)
 
-remote func set_workspace(ws):
-  print("Workspace now %s" % ws)
-  self.ws = ws
+remote func set_workspace(new_ws):
+  print("Workspace now %s" % new_ws)
+  self.ws = new_ws
   # Update puppet visibility after the new workspace
   # is set.
   for p in gamestate.players.get_children():
@@ -149,6 +155,7 @@ var lastHandControl = 0
 var handControlActive = false
 var lgest = null
 var rgest = null
+onready var raycast = $OQ_ARVROrigin/OQ_RightController/Feature_UIRayCast
 func _handControlProcess(_delta):
   # Based on hand gestures in both hands, toggle
   # the more "sensitive" controls so the user
@@ -156,11 +163,12 @@ func _handControlProcess(_delta):
   # by menus, movement etc. 
   var active = false
   if vr.ovrHandTracking:
-    var lgest = lhand.detect_simple_gesture()
-    var rgest = rhand.detect_simple_gesture()
-    if lgest == "V" and rgest == "V":
-      active = true
-    
+    lgest = lhand.detect_simple_gesture()
+    rgest = rhand.detect_simple_gesture()
+  
+  if (lgest == "V" and rgest == "V") or Input.is_action_pressed("ui_hand_control"):
+    active = true
+  
   if not active:
     handControlActive = false
     return
@@ -172,9 +180,7 @@ func _handControlProcess(_delta):
     lastHandControl = now
     print("Hand control active - toggling sensitive controls")
     
-    var ray = left.find_node("Feature_UIRayCast", true, false)
-    if ray != null:
-      ray.visible = not ray.visible
+    raycast.active = not raycast.active    
     menuEnabled = not menuEnabled
 
 # ===================== Main functions ================================

@@ -31,7 +31,7 @@ func _popupMenuChoice(id):
   emit_signal("set_shape", id)
 
 
-func _on_CanvasUI_input_event(viewport, event, shape_idx):
+func _on_CanvasUI_input_event(_viewport, event, _shape_idx):
   if event is InputEventMouseButton:
     if event.is_pressed():
       print("Object clicky")

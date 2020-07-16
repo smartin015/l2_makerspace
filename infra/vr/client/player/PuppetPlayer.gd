@@ -7,6 +7,7 @@ extends Spatial
 var ws
 puppet var puppet_transform
 puppet var puppet_motion
+puppet var alias = "loading..."
 
 onready var left = $LeftHand
 onready var right = $RightHand
@@ -28,8 +29,8 @@ func update_visibility():
   # transmission of puppet_motion and prevent network errors.
   visible = (ws == gamestate.player.ws)
 
-remote func set_workspace(ws):
-  self.ws = ws
+remote func set_workspace(new_ws):
+  self.ws = new_ws
   update_visibility()
 
 func _ready():

@@ -112,7 +112,7 @@ func setup_controls():
     self, "_handle_joint_states", 
     "joint_state_sub")
     
-func _handle_joint_states(msg, id):
+func _handle_joint_states(msg, _id):
   for i in len(msg['name']):
     var j = joints.get(msg['name'][i])
     if j != null:

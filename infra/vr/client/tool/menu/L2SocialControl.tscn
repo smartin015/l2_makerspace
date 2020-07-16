@@ -3,7 +3,6 @@
 [ext_resource path="res://OQ_Toolkit/OQ_UI2D/theme/oq_ui2d_standard.theme" type="Theme" id=1]
 [ext_resource path="res://tool/menu/L2SocialControl.gd" type="Script" id=2]
 
-
 [sub_resource type="StyleBoxFlat" id=1]
 bg_color = Color( 0.121569, 0.121569, 0.121569, 1 )
 
@@ -49,3 +48,14 @@ margin_right = 256.0
 margin_bottom = 218.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
+
+[node name="Edit" type="Button" parent="."]
+margin_left = 192.354
+margin_top = -2.08112
+margin_right = 253.354
+margin_bottom = 36.9189
+text = "Edit"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+[connection signal="pressed" from="Edit" to="." method="_on_Edit_pressed"]

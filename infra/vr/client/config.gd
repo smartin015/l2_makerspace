@@ -3,7 +3,7 @@ extends Node
 const CONFIG_PATH = "user://user_config.save"
 
 static func default_user_config():
-  var name_candidates = ["Robot", "Beaver", "Muskrat", "Chainsaw", "Pegleg"]
+  var name_candidates = ["Robot", "Beaver", "Muskrat", "Chainsaw", "Pegleg", "Buttsmith99"]
   return {
     "alias": "Anon " + name_candidates[randi() % len(name_candidates)],
   }

@@ -92,6 +92,7 @@ func connect_to_server(ip, port):
 
 func _connected_ok():
   player.name = str(get_tree().get_network_unique_id())
+  rpc_id(1, "request_init", gamestate.config["alias"])
 
 func _server_disconnected():
   is_initialized = false
@@ -168,3 +169,8 @@ func toggle_menu(tf):
     tools.add_child(menu)
   else:
     menu.queue_free()
+
+func set_alias(alias):
+  config["alias"] = alias
+  player.rset("alias", alias)
+  Config.save_user_config(config)

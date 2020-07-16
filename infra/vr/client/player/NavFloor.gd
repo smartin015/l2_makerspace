@@ -19,7 +19,7 @@ func _update_indicators():
 func _ready():
   _update_indicators()
 
-func ui_raycast_hit_event(position, click, release):
+func ui_raycast_hit_event(position, _click, release):
   pointing = !release
   if release:
     if from_pos != null:

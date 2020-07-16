@@ -31,24 +31,28 @@ remote func set_workspace(ws):
   _populate_workspace_for_player(sender, ws)
 
 func _peer_connected(id):
-  print("GDT(%s) connected; pushing %d players %d actors" % [id, len(players.get_children()), len(actors.get_children())])
+  print("GDT(%s) connected")
+
+remote func request_init(alias):
+  var sender = get_tree().get_rpc_sender_id()
   
+  print("GDT(%s): pushing %d players %d actors" % [sender, len(players.get_children()), len(actors.get_children())])
   # Send a list of user-visible workspaces
-  workspace.broadcast_visible(id)
+  workspace.broadcast_visible(sender)
   
   # User begins in the default workspace
-  _populate_workspace_for_player(id, workspace.DEFAULT)
+  _populate_workspace_for_player(sender, workspace.DEFAULT)
   
   # Spawn other players for new peer
   for p in players.get_children():
-    players.rpc_id(id, "spawn", p.get_network_master(), p.transform.origin, p.ws)
+    players.rpc_id(sender, "spawn", p.get_network_master(), p.transform.origin, p.ws, alias)
   
   # Spawn new peer for all players
-  players.rpc("spawn", id, Vector3.ZERO, workspace.DEFAULT)
+  players.rpc("spawn", sender, Vector3.ZERO, workspace.DEFAULT, alias)
   
   # Let user know about ROS peers
   ROSBridge.send_ros_peers()  
-  
+
 func _populate_workspace_for_player(id, ws):
   # Spawn all currently active dynamic elements on new client
   # Note that (puppet) players are never removed, so aren't

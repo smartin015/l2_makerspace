@@ -1,9 +1,9 @@
 [gd_scene load_steps=3 format=2]
 
-[ext_resource path="res://tool/menu/L2WorkspaceControl.gd" type="Script" id=1]
+[ext_resource path="res://tool/menu/L2AliasEdit.gd" type="Script" id=1]
 [ext_resource path="res://OQ_Toolkit/OQ_UI2D/theme/oq_ui2d_standard.theme" type="Theme" id=2]
 
-[node name="L2WorkspaceControl" type="ReferenceRect"]
+[node name="L2AliasEdit" type="ReferenceRect"]
 margin_top = 1.0
 margin_right = 256.0
 margin_bottom = 256.0
@@ -23,7 +23,7 @@ __meta__ = {
 [node name="Label" type="Label" parent="VBoxContainer"]
 margin_right = 256.0
 margin_bottom = 33.0
-text = "Workspaces"
+text = "Social"
 align = 1
 __meta__ = {
 "_edit_use_anchors_": false
@@ -32,7 +32,7 @@ __meta__ = {
 [node name="ColorRect" type="ColorRect" parent="VBoxContainer"]
 margin_top = 37.0
 margin_right = 256.0
-margin_bottom = 255.0
+margin_bottom = 212.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 color = Color( 0.121569, 0.121569, 0.121569, 1 )
@@ -50,19 +50,32 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="Workspaces" type="VBoxContainer" parent="VBoxContainer/ColorRect/ScrollContainer"]
+[node name="Attributes" type="VBoxContainer" parent="VBoxContainer/ColorRect/ScrollContainer"]
 margin_right = 256.0
 margin_bottom = 217.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="NewWorkspace" type="Button" parent="."]
-margin_left = 224.562
-margin_top = -1.0
-margin_right = 254.562
-margin_bottom = 38.0
-text = "+"
+[node name="Label" type="Label" parent="VBoxContainer/ColorRect/ScrollContainer/Attributes"]
+margin_right = 256.0
+margin_bottom = 33.0
+text = "Alias"
+
+[node name="NameEdit" type="TextEdit" parent="VBoxContainer/ColorRect/ScrollContainer/Attributes/Label"]
+margin_top = 37.0
+margin_right = 256.0
+margin_bottom = 88.0
+text = "yourname"
 __meta__ = {
 "_edit_use_anchors_": false
 }
-[connection signal="pressed" from="NewWorkspace" to="." method="_on_NewWorkspace_pressed"]
+
+[node name="Done" type="Button" parent="VBoxContainer"]
+margin_top = 216.0
+margin_right = 256.0
+margin_bottom = 255.0
+text = "Done"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+[connection signal="pressed" from="VBoxContainer/Done" to="." method="_on_Done_pressed"]
