@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=2]
+[gd_scene load_steps=14 format=2]
 
 [ext_resource path="res://OQ_Toolkit/OQ_ARVRController/Feature_HandModel_Left.tscn" type="PackedScene" id=1]
 [ext_resource path="res://OQ_Toolkit/OQ_ARVROrigin.tscn" type="PackedScene" id=2]
@@ -10,6 +10,7 @@
 [ext_resource path="res://player/Player.gd" type="Script" id=8]
 [ext_resource path="res://OQ_Toolkit/OQ_ARVRController/Feature_StaticGrab.tscn" type="PackedScene" id=9]
 [ext_resource path="res://OQ_Toolkit/OQ_ARVRCamera.tscn" type="PackedScene" id=10]
+[ext_resource path="res://OQ_Toolkit/OQ_UI2D/OQ_UI2DLabel.tscn" type="PackedScene" id=11]
 
 [sub_resource type="CubeMesh" id=1]
 size = Vector3( 0.005, 0.005, 1 )
@@ -51,3 +52,7 @@ ui_raycast_length = 5.0
 check_parent_can_static_grab = true
 
 [node name="Feature_VRSimulator" parent="OQ_ARVROrigin" instance=ExtResource( 5 )]
+
+[node name="debug" parent="." instance=ExtResource( 11 )]
+transform = Transform( 1, 0, 0, 0, 0.34202, 0.939693, 0, -0.939693, 0.34202, 0, 0.168224, -0.292959 )
+text = "..."

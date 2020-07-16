@@ -124,11 +124,19 @@ func _grabProcess(_delta):
 # ===================== Controls & Menus ================================
 
 var menuEnabled = true
+var lastMenuAction = false
 func _menuProcess(_delta):
-  if menuEnabled and (vr.button_just_pressed(vr.BUTTON.Y) || Input.is_action_just_pressed("ui_cycle_mode")):
+  var pressed = (vr.button_pressed(vr.BUTTON.Y) || Input.is_action_pressed("ui_cycle_mode"))
+  if lastMenuAction:
+    if pressed:
+      return
+    else:
+      lastMenuAction = false
+  if menuEnabled and not lastMenuAction and pressed:
     var tf = head.global_transform
     tf = tf.translated(Vector3(0, 0, -0.6))
     gamestate.toggle_menu(tf)
+    lastMenuAction = true
 
 func set_raycast_len(l: float):
   var uirc = find_node("Feature_UIRayCast", true, false)
@@ -139,14 +147,20 @@ func set_raycast_len(l: float):
 const HAND_CONTROL_DEBOUNCE = 2000
 var lastHandControl = 0
 var handControlActive = false
+var lgest = null
+var rgest = null
 func _handControlProcess(_delta):
   # Based on hand gestures in both hands, toggle
   # the more "sensitive" controls so the user
   # can gesticulate wildly without being surprised
   # by menus, movement etc. 
-  var active = (vr.ovrHandTracking 
-    and lhand.detect_simple_gesture() == "Two" 
-    and rhand.detect_simple_gesture() == "Two")
+  var active = false
+  if vr.ovrHandTracking:
+    var lgest = lhand.detect_simple_gesture()
+    var rgest = rhand.detect_simple_gesture()
+    if lgest == "V" and rgest == "V":
+      active = true
+    
   if not active:
     handControlActive = false
     return
@@ -168,8 +182,12 @@ func _handControlProcess(_delta):
 func _ready():
   _multiplayerReady()
 
+onready var dbg = $debug
 func _process(delta):
+  _handControlProcess(delta)
   _multiplayerProcess(delta)
   _controllerProcess(delta)
   _grabProcess(delta)
   _menuProcess(delta)
+  dbg.set_label_text("L: %s R: %s M: %s" % [str(lgest), str(rgest), menuEnabled])
+    
