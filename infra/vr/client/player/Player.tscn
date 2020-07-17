@@ -29,6 +29,11 @@ script = ExtResource( 8 )
 
 [node name="OQ_ARVRCamera" parent="OQ_ARVROrigin" instance=ExtResource( 10 )]
 
+[node name="debug" parent="OQ_ARVROrigin/OQ_ARVRCamera" instance=ExtResource( 11 )]
+transform = Transform( 1, 0, 0, 0, 0.965926, 0.258819, 0, -0.258819, 0.965926, 0, -0.453073, -1.36526 )
+visible = false
+text = "..."
+
 [node name="OQ_RightController" parent="OQ_ARVROrigin" instance=ExtResource( 3 )]
 
 [node name="RedIndicator" type="MeshInstance" parent="OQ_ARVROrigin/OQ_RightController"]
@@ -52,7 +57,3 @@ ui_raycast_length = 5.0
 check_parent_can_static_grab = true
 
 [node name="Feature_VRSimulator" parent="OQ_ARVROrigin" instance=ExtResource( 5 )]
-
-[node name="debug" parent="." instance=ExtResource( 11 )]
-transform = Transform( 1, 0, 0, 0, 0.34202, 0.939693, 0, -0.939693, 0.34202, 0, 0.168224, -0.292959 )
-text = "..."

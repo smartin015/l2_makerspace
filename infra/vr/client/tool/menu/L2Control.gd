@@ -26,6 +26,8 @@ func _on_L2WorkspaceControl_workspace_action(ws, action):
         "name": ws
       })
       $CenterRaised.visible = true
+    "save":
+      workspace.snapshot(ws)
     _:
       print("Unknown action %s for workspace %s" % [action, ws])
 

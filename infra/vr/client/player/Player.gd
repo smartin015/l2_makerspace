@@ -12,11 +12,7 @@ onready var right = $OQ_ARVROrigin/OQ_RightController
 onready var lgrab = $OQ_ARVROrigin/OQ_LeftController/Feature_StaticGrab
 onready var rgrab = $OQ_ARVROrigin/OQ_RightController/Feature_StaticGrab
 onready var redIndicator = $OQ_ARVROrigin/OQ_RightController/RedIndicator
-
-func _noset_alias(_a):
-  pass
-func _get_alias():
-  return gamestate.config["alias"]
+onready var toast = $OQ_ARVROrigin/OQ_ARVRCamera/debug
 
 # ===================== Networked Multiplayer ==========================
 var last_head = Transform()
@@ -78,6 +74,11 @@ remote func set_workspace(new_ws):
     if p == self:
       continue
     p.update_visibility()
+
+func _noset_alias(_a):
+  pass
+func _get_alias():
+  return gamestate.config["alias"]
 
 # ==================== Control Zone ===================================
 
@@ -178,22 +179,34 @@ func _handControlProcess(_delta):
       and now > lastHandControl + HAND_CONTROL_DEBOUNCE):
     handControlActive = true
     lastHandControl = now
-    print("Hand control active - toggling sensitive controls")
     
     raycast.active = not raycast.active    
     menuEnabled = not menuEnabled
+    if menuEnabled:
+      show_toast("Controls Unlocked")
+    else:
+      show_toast("Controls Locked")
 
 # ===================== Main functions ================================
+
+var toast_start = null
+const DEBUG_VISIBLE_MSEC = 3000
+func show_toast(text):
+  toast.set_label_text(text)
+  toast.visible = true
+  toast_start = OS.get_ticks_msec()
 
 func _ready():
   _multiplayerReady()
 
-onready var dbg = $debug
 func _process(delta):
   _handControlProcess(delta)
   _multiplayerProcess(delta)
   _controllerProcess(delta)
   _grabProcess(delta)
   _menuProcess(delta)
-  dbg.set_label_text("L: %s R: %s M: %s" % [str(lgest), str(rgest), menuEnabled])
+  
+  if toast_start != null and OS.get_ticks_msec() > toast_start + DEBUG_VISIBLE_MSEC:
+    toast.visible = false
+    toast_start = null
     

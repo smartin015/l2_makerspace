@@ -44,3 +44,9 @@ func _init_workspaces():
     ws.fields["room"] = DEFAULT_WS_ROOMS[i]
     wss.push_back(ws)
   return wss
+
+remote func snapshot(name):
+  var sender = get_tree().get_rpc_sender_id()
+  print("TODO snapshot ws %s" % name)
+  rpc_id(sender, "on_snapshot", name, OK)
+  

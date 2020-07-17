@@ -19,3 +19,12 @@ remote func on_new(ws):
   
 func edit(ws, fields):
   rpc_id(1, "edit", ws, fields)
+
+func snapshot(ws):
+  rpc_id(1, "snapshot", ws)
+  
+remote func on_snapshot(ws, status):
+  if status == OK:
+    gamestate.player.show_toast("Saved snapshot: %s" % ws)
+  else:
+    gamestate.player.show_toast("Error: %s" % status)

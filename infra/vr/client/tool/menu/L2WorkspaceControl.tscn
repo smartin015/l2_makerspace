@@ -1,7 +1,10 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://tool/menu/L2WorkspaceControl.gd" type="Script" id=1]
 [ext_resource path="res://OQ_Toolkit/OQ_UI2D/theme/oq_ui2d_standard.theme" type="Theme" id=2]
+[ext_resource path="res://textures/baseline_save_white_18dp.png" type="Texture" id=3]
+[ext_resource path="res://textures/baseline_add_white_18dp.png" type="Texture" id=4]
+[ext_resource path="res://textures/baseline_folder_open_white_18dp.png" type="Texture" id=5]
 
 [node name="L2WorkspaceControl" type="ReferenceRect"]
 margin_top = 1.0
@@ -20,7 +23,7 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="Label" type="Label" parent="VBoxContainer"]
+[node name="Title" type="Label" parent="VBoxContainer"]
 margin_right = 256.0
 margin_bottom = 33.0
 text = "Workspaces"
@@ -29,8 +32,38 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="ColorRect" type="ColorRect" parent="VBoxContainer"]
+[node name="Border" type="ColorRect" parent="VBoxContainer"]
 margin_top = 37.0
+margin_right = 256.0
+margin_bottom = 39.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
+margin_top = 41.0
+margin_right = 256.0
+margin_bottom = 77.0
+
+[node name="Current" type="Label" parent="VBoxContainer/HBoxContainer"]
+margin_top = 1.0
+margin_right = 216.0
+margin_bottom = 34.0
+size_flags_horizontal = 3
+text = "> WS"
+clip_text = true
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Save" type="TextureButton" parent="VBoxContainer/HBoxContainer"]
+margin_left = 220.0
+margin_right = 256.0
+margin_bottom = 36.0
+texture_normal = ExtResource( 3 )
+
+[node name="ColorRect" type="ColorRect" parent="VBoxContainer"]
+margin_top = 81.0
 margin_right = 256.0
 margin_bottom = 255.0
 size_flags_horizontal = 3
@@ -56,13 +89,25 @@ margin_bottom = 217.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="NewWorkspace" type="Button" parent="."]
-margin_left = 224.562
+[node name="NewWorkspace" type="TextureButton" parent="."]
+margin_left = 219.269
 margin_top = -1.0
-margin_right = 254.562
+margin_right = 255.269
 margin_bottom = 38.0
-text = "+"
+texture_normal = ExtResource( 4 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
+
+[node name="LoadWorkspace" type="TextureButton" parent="."]
+margin_left = 1.12611
+margin_top = -0.646439
+margin_right = 37.1261
+margin_bottom = 38.3536
+texture_normal = ExtResource( 5 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+[connection signal="pressed" from="VBoxContainer/HBoxContainer/Save" to="." method="_on_Save_pressed"]
 [connection signal="pressed" from="NewWorkspace" to="." method="_on_NewWorkspace_pressed"]
+[connection signal="pressed" from="LoadWorkspace" to="." method="_on_LoadWorkspace_pressed"]
