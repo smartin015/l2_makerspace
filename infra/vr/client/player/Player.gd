@@ -3,6 +3,7 @@ extends Spatial
 const DEFAULT_RAYCAST_LEN = 5.0
 var ws = workspace.DEFAULT
 var alias setget _noset_alias, _get_alias
+var color setget _noset_color, _get_color
 onready var origin = $OQ_ARVROrigin
 onready var head = $OQ_ARVROrigin/OQ_ARVRCamera
 onready var left = $OQ_ARVROrigin/OQ_LeftController
@@ -44,6 +45,7 @@ func _multiplayerProcess(delta):
       rpc_unreliable("puppet_hands", lorient, rorient)
     else:
       redIndicator.visible = true
+      rpc_unreliable("puppet_hands", null, null)
       
     
     rset_unreliable("puppet_motion", [
@@ -79,6 +81,11 @@ func _noset_alias(_a):
   pass
 func _get_alias():
   return gamestate.config["alias"]
+  
+func _noset_color(_a):
+  pass
+func _get_color():
+  return gamestate.config["color"]
 
 # ==================== Control Zone ===================================
 

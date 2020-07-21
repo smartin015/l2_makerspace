@@ -14,3 +14,6 @@ func check(c, a):
 func set_name(c, n: String):
   if check(c, Access.WRITE):
     name = n
+
+func get_state():
+  return {"name": name, "fields": fields, "perm": perm}

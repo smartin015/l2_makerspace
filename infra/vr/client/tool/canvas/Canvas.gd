@@ -21,9 +21,9 @@ func _ready():
 remote func setup(shapesList: Array):
   for s in shapesList:
     var n = L2Shape.instance()
-    n.start_shape(s[0], s[1][0])
-    for i in range(1, len(s[1])):
-      n.handle_point(s[1][i])
+    n.start_shape(s[0], s[2][0], s[1])
+    for i in range(1, len(s[2])):
+      n.handle_point(s[2][i])
     cui.add_child(n)
 
 remotesync func clear():
@@ -56,7 +56,7 @@ remotesync func redo():
       c.visible = true
       return
 
-remotesync func handle_input(pressed, position, shapeType):
+remotesync func handle_input(pressed, position, shapeType, col):
   if cui == null:
     return
   
@@ -82,7 +82,7 @@ remotesync func handle_input(pressed, position, shapeType):
     if pressed:
       var n = L2Shape.instance()
       cui.add_child(n)
-      n.start_shape(shapeType, position)
+      n.start_shape(shapeType, position, col)
       currShape[sender] = n
     elif currShape.get(sender) != null:
       currShape[sender] = null
@@ -98,16 +98,8 @@ func _on_CanvasUI_gui_input(event):
   rpc("handle_input", 
     event.get('pressed'), 
     event.get('position'), 
-    nextShapeType)
-
-
-func _on_CanvasUIContainer_clear():
-  rpc("clear")
-
-func _on_CanvasUIContainer_save():
-  # TODO save
-  print("Save")
-  audio.play()
+    nextShapeType,
+    gamestate.config["color"])
 
 func _on_CanvasUIContainer_set_shape(shape):
   # Shape is only selected locally
@@ -125,8 +117,24 @@ func _on_CanvasUIContainer_set_shape(shape):
 func _on_AudioStreamPlayer2D_finished():
   print("Audio finished")
 
-func _on_CanvasUIContainer_undo():
-  rpc("undo")
+func _on_CanvasUIContainer_button(name):
+  match name:
+    "clear":
+      rpc("clear")
+    "save":
+      rpc_id(1, "save")
+    "undo":
+      rpc("undo")
+    "redo":
+      rpc("redo")
+    "help":
+      audio.play()
+    _:
+      print("Error: unknown canvas button name %s" % name)
 
-func _on_CanvasUIContainer_redo():
-  rpc("redo")
+remote func on_save(status, name):
+  # Called by server when save action ends
+  if status == OK:
+    gamestate.player.show_toast("Saved to %s" % name)
+  else:
+    gamestate.player.show_toast("Error saving: %s" % status)

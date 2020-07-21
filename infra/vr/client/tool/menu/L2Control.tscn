@@ -6,52 +6,40 @@
 [ext_resource path="res://tool/menu/L2WorkspaceControl.tscn" type="PackedScene" id=4]
 [ext_resource path="res://tool/menu/L2SocialControl.tscn" type="PackedScene" id=5]
 [ext_resource path="res://tool/menu/L2ToolControl.tscn" type="PackedScene" id=6]
-[ext_resource path="res://tool/menu/L2WorkspaceEdit.tscn" type="PackedScene" id=7]
-[ext_resource path="res://tool/menu/L2AliasEdit.tscn" type="PackedScene" id=8]
+[ext_resource path="res://tool/menu/L2ParamEdit.tscn" type="PackedScene" id=7]
+[ext_resource path="res://tool/menu/ListSelect.tscn" type="PackedScene" id=8]
 
 [node name="L2Control" type="Spatial"]
 script = ExtResource( 2 )
 
 [node name="Left" parent="." instance=ExtResource( 1 )]
 transform = Transform( 0.866025, 0, 0.5, 0, 0.999999, 0, -0.5, 0, 0.866025, -0.3, 0, 0.05 )
-editor_live_update = false
-transparent = false
 
 [node name="L2WorkspaceControl" parent="Left" instance=ExtResource( 4 )]
 
 [node name="Center" parent="." instance=ExtResource( 1 )]
-editor_live_update = false
-transparent = false
 
 [node name="L2ToolControl" parent="Center" instance=ExtResource( 6 )]
 
 [node name="CenterRaised" parent="." instance=ExtResource( 1 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.0957865 )
 visible = false
-editor_live_update = false
-transparent = false
 
-[node name="L2WorkspaceEdit" parent="CenterRaised" instance=ExtResource( 7 )]
+[node name="L2ParamEdit" parent="CenterRaised" instance=ExtResource( 7 )]
 
 [node name="CenterRaised2" parent="." instance=ExtResource( 1 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.0957865 )
 visible = false
-editor_live_update = false
-transparent = false
 
-[node name="L2AliasEdit" parent="CenterRaised2" instance=ExtResource( 8 )]
+[node name="ListSelect" parent="CenterRaised2" instance=ExtResource( 8 )]
 
 [node name="Right" parent="." instance=ExtResource( 1 )]
 transform = Transform( 0.866025, 0, -0.5, 0, 1, 0, 0.5, 0, 0.866025, 0.3, 0, 0.05 )
-editor_live_update = false
-transparent = false
 
 [node name="L2SocialControl" parent="Right" instance=ExtResource( 5 )]
 
 [node name="Bottom" parent="." instance=ExtResource( 1 )]
 transform = Transform( 1, 0, -2.08616e-07, 1.34096e-07, 0.766044, 0.642788, 1.59809e-07, -0.642788, 0.766044, 0, -0.346691, 0.0266754 )
-editor_live_update = false
-transparent = false
 
 [node name="ReferenceRect" type="ReferenceRect" parent="Bottom"]
 anchor_right = 0.186
@@ -75,7 +63,8 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 [connection signal="workspace_action" from="Left/L2WorkspaceControl" to="." method="_on_L2WorkspaceControl_workspace_action"]
-[connection signal="close_edit" from="CenterRaised/L2WorkspaceEdit" to="." method="_on_L2WorkspaceEdit_close_edit"]
-[connection signal="close_edit" from="CenterRaised2/L2AliasEdit" to="." method="_on_L2AliasEdit_close_edit"]
+[connection signal="close_edit" from="CenterRaised/L2ParamEdit" to="." method="_on_L2ParamEdit_close_edit"]
+[connection signal="delete" from="CenterRaised2/ListSelect" to="." method="_on_ListSelect_delete"]
+[connection signal="selection" from="CenterRaised2/ListSelect" to="." method="_on_ListSelect_selection"]
 [connection signal="social_action" from="Right/L2SocialControl" to="." method="_on_L2SocialControl_social_action"]
 [connection signal="pressed" from="Bottom/ReferenceRect/Close" to="." method="_on_Close_pressed"]

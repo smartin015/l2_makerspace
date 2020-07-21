@@ -14,6 +14,9 @@ remotesync func set_ws(ws):
   if ws != gamestate.player.ws:
     get_parent().queue_free()
 
+remotesync func delete():
+  get_parent().queue_free()
+
 func _ready():
   center.material_override = SpatialMaterial.new()
   _update_color()
@@ -84,3 +87,5 @@ func handle_drag(dest):
 func handle_ws(ws):
   rpc("set_ws", ws)
 
+func handle_delete():
+  rpc("delete")

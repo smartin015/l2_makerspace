@@ -5,3 +5,6 @@ remote func set_tf(tf):
 
 remote func set_ws(ws):
   get_parent().ws = ws
+
+remote func delete():
+  get_parent().queue_free()

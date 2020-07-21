@@ -2,7 +2,6 @@
 
 [ext_resource path="res://tool/canvas/Shape.gd" type="Script" id=1]
 
-
 [sub_resource type="CircleShape2D" id=1]
 radius = 20.0
 

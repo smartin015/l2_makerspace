@@ -3,7 +3,7 @@ extends Area2D
 var color: Color = Color.blue
 var stroke = 2.0
 var pickable = false setget _set_pickable
-onready var col = $CollisionShape2D
+onready var collShape = $CollisionShape2D
 var shapeType: int # gamestate.SHAPE
 # Interpretation differs based on shape type
 var points: PoolVector2Array
@@ -18,7 +18,7 @@ func _draw():
     # TODO Find centroid and set pickable location
     var p = points[0]
     draw_circle(p, radius, Color.yellowgreen)
-    col.position = p    
+    collShape.position = p    
     
   # https://docs.godotengine.org/en/stable/classes/class_canvasitem.html
   match shapeType:
@@ -33,7 +33,8 @@ func _draw():
         points[1].length(), 
         0, PI*2, 24, color, stroke)
     
-func start_shape(shape: int, origin: Vector2):
+func start_shape(shape: int, origin: Vector2, col: Color):
+  color = col
   print("Starting %s" % shape)
   shapeType = shape
   clear()

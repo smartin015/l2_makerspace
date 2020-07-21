@@ -14,7 +14,7 @@ __meta__ = {
 }
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
-margin_right = 1197.0
+margin_right = 1467.0
 margin_bottom = 39.0
 size_flags_horizontal = 3
 theme = ExtResource( 1 )
@@ -46,15 +46,21 @@ margin_right = 906.0
 margin_bottom = 39.0
 text = "Redo"
 
-[node name="ShapeMenu" type="MenuButton" parent="HBoxContainer"]
+[node name="Help" type="Button" parent="HBoxContainer"]
 margin_left = 1106.0
-margin_right = 1197.0
+margin_right = 1176.0
+margin_bottom = 39.0
+text = "Help"
+
+[node name="ShapeMenu" type="MenuButton" parent="HBoxContainer"]
+margin_left = 1376.0
+margin_right = 1467.0
 margin_bottom = 39.0
 text = "Shape"
 
 [node name="CanvasUI" type="ReferenceRect" parent="."]
 margin_top = 69.0
-margin_right = 1197.0
+margin_right = 1467.0
 margin_bottom = 600.0
 mouse_filter = 1
 size_flags_horizontal = 3
@@ -66,3 +72,4 @@ __meta__ = {
 [connection signal="pressed" from="HBoxContainer/Save" to="." method="_on_Save_pressed"]
 [connection signal="pressed" from="HBoxContainer/Undo" to="." method="_on_Undo_pressed"]
 [connection signal="pressed" from="HBoxContainer/Redo" to="." method="_on_Redo_pressed"]
+[connection signal="pressed" from="HBoxContainer/Help" to="." method="_on_Help_pressed"]

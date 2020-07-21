@@ -6,8 +6,8 @@ export var ws = workspace.DEFAULT
 var currShape = {}
 
 remote func clear():
-  for l in get_children():
-    l.queue_free()
+  for c in get_children():
+    c.queue_free()
 
 remotesync func undo():
   # Undo hides the last unhidden shape
@@ -27,16 +27,35 @@ remotesync func redo():
       c.visible = true
       return
 
-remote func setup_request():
-  var sender = get_tree().get_rpc_sender_id()
-  var shapesList = []
+remote func save():
+  print("Beginning save")
+  var shapes = ""
+  for c in get_children():
+    if not c.has_method("to_svg"):
+      continue
+    shapes += "\n" + c.to_svg()
+    
+  var svg = ("<?xml version=\"1.0\" standalone=\"yes\"?>"
+      + "<svg width=\"1500\" height=\"600\" xmlns=\"http://www.w3.org/2000/svg\">"
+      + shapes
+      + "\n</svg>")
   
+  print(svg) # TODO publish on ROS topic
+  
+  var sender = get_tree().get_rpc_sender_id()
+  rpc_id(sender, "on_save", OK, "but_not_implemented")
+
+func get_state():
+  var shapesList = []
   for s in get_children():
     if s.has_method('start_shape') and s.visible:
-      shapesList.push_back([s.shapeType, s.points])
-  rpc_id(sender, "setup", shapesList)
+      shapesList.push_back([s.shapeType, s.color, s.points])
+  return {"type": objtype, "shapes": shapesList}
 
-remote func handle_input(pressed, position, shapeType):
+remote func setup_request():
+  rpc_id(get_tree().get_rpc_sender_id(), "setup", get_state()["shapes"])
+
+remote func handle_input(pressed, position, shapeType, col):
   # Remove any undo (non-visible) shapes
   var cs = get_children()
   cs.invert()
@@ -54,7 +73,7 @@ remote func handle_input(pressed, position, shapeType):
   if pressed != null:
     if pressed:
       var n = L2Shape.instance()
-      n.start_shape(shapeType, position)
+      n.start_shape(shapeType, position, col)
       add_child(n)
       currShape[sender] = n
     elif currShape.get(sender) != null:

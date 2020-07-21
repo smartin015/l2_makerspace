@@ -19,9 +19,6 @@ stream = ExtResource( 4 )
 
 [node name="Selectable" parent="." instance=ExtResource( 5 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0 )
-[connection signal="clear" from="OQ_UI2DCanvas/CanvasUIContainer" to="." method="_on_CanvasUIContainer_clear"]
-[connection signal="redo" from="OQ_UI2DCanvas/CanvasUIContainer" to="." method="_on_CanvasUIContainer_redo"]
-[connection signal="save" from="OQ_UI2DCanvas/CanvasUIContainer" to="." method="_on_CanvasUIContainer_save"]
+[connection signal="button" from="OQ_UI2DCanvas/CanvasUIContainer" to="." method="_on_CanvasUIContainer_button"]
 [connection signal="set_shape" from="OQ_UI2DCanvas/CanvasUIContainer" to="." method="_on_CanvasUIContainer_set_shape"]
-[connection signal="undo" from="OQ_UI2DCanvas/CanvasUIContainer" to="." method="_on_CanvasUIContainer_undo"]
 [connection signal="finished" from="AudioStreamPlayer2D" to="." method="_on_AudioStreamPlayer2D_finished"]

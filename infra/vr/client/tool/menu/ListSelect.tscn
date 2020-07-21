@@ -1,15 +1,16 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=5 format=2]
 
-[ext_resource path="res://tool/selectable/SelectWorkspace.gd" type="Script" id=1]
-[ext_resource path="res://OQ_Toolkit/OQ_UI2D/theme/oq_ui2d_standard.theme" type="Theme" id=2]
+[ext_resource path="res://OQ_Toolkit/OQ_UI2D/theme/oq_ui2d_standard.theme" type="Theme" id=1]
+[ext_resource path="res://textures/baseline_delete_white_18dp.png" type="Texture" id=2]
+[ext_resource path="res://tool/menu/ListSelect.gd" type="Script" id=3]
+[ext_resource path="res://textures/baseline_close_white_18dp.png" type="Texture" id=4]
 
-
-[node name="SelectWorkspace" type="ReferenceRect"]
+[node name="ListSelect" type="ReferenceRect"]
 margin_top = 1.0
 margin_right = 256.0
 margin_bottom = 256.0
-theme = ExtResource( 2 )
-script = ExtResource( 1 )
+theme = ExtResource( 1 )
+script = ExtResource( 3 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -24,7 +25,7 @@ __meta__ = {
 [node name="Label" type="Label" parent="VBoxContainer"]
 margin_right = 256.0
 margin_bottom = 33.0
-text = "Select WS"
+text = "Select"
 align = 1
 __meta__ = {
 "_edit_use_anchors_": false
@@ -51,19 +52,30 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="Workspaces" type="VBoxContainer" parent="VBoxContainer/ColorRect/ScrollContainer"]
+[node name="Items" type="VBoxContainer" parent="VBoxContainer/ColorRect/ScrollContainer"]
 margin_right = 256.0
 margin_bottom = 217.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="Close" type="Button" parent="."]
+[node name="Close" type="TextureButton" parent="."]
 margin_left = 222.44
-margin_top = -3.1777
-margin_right = 252.44
-margin_bottom = 35.8223
-text = "X"
+margin_top = -2.1777
+margin_right = 258.44
+margin_bottom = 36.8223
+texture_normal = ExtResource( 4 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Delete" type="TextureButton" parent="."]
+margin_left = 5.43295
+margin_top = -1.92688
+margin_right = 41.433
+margin_bottom = 37.0731
+texture_normal = ExtResource( 2 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 [connection signal="pressed" from="Close" to="." method="_on_Close_pressed"]
+[connection signal="pressed" from="Delete" to="." method="_on_Delete_pressed"]

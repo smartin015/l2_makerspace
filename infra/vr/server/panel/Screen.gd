@@ -9,3 +9,6 @@ func _ready():
 
 remote func setup_request():
   rpc_id(get_tree().get_rpc_sender_id(), "setup", chan)
+
+func get_state():
+  pass

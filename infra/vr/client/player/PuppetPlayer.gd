@@ -8,6 +8,7 @@ var ws
 puppet var puppet_transform
 puppet var puppet_motion
 puppet var alias = "loading..."
+puppet var color = "#FFFFFF"
 
 onready var left = $LeftHand
 onready var right = $RightHand
@@ -66,7 +67,7 @@ func _clear_bone_rest(skeleton : Skeleton):
     skeleton.set_bone_pose(i, Transform(bone_rest.basis)); # use the loaded rest as start pose
     bone_rest.basis = Basis(); # clear the rotation of the rest pose
     skeleton.set_bone_rest(i, bone_rest); # and set this as the rest pose for the skeleton
-  
+
 remote func puppet_hands(lorient, rorient):
   if lorient != null:
     for i in range(0, len(_vrapi2hand_bone_map)):

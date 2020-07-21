@@ -39,7 +39,7 @@ func _init_workspaces():
   var wss = []
   for i in range(len(DEFAULT_WS_ROOMS)):
     var ws = PathEnt.new()
-    ws.name = str(i)
+    ws.name = "Workspace " + str(i)
     ws.perm = 0x777
     ws.fields["room"] = DEFAULT_WS_ROOMS[i]
     wss.push_back(ws)
@@ -48,5 +48,21 @@ func _init_workspaces():
 remote func snapshot(name):
   var sender = get_tree().get_rpc_sender_id()
   print("TODO snapshot ws %s" % name)
+  var ws
+  for w in workspaces:
+    if w.name == name:
+      ws = w.get_state()
+      
+  if ws == null:
+    rpc_id(sender, "on_snapshot", name, ERR_CANT_RESOLVE)
+    return
+  
+  var tools = []
+  for t in gamestate.tools.get_children():
+    if t.ws == name:
+      tools.push_back(t.get_state())
+  
+  print({"ws": ws, "tools": tools})
+  
   rpc_id(sender, "on_snapshot", name, OK)
   

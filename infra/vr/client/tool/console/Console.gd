@@ -26,4 +26,4 @@ func _on_ConsoleUI_clear():
   rpc("clear")
 
 func _on_ConsoleUI_set_topic(t):
-  rpc_id(0, "set_topic", t)
+  rpc_id(1, "set_topic", t)

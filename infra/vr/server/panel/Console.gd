@@ -28,6 +28,9 @@ remote func set_topic(t):
   # Bulk update all clients
   rpc("setup", topic, text)
 
+func get_state():
+  pass
+
 remote func setup_request():
   rpc_id(get_tree().get_rpc_sender_id(), "setup", topic, text)
 

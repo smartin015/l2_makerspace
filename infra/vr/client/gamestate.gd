@@ -154,6 +154,12 @@ func ws_selection(ws):
     s[-1].handle_ws(ws)
     nfloor.from_pos = null
   
+func delete_selection():
+  var s = get_tree().get_nodes_in_group("selection")
+  if len(s) > 0:
+    s[-1].queue_free()
+    nfloor.from_pos = null
+  
 func shout(text: String):
   rpc("recv_shout", text)
   
@@ -170,7 +176,14 @@ func toggle_menu(tf):
   else:
     menu.queue_free()
 
-func set_alias(alias):
-  config["alias"] = alias
-  player.rset("alias", alias)
+func set_social(next):
+  for k in next.keys():
+    match k:
+      "alias":
+        config["alias"] = next[k]
+        player.rset("alias", next[k])
+      "color":
+        config["color"] = next[k]
+        player.rset("color", next[k])
+        
   Config.save_user_config(config)
