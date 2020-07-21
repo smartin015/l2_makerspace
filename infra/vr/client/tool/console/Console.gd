@@ -7,7 +7,8 @@ func _ready():
   # Always server-owned
   set_network_master(0)
   
-remote func set_topics(topics: String):
+remote func set_topics(topics: PoolStringArray):
+  print("set_topics called")
   cui.topics = topics
   
 remote func setup(topic: String, text: PoolStringArray):
@@ -25,5 +26,5 @@ remote func on_console(text):
 func _on_ConsoleUI_clear():
   rpc("clear")
 
-func _on_ConsoleUI_set_topic(t):
+func _on_ConsoleUI_set_topic(t: String):
   rpc_id(1, "set_topic", t)

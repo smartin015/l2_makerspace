@@ -5,6 +5,7 @@ const MAX_PLAYERS = 12
 onready var actors = get_node("/root/World/Actors")
 onready var players = get_node("/root/World/Players")
 onready var tools = get_node("/root/World/Tools")
+var topics = ["test1", "test2", "asdf"] # TODO get from ROS
 
 # Shapes for CAD
 enum SHAPE {PENCIL, LINE, RECTANGLE, CIRCLE, DRAG}

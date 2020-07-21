@@ -25,6 +25,7 @@ func set_active_topic(t: String):
   topic.text = "Topic: " + t
 
 func _set_topics(ts):
+  print("Setting topics to %s" % ts)
   topics = ts
   var popup = topic.get_popup()
   popup.clear()
@@ -35,4 +36,4 @@ func _set_topics(ts):
   popup.show()
 
 func _popupMenuChoice(id):
-  emit_signal("set_topic", id)
+  emit_signal("set_topic", topics[id])

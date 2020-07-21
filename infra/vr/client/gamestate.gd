@@ -157,7 +157,7 @@ func ws_selection(ws):
 func delete_selection():
   var s = get_tree().get_nodes_in_group("selection")
   if len(s) > 0:
-    s[-1].queue_free()
+    s[-1].handle_delete()
     nfloor.from_pos = null
   
 func shout(text: String):

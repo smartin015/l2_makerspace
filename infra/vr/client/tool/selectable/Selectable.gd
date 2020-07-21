@@ -59,7 +59,6 @@ func _on_CenterArea_hit_event(_position, click, release):
     gamestate.handle_selection_change()
 
 func _on_HoldSelect_timeout():
-  print("Timeout!")
   if menu:
     menu.queue_free()
   var tf = gamestate.player.head.global_transform
@@ -80,7 +79,6 @@ func handle_drag(dest):
     SelectState.ROTATE:
       rpc("set_tf", get_parent().global_transform.looking_at(dest, Vector3.UP))
   selected = SelectState.NONE
-  print("rm handle_drag")
   remove_from_group("selection")
   _update_color()
 

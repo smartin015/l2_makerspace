@@ -14,7 +14,7 @@ func _ready():
 remote func clear():
   text = PoolStringArray()
 
-remote func set_topic(t):
+remote func set_topic(t: String):
   if handler != null:
     ROSBridge.ros_disconnect(handler)
     
@@ -32,7 +32,9 @@ func get_state():
   pass
 
 remote func setup_request():
-  rpc_id(get_tree().get_rpc_sender_id(), "setup", topic, text)
+  var sender = get_tree().get_rpc_sender_id()
+  rpc_id(sender, "setup", topic, text)
+  rpc_id(sender, "set_topics", gamestate.topics)
 
 func _on_console(msg, _id):
   text.push_back(msg.data)

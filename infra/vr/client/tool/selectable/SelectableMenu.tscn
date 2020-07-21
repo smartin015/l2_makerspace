@@ -8,7 +8,7 @@
 script = ExtResource( 3 )
 
 [node name="OQ_UI2DCanvas" parent="." instance=ExtResource( 1 )]
-transform = Transform( 1, 0, 0, 0, 0.866025, 0.5, 0, -0.5, 0.866025, 0, 0, 0 )
+transform = Transform( 1, 0, 0, 0, 1, 2.08616e-07, 0, -2.08616e-07, 1, 0, 0, 0 )
 
 [node name="SelectWorkspace" parent="OQ_UI2DCanvas" instance=ExtResource( 2 )]
 [connection signal="delete" from="OQ_UI2DCanvas/SelectWorkspace" to="." method="_on_SelectWorkspace_delete"]
