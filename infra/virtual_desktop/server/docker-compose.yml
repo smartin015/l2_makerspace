@@ -6,7 +6,7 @@ services:
       target: vdi
     image: vdi:latest
     environment:
-    - PASSWORD=oakdale43
+    - PASSWORD=l2pass
     - USER=user
     - KEYMAP="us"
     cap_add:
