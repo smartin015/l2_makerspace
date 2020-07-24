@@ -1,5 +1,6 @@
 extends Spatial
 
+const GRAB_TYPE = "pendant"
 var control_zone # String passed in to find `zone`
 var pos_topic
 

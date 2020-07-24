@@ -1,15 +1,8 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=2 format=2]
 
 [ext_resource path="res://OQ_Toolkit/OQ_UI2D/OQ_UI2DCanvas.tscn" type="PackedScene" id=1]
-[ext_resource path="res://tool/menu/ListSelect.tscn" type="PackedScene" id=2]
-[ext_resource path="res://tool/selectable/SelectableMenu.gd" type="Script" id=3]
 
-[node name="SelectableMenu" type="Spatial"]
-script = ExtResource( 3 )
+[node name="3DTransformMenu" type="Spatial"]
 
 [node name="OQ_UI2DCanvas" parent="." instance=ExtResource( 1 )]
 transform = Transform( 1, 0, 0, 0, 1, 2.08616e-07, 0, -2.08616e-07, 1, 0, 0, 0 )
-
-[node name="SelectWorkspace" parent="OQ_UI2DCanvas" instance=ExtResource( 2 )]
-[connection signal="delete" from="OQ_UI2DCanvas/SelectWorkspace" to="." method="_on_SelectWorkspace_delete"]
-[connection signal="selection" from="OQ_UI2DCanvas/SelectWorkspace" to="." method="_on_SelectWorkspace_selection"]

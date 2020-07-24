@@ -5,6 +5,7 @@ var selected = SelectState.NONE
 onready var center = $CenterArea/MeshInstance
 onready var tmr = $HoldSelect
 onready var SelectableMenu = load("res://tool/selectable/SelectableMenu.tscn")
+onready var Transformer = load("res://tool/selectable/3DTransformer.tscn")
 onready var menu = null
 
 remotesync func set_tf(tf):
@@ -63,7 +64,8 @@ func _on_HoldSelect_timeout():
     menu.queue_free()
   var tf = gamestate.player.head.global_transform
   tf = tf.translated(Vector3(0, 0, -0.6))
-  var m = SelectableMenu.instance()
+  # var m = SelectableMenu.instance()
+  var m = Transformer.instance()
   m.transform = tf
   gamestate.tools.add_child(m)
   selected = SelectState.FIXED

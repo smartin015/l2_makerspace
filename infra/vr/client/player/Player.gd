@@ -130,10 +130,20 @@ func _controllerProcess(_delta):
 var grabStart
 
 func _grabProcess(_delta):
-  if lgrab.is_just_grabbing:
-    grabStart = lgrab.grabbed_object.get_parent().translation
-  elif lgrab.is_grabbing:
-    lgrab.grabbed_object.get_parent().translation = lgrab.delta_position + grabStart
+  if lgrab.grabbed_object == null:
+    return
+  var parent = lgrab.grabbed_object.get_parent()
+  var gt = parent.get("GRAB_TYPE")
+  match gt:
+    "pendant":
+      if lgrab.is_just_grabbing:
+        grabStart = parent.translation
+      elif lgrab.is_grabbing:
+        parent.translation = lgrab.delta_position + grabStart
+    "3dtransformer":
+      parent.handle_grab(lgrab.grabbed_object, lgrab.delta_position)
+    _:
+      print("Unknown grabbed object type %s" % parent.GRAB_TYPE)
 
 # ===================== Controls & Menus ================================
 
