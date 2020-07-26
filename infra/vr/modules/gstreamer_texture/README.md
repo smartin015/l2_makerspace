@@ -8,3 +8,5 @@ Note: if not present, may need to add to SConstruct using `env.Append(LIBS=[...]
 
 To see what shared library exports:
 `nm -D /usr/lib/x86_64-linux-gnu/libgobject-2.0.so.0 | less`
+
+For "no element 'playbin'", need to remember to call `gst_init`

@@ -64,8 +64,8 @@ func _on_HoldSelect_timeout():
     menu.queue_free()
   var tf = gamestate.player.head.global_transform
   tf = tf.translated(Vector3(0, 0, -0.6))
-  # var m = SelectableMenu.instance()
-  var m = Transformer.instance()
+  var m = SelectableMenu.instance()
+  # var m = Transformer.instance()
   m.transform = tf
   gamestate.tools.add_child(m)
   selected = SelectState.FIXED
