@@ -120,6 +120,7 @@ void GStreamerTexture::_init() {
   Godot::print("gstreamer texture init");
 
   Godot::print(std::getenv("GST_PLUGIN_PATH"));
+  gst_init(NULL, NULL);
   // https://stackoverflow.com/questions/10403588/adding-opencv-processing-to-gstreamer-application
 	gchar *descr = g_strdup(
     /*
@@ -128,7 +129,7 @@ void GStreamerTexture::_init() {
       "! decodebin ! videoconvert ! video/x-raw,format=(string)BGR ! videoconvert "
     */
       "playbin uri=https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm "
- //     "! appsink name=sink emit-signals=true sync=false max-buffers=1 drop=true"
+      "! appsink name=sink emit-signals=true sync=false max-buffers=1 drop=true"
   );
 
   // Check pipeline
@@ -145,6 +146,7 @@ void GStreamerTexture::_init() {
     * @brief Get sink signals and check for a preroll
     *  If preroll exists, we do have a new frame
     */
+  sink = gst_bin_get_by_name (GST_BIN (pipeline), "sink");
   gst_app_sink_set_emit_signals((GstAppSink*)sink, true);
   gst_app_sink_set_drop((GstAppSink*)sink, true);
   gst_app_sink_set_max_buffers((GstAppSink*)sink, 1);
