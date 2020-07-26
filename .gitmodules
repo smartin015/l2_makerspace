@@ -1,0 +1,3 @@
+[submodule "infra/vr/modules/example_gdn_cpp/godot-cpp"]
+	path = infra/vr/modules/example_gdn_cpp/godot-cpp
+	url = https://github.com/GodotNativeTools/godot-cpp
