@@ -1,0 +1,8 @@
+[gd_resource type="ImageTexture" load_steps=2 format=2]
+
+[ext_resource path="res://bin/gstreamertexture.gdns" type="Script" id=1]
+
+[resource]
+flags = 71
+flags = 71
+script = ExtResource( 1 )
