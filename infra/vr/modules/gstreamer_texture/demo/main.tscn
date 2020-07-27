@@ -6,17 +6,43 @@
 [node name="Main" type="Node"]
 script = ExtResource( 3 )
 
-[node name="GStreamer" type="Control" parent="."]
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="GStreamer" type="Control" parent="HBoxContainer"]
+margin_right = 510.0
+margin_bottom = 600.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
 script = ExtResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 pipeline = "videotestsrc pattern=\"snow\" ! videoconvert ! video/x-raw, format=RGB ! appsink name=sink emit-signals=true sync=false max-buffers=1 drop=true"
 
-[node name="TextureRect" type="TextureRect" parent="GStreamer"]
+[node name="TextureRect" type="TextureRect" parent="HBoxContainer/GStreamer"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_right = 40.0
-margin_bottom = 40.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="GStreamer2" type="Control" parent="HBoxContainer"]
+margin_left = 514.0
+margin_right = 1024.0
+margin_bottom = 600.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="TextureRect" type="TextureRect" parent="HBoxContainer/GStreamer2"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+[connection signal="new_caps" from="HBoxContainer/GStreamer" to="." method="_on_GStreamer_new_caps"]
