@@ -13,6 +13,7 @@ script = ExtResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
+pipeline = "videotestsrc pattern=\"snow\" ! videoconvert ! video/x-raw, format=RGB ! appsink name=sink emit-signals=true sync=false max-buffers=1 drop=true"
 
 [node name="TextureRect" type="TextureRect" parent="GStreamer"]
 anchor_right = 1.0

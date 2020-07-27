@@ -23,6 +23,7 @@ private:
     GstBus* bus;
     GError* error;
     bool texture_init;
+    String pipeline_str;
 public:
     static void _register_methods();
 

@@ -12,9 +12,17 @@ std::atomic_bool hasdata = false;
 int width = 0;
 int height = 0;
 
+const char* DEFAULT_PIPELINE = (
+  //"playbin uri=https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm "
+  "videotestsrc "
+  "! videoconvert ! video/x-raw, format=RGB "
+  "! appsink name=sink emit-signals=true sync=false max-buffers=1 drop=true"
+);
+
 void GStreamer::_register_methods() {
   register_method("_process", &GStreamer::_process);
   register_method("_ready", &GStreamer::_ready);
+  register_property<GStreamer, String>("pipeline", &GStreamer::pipeline_str, String(DEFAULT_PIPELINE));
 }
 
 GStreamer::GStreamer() {
@@ -116,6 +124,7 @@ static gboolean my_bus_callback(GstBus *bus, GstMessage *message, gpointer data)
 }
 
 void GStreamer::_init() {
+  pipeline_str = String(DEFAULT_PIPELINE);
   buf = new PoolByteArray();
   width = 0;
   height = 0;
@@ -138,23 +147,17 @@ void GStreamer::_ready() {
   }
   c->set_texture(it);
 
-  // flags = Texture::FLAG_VIDEO_SURFACE;
   Godot::print("gstreamer texture init");
 
   gst_init(NULL, NULL);
   // https://stackoverflow.com/questions/10403588/adding-opencv-processing-to-gstreamer-application
-  gchar *descr = g_strdup(
-      //"playbin uri=https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm "
-      "videotestsrc "
-      "! videoconvert ! video/x-raw, format=RGB "
-      "! appsink name=sink emit-signals=true sync=false max-buffers=1 drop=true"
-  );
-
   // Check pipeline
   error = nullptr;
-  pipeline = gst_parse_launch(descr, &error);
+  Godot::print(pipeline_str);
+  pipeline = gst_parse_launch(pipeline_str.alloc_c_string(), &error);
 	if(error) {
-      Godot::print("could not construct pipeline: %s", error->message);
+      Godot::print("could not construct pipeline");
+      Godot::print(error->message);
       g_error_free(error);
       exit(-1);
   }
@@ -192,7 +195,8 @@ void GStreamer::_process(float delta) {
     im->unlock();
 
     if (!texture_init) {
-      it->create_from_image(Ref(im));
+      it->create_from_image(Ref(im), Texture::FLAG_VIDEO_SURFACE);
+
       texture_init = true;
     } else {
       it->set_data(im);
