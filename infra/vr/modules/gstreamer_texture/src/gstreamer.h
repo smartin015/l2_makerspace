@@ -22,10 +22,11 @@ private:
     GstElement* pipeline;
     GstElement* source;
     GstElement* sink;
-    bool texture_init;
     String pipeline_str;
     int width;
     int height;
+    int texture_width;
+    int texture_height;
     PoolByteArray* buf;
     std::atomic_bool has_data;
 public:

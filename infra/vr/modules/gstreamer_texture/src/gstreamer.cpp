@@ -61,10 +61,11 @@ GstFlowReturn GStreamer::new_sample(GstAppSink *appsink) {
   // Get frame data and convert
   GstMapInfo map;
   gst_buffer_map(buffer, &map, GST_MAP_READ);
-  if (!buf->size()) {
-    buf->resize(map.size);
+  const int bitlen = width * height * 3;
+  if (buf->size() != bitlen) {
+    buf->resize(bitlen);
   }
-  memcpy(buf->write().ptr(), map.data, buf->size());
+  memcpy(buf->write().ptr(), map.data, std::min(buf->size(), bitlen));
   has_data = true;
   gst_buffer_unmap(buffer, &map);
   gst_sample_unref(sample);
@@ -119,7 +120,8 @@ void GStreamer::_init() {
 
   it = ImageTexture::_new();
   it->set_storage(ImageTexture::STORAGE_RAW);
-  texture_init = false; // Wait to init texture
+  texture_width = 0;
+  texture_height = 0;
 }
 
 void GStreamer::_ready() {
@@ -173,10 +175,11 @@ void GStreamer::_process(float delta) {
       return;
     }
 
-    if (!texture_init) {
+    if (texture_width != width || texture_height != height) {
       im->create_from_data(width, height, false, Image::FORMAT_RGB8, *buf);
       it->create_from_image(Ref(im), Texture::FLAG_VIDEO_SURFACE);
-      texture_init = true;
+      texture_width = width;
+      texture_height = height;
     } else {
       im->lock();
       im->create_from_data(width, height, false, Image::FORMAT_RGB8, *buf);
