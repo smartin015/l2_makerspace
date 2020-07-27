@@ -9,6 +9,8 @@ using namespace godot;
 // TODO make part of class
 PoolByteArray* buf;
 std::atomic_bool hasdata = false;
+int width = 0;
+int height = 0;
 
 void GStreamer::_register_methods() {
   register_method("_process", &GStreamer::_process);
@@ -20,7 +22,6 @@ GStreamer::GStreamer() {
 
 GStreamer::~GStreamer() {
   Godot::print("Deconstructing");
-  delete im;
   gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_NULL);
   gst_object_unref(GST_OBJECT(pipeline));
 }
@@ -51,13 +52,13 @@ GstFlowReturn new_sample(GstAppSink *appsink, gpointer /*data*/) {
     GstSample *sample = gst_app_sink_pull_sample(appsink);
     GstBuffer *buffer = gst_sample_get_buffer(sample);
 
-    // Show caps on first frame
+    // Show caps & record dimensions on first frame
     if(!framecount) {
       GstCaps *caps = gst_sample_get_caps(sample);
       GstStructure *structure = gst_caps_get_structure(caps, 0);
-      const int width = g_value_get_int(
+      width = g_value_get_int(
           gst_structure_get_value(structure, "width"));
-      const int height = g_value_get_int(
+      height = g_value_get_int(
           gst_structure_get_value(structure, "height"));
       Godot::print(gst_caps_to_string(caps));
     }
@@ -66,10 +67,11 @@ GstFlowReturn new_sample(GstAppSink *appsink, gpointer /*data*/) {
     // Get frame data and convert
     GstMapInfo map;
     gst_buffer_map(buffer, &map, GST_MAP_READ);
-    buf->resize(map.size);
-    memcpy(buf->write().ptr(), map.data, map.size);
+    if (!buf->size()) {
+      buf->resize(map.size);
+    }
+    memcpy(buf->write().ptr(), map.data, buf->size());
     hasdata = true;
-    Godot::print(String::num(map.size));
     gst_buffer_unmap(buffer, &map);
     gst_sample_unref(sample);
     return GST_FLOW_OK;
@@ -115,14 +117,13 @@ static gboolean my_bus_callback(GstBus *bus, GstMessage *message, gpointer data)
 
 void GStreamer::_init() {
   buf = new PoolByteArray();
-
-  im = Image::_new();
-  im->create(320, 120, false, Image::FORMAT_RGB8);
-  im->fill(Color(0, 1.0, 0));
+  width = 0;
+  height = 0;
+  im = Ref(Image::_new()); // Wait to initialize image
 
   it = ImageTexture::_new();
   it->set_storage(ImageTexture::STORAGE_RAW);
-  it->create_from_image(Ref(im));
+  texture_init = false; // Wait to init texture
 }
 
 void GStreamer::_ready() {
@@ -145,7 +146,7 @@ void GStreamer::_ready() {
   gchar *descr = g_strdup(
       //"playbin uri=https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm "
       "videotestsrc "
-      "! videoconvert "
+      "! videoconvert ! video/x-raw, format=RGB "
       "! appsink name=sink emit-signals=true sync=false max-buffers=1 drop=true"
   );
 
@@ -182,11 +183,20 @@ void GStreamer::_process(float delta) {
   //g_main_iteration(false);
   if (hasdata.load()) {
     hasdata = false;
+    if (buf->size() == 0) {
+      return;
+    }
+
     im->lock();
-    Godot::print(String::num(buf->size()));
-    im->create_from_data(320, 120, false, Image::FORMAT_RGB8, *buf);
+    im->create_from_data(width, height, false, Image::FORMAT_RGB8, *buf);
     im->unlock();
-    it->set_data(im);
+
+    if (!texture_init) {
+      it->create_from_image(Ref(im));
+      texture_init = true;
+    } else {
+      it->set_data(im);
+    }
   }
 }
 

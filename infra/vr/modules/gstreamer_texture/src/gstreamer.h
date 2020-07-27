@@ -15,13 +15,14 @@ class GStreamer : public Control {
 
 private:
     ImageTexture* it;
-    Image* im;
+    Ref<Image> im;
     GstElement* pipeline;
     GstElement* source;
     GstElement* sink;
     GstElement* bin;
     GstBus* bus;
     GError* error;
+    bool texture_init;
 public:
     static void _register_methods();
 
