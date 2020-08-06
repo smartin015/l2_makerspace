@@ -4,6 +4,7 @@
 #include <Godot.hpp>
 #include <gst/app/gstappsink.h>
 #include <ImageTexture.hpp>
+#include <AudioStreamGeneratorPlayback.hpp>
 #include <Image.hpp>
 #include <Color.hpp>
 #include <gst/gst.h>
@@ -18,15 +19,22 @@ class GStreamer : public Node {
 
 private:
     Ref<ImageTexture> image_texture;
+    Ref<AudioStreamGeneratorPlayback> asgp;
     Ref<Image> im;
     GstElement* pipeline;
     String pipeline_str;
     int width;
     int height;
+    int channels;
     int texture_width;
     int texture_height;
     PoolByteArray* buf;
+
+    // Under the hood, this is a Vector<Vector2>
+    // so needs interleaved audio
+    PoolVector2Array* abuf;
     std::atomic_bool has_data;
+    std::atomic_bool has_audio;
     String videosink;
     String audiosink;
 public:
@@ -37,6 +45,7 @@ public:
     // write back data. It should not be exposed
     // to GDScript.
     GstFlowReturn new_video_sample(GstAppSink *appsink);
+    GstFlowReturn new_audio_sample(GstAppSink *appsink);
 
     GStreamer();
     ~GStreamer();
