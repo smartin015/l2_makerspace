@@ -1,7 +1,6 @@
 extends Spatial
 
-const topic = "sequence"
-const topic_type = "l2_msgs/msg/L2Sequence"
+var vp
 
 remote func set_tf(tf):
   transform = tf
@@ -10,7 +9,8 @@ remote func set_ws(ws):
   self.ws = ws
   
 func _ready():
-  ROSBridge.advertise(topic, topic_type, "run_seq_adv")
+  vp = find_node("Viewport", true, false)
+  vp.set_update_mode(Viewport.UPDATE_ONCE)
 
 remote func setup(packed):
   var sui = find_node("SequenceUI", true, false)
@@ -22,21 +22,4 @@ remote func setup(packed):
   for conn in packed["connection_list"]:
     sui.connect_node(
       conn["from"], conn["from_port"], conn["to"], conn["to_port"])
-
-func _on_SequenceItemUI_run_sequence(seq):
-  var items = []
-  for s in seq:
-    items.append({
-      "name": s,
-      "params": [],
-     })
-  ROSBridge.publish(topic, topic_type, {
-    "items": items,
-  }, "seq")
-  print("Published seq to run")
-
-func _on_SequenceItemUI_stop_sequence():
-  ROSBridge.publish(topic, topic_type, {
-    "items": [],
-  }, "seq")
-  print("Published stopseq")
+  vp.set_update_mode(Viewport.UPDATE_ONCE)

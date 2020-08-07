@@ -1,8 +1,6 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=2 format=2]
 
-[ext_resource path="res://tool/sequence/ui_theme.tres" type="Theme" id=1]
 [ext_resource path="res://tool/sequence/SequenceItemNode.gd" type="Script" id=2]
-
 
 [node name="SequenceItemNode" type="GraphNode"]
 margin_right = 216.0
@@ -20,12 +18,11 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="Label" type="Label" parent="."]
+[node name="Status" type="Label" parent="."]
 margin_left = 16.0
 margin_top = 24.0
 margin_right = 200.0
-margin_bottom = 43.0
-theme = ExtResource( 1 )
-text = "Not Started"
+margin_bottom = 38.0
+text = "Status"
 [connection signal="close_request" from="." to="." method="_on_SequenceItem_close_request"]
 [connection signal="dragged" from="." to="." method="_on_SequenceItem_dragged"]

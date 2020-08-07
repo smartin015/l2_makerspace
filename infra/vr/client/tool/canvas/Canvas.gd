@@ -2,6 +2,7 @@ extends Spatial
 
 var currShape = {}
 var cui
+var vp
 var nextShapeType = gamestate.SHAPE.LINE
 onready var audio = $AudioStreamPlayer2D
 onready var L2Shape = load("res://tool/canvas/Shape.tscn")
@@ -12,7 +13,12 @@ remote func set_tf(tf):
 remote func set_ws(ws):
   self.ws = ws
 
+func _update():
+  vp.set_update_mode(Viewport.UPDATE_ONCE)
+
 func _ready():
+  vp = find_node("Viewport", true, false)
+  _update()
   cui = find_node("CanvasUI", true, false)
   cui.connect("gui_input", self, "_on_CanvasUI_gui_input")
   # Always server-owned
@@ -25,6 +31,7 @@ remote func setup(shapesList: Array):
     for i in range(1, len(s[2])):
       n.handle_point(s[2][i])
     cui.add_child(n)
+  _update()
 
 remotesync func clear():
   if cui == null:
@@ -32,6 +39,7 @@ remotesync func clear():
   for c in cui.get_children():
     if c.has_method('start_shape'):
       c.queue_free()
+  _update()
 
 remotesync func undo():
   # Undo hides the last unhidden shape
@@ -44,6 +52,7 @@ remotesync func undo():
       c.visible = false
       c.pickable = false
       return
+  _update()
 
 remotesync func redo():
   # Redo unhides the last hidden shape
@@ -55,6 +64,7 @@ remotesync func redo():
     if c.has_method('start_shape') and not c.visible:
       c.visible = true
       return
+  _update()
 
 remotesync func handle_input(pressed, position, shapeType, col):
   if cui == null:
@@ -90,6 +100,7 @@ remotesync func handle_input(pressed, position, shapeType, col):
     var cl = currShape.get(sender)
     if cl != null:
       cl.handle_point(position)
+  _update()
 
 func _on_CanvasUI_gui_input(event):
   # Only pass necessary event params to avoid remote
