@@ -13,3 +13,5 @@ uint8 type
 
 string name
 string data
+
+geometry_msgs/Vector3 origin

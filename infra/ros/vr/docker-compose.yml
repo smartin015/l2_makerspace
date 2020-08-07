@@ -1,6 +1,7 @@
 version: '3.5'
 services:
   vr_syncer:
+    build: .
     image: l2vr:latest
     networks:
       - l2
@@ -8,6 +9,7 @@ services:
       - PYTHONUNBUFFERED=1
     command: ros2 run l2_vr node --ros-args -p "extra_names:=[]" -p verbose:=true
   vr_fwd:
+    build: .
     image: l2vr:latest
     networks:
       - l2

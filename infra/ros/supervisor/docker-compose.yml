@@ -2,6 +2,7 @@ version: '3.5'
 
 services:
   main:
+    build: .
     image: l2supervisor:latest
     networks:
       - l2

@@ -2,6 +2,7 @@ version: '3.4'
 
 services:
   main:
+    build: .
     image: l2tasks:latest
     environment:
       PYTHONUNBUFFERED: 1

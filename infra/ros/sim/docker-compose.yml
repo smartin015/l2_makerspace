@@ -2,6 +2,7 @@ version: '3.5'
 
 services:
   sim:
+    build: .
     image: l2sim
     ipc: host
     networks:
@@ -18,6 +19,7 @@ services:
     command: /ros_entrypoint.sh ros2 run l2_sim node --ros-args -p report_path:=/test -p object_config:=$OBJCONFIG -r __ns:=/l2/$COMPOSE_PROJECT_NAME
   
   example_controller:
+    build: .
     image: l2sim
     volumes:
       - "webots:/tmp"
@@ -31,6 +33,7 @@ services:
     command: /ros_entrypoint.sh ros2 run l2_sim example_controller --ros-args -p synchronization:=False -r __ns:=/l2/$COMPOSE_PROJECT_NAME
 
   pendant_controller:
+    build: .
     image: l2sim
     volumes:
       - "webots:/tmp"
@@ -44,6 +47,7 @@ services:
     command: /ros_entrypoint.sh ros2 run l2_sim pendant_controller --ros-args -p synchronization:=False -r __ns:=/l2/$COMPOSE_PROJECT_NAME
 
   range_controller:
+    build: .
     image: l2sim
     ipc: container:sim
     pid: host
@@ -61,6 +65,7 @@ services:
     command: /ros_entrypoint.sh ros2 run l2_sim rangefinder_controller --ros-args -p synchronization:=False -r __ns:=/l2/$COMPOSE_PROJECT_NAME
 
   gen_example_rvl:
+    build: .
     image: l2sim
     pid: host
     networks:

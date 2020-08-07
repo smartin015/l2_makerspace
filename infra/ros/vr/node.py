@@ -20,10 +20,17 @@ class VRServer(Node):
         super().__init__('l2_vr', namespace=ns)
         self.get_logger().info("Init")
         self.declare_parameter('extra_names', [], ParameterDescriptor())
+        self.declare_parameter('verbose', False, ParameterDescriptor())
         T0 = Time(clock_type=self.get_clock().clock_type)
 
+        self.verbose = self.get_parameter('verbose').value
+
         self.ignore_names = set(['ground_plane'])
-        self.extra_names = set(self.get_parameter('extra_names').value)
+        self.extra_names = self.get_parameter('extra_names').value
+        if self.extra_names is None:
+            self.extra_names = set()
+        else:
+            self.extra_names = set(self.extra_names)
         self.get_logger().info("Ignoring %s, appending %s" % (self.ignore_names, self.extra_names))
         self.sim_state = Simulation() # TODO support multiple simulations
         self.vr_object3d = Object3DArray()
@@ -48,7 +55,7 @@ class VRServer(Node):
         self.vr_missing_pub = self.create_publisher(Object3DArray, "vr/missing_object3d", 10)
         self.vr_extra_pub = self.create_publisher(Object3DArray, "vr/extra_object3d", 10)
         self.create_subscription(Object3DArray, "vr/Object3D", self.set_vr_state, qos_profile_sensor_data, callback_group=cb_group)
-        self.create_subscription(Simulation, "simulation", self.set_sim_state, qos_profile_sensor_data, callback_group=cb_group)
+        self.create_subscription(Simulation, "sim/simulation", self.set_sim_state, qos_profile_sensor_data, callback_group=cb_group)
 
     def stale(self):
         now = self.get_clock().now()
@@ -113,7 +120,7 @@ class VRServer(Node):
         }
 
         # Skip if there's not really anything new to report
-        if self.last_status is not None and (
+        if not self.verbose and self.last_status is not None and (
                 self.last_status["stale"] == status["stale"] 
                 and self.last_status["sim"][1] == status["sim"][1]
                 and self.last_status["vr"][1] == status["vr"][1]):

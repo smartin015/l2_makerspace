@@ -1,6 +1,7 @@
 version: '3.5'
 services:
   storage:
+    build: .
     image: l2storage:latest
     environment:
       PYTHONUNBUFFERED: 1

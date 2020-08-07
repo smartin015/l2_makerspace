@@ -10,4 +10,8 @@ $INFRADIR/base/build.sh
 for tag in storage sim bridge vr
 do
   docker build --tag "l2$tag" -f $INFRADIR/ros/$tag/Dockerfile $INFRADIR/ros/$tag/
+  if [ $? -ne 0 ]; then
+    echo "Build failed on $tag"
+    exit 1
+  fi;
 done
