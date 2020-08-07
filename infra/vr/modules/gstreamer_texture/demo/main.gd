@@ -22,10 +22,10 @@ func _ready():
     "videoscale",
     "video/x-raw,format=RGB,width=480,height=480",
     "videoconvert",
-    "appsink name=videosink emit-signals=true sync=true max-buffers=1 drop=false stream.",
+    "appsink name=videosink emit-signals=true sync=true max-buffers=1 drop=true stream.",
     "audioconvert",
     "audio/x-raw,format=F32LE,channels=2,layout=interleaved",
-    "appsink name=audiosink sync=false max-buffers=10 drop=false",
+    "appsink name=audiosink sync=false max-buffers=10 drop=true",
    ]).join(" ! ")
   gs1.connect("new_caps", self, "_on_GStreamer_new_caps")
   add_child(gs1)

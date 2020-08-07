@@ -81,7 +81,7 @@ GstFlowReturn GStreamer::new_audio_sample(GstAppSink *appsink) {
 }
 
 GstFlowReturn GStreamer::new_video_sample(GstAppSink *appsink) {
-  if(has_data) {
+  if(has_video) {
     // We haven't yet consumed the last sample
     return GST_FLOW_OK;
   }
@@ -108,7 +108,7 @@ GstFlowReturn GStreamer::new_video_sample(GstAppSink *appsink) {
     buf->resize(bitlen);
   }
   memcpy(buf->write().ptr(), map.data, std::min(buf->size(), bitlen));
-  has_data = true;
+  has_video = true;
   gst_buffer_unmap(buffer, &map);
   gst_sample_unref(sample);
   return GST_FLOW_OK;
@@ -158,7 +158,7 @@ void GStreamer::_init() {
   audiosink = String("audiosink");
   buf = new PoolByteArray();
   abuf = new PoolVector2Array();
-  has_data = false;
+  has_video = false;
   width = 0;
   height = 0;
   channels = 0;
@@ -215,7 +215,7 @@ static float dt = 0.0;
 static float at = 0.0;
 static float nt = 0.0;
 void GStreamer::_process(float delta) {
-  if (has_data.load() && buf->size() != 0) {
+  if (has_video.load() && buf->size() != 0) {
     if (image_texture.is_valid()) {
       if (texture_width != width || texture_height != height) {
         im->create_from_data(width, height, false, Image::FORMAT_RGB8, *buf);
@@ -229,7 +229,7 @@ void GStreamer::_process(float delta) {
         image_texture->set_data(im);
       }
     }
-    has_data = false;
+    has_video = false;
   }
 
   if (has_audio.load()) {

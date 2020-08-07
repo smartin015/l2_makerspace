@@ -33,7 +33,7 @@ private:
     // Under the hood, this is a Vector<Vector2>
     // so needs interleaved audio
     PoolVector2Array* abuf;
-    std::atomic_bool has_data;
+    std::atomic_bool has_video;
     std::atomic_bool has_audio;
     String videosink;
     String audiosink;

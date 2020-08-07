@@ -14,3 +14,10 @@ For "no element 'playbin'", need to remember to call `gst_init`
 If audio playing doesn't work, make sure $USER is a member of group `audio`:
 
 `sudo usermod -a -G audio $USER`
+
+## Developer workflow
+
+* `scons platform=linux` run in root
+* `GST_DEBUG=3 godot --world main.tscn` run in `demo/`
+* edit `src/gstreamer.*`, `demo/main.gd`, rebuild etc.
+* look in `godot-cpp/include` for godot headers
