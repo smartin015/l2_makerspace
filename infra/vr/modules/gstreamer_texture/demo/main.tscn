@@ -1,7 +1,13 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=5 format=2]
 
-[ext_resource path="res://bin/gstreamer.gdns" type="Script" id=1]
 [ext_resource path="res://main.gd" type="Script" id=3]
+
+[sub_resource type="ImageTexture" id=1]
+
+[sub_resource type="ImageTexture" id=2]
+
+[sub_resource type="AudioStreamGenerator" id=3]
+buffer_length = 1.0
 
 [node name="Main" type="Node"]
 script = ExtResource( 3 )
@@ -13,36 +19,27 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="GStreamer" type="Control" parent="HBoxContainer"]
+[node name="TextureRect" type="TextureRect" parent="HBoxContainer"]
 margin_right = 510.0
 margin_bottom = 600.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
-script = ExtResource( 1 )
-__meta__ = {
-"_edit_use_anchors_": false
-}
-pipeline = "uridecodebin uri=https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm ! videoconvert ! video/x-raw, format=RGB ! appsink name=sink emit-signals=true sync=false max-buffers=1 drop=true"
-
-[node name="TextureRect" type="TextureRect" parent="HBoxContainer/GStreamer"]
-anchor_right = 1.0
-anchor_bottom = 1.0
+texture = SubResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="GStreamer2" type="Control" parent="HBoxContainer"]
+[node name="TextureRect2" type="TextureRect" parent="HBoxContainer"]
 margin_left = 514.0
 margin_right = 1024.0
 margin_bottom = 600.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
-script = ExtResource( 1 )
+texture = SubResource( 2 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="TextureRect" type="TextureRect" parent="HBoxContainer/GStreamer2"]
-anchor_right = 1.0
-anchor_bottom = 1.0
-[connection signal="new_caps" from="HBoxContainer/GStreamer" to="." method="_on_GStreamer_new_caps"]
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+stream = SubResource( 3 )
+autoplay = true

@@ -1,6 +1,6 @@
 # This node handles ROS-side logic for the VR server
-from l2_msgs.srv import GetFile, SpawnObject3D, RemoveObject3D, GetObject3D
-from l2_msgs.msg import Object3DArray, Object3D, Simulation
+from l2_msgs.srv import GetFile, PutFile SpawnObject3D, RemoveObject3D, GetObject3D
+from l2_msgs.msg import Object3DArray, Object3D, Simulation, L2File
 from rcl_interfaces.msg import ParameterDescriptor
 from std_msgs.msg import String
 import rclpy
@@ -50,12 +50,15 @@ class VRServer(Node):
         self.logtmr = self.create_timer(10.0, self.log_status, callback_group=cb_group)
         self.resolvetmr = self.create_timer(10.0, self.resolve_diffs, callback_group=cb_group)
         self.getcli = self.create_client(GetObject3D, 'storage/get_object3d', callback_group=cb_group)
+        self.putfilecli = self.create_client(PutFile, 'storage/put_file', callback_group=cb_group)
         self.spawncli = self.create_client(SpawnObject3D, 'vr/SpawnObject3D', callback_group=cb_group)
         self.rmcli = self.create_client(RemoveObject3D, 'vr/RemoveObject3D', callback_group=cb_group)
         self.vr_missing_pub = self.create_publisher(Object3DArray, "vr/missing_object3d", 10)
         self.vr_extra_pub = self.create_publisher(Object3DArray, "vr/extra_object3d", 10)
         self.create_subscription(Object3DArray, "vr/Object3D", self.set_vr_state, qos_profile_sensor_data, callback_group=cb_group)
         self.create_subscription(Simulation, "sim/simulation", self.set_sim_state, qos_profile_sensor_data, callback_group=cb_group)
+        self.create_subscription(L2File, "vr/PutFile", self.handle_put_file,
+                qos_profile_sensor_data, callback_group=cb_group)
 
     def stale(self):
         now = self.get_clock().now()
@@ -137,6 +140,22 @@ class VRServer(Node):
     def set_sim_state(self, msg):
         self.sim_state = msg
         self.last_sim_msg = self.get_clock().now()
+
+    def handle_put_file(self, msg):
+        # Repackage and forward file writing request to 
+        # storage
+        self.get_logger().info("Put %s" % msg.path)
+        self.call_with_deadline(self.getcli, PutFile.Request(path=msg.path,
+            data=msg.data), self.put_file_response)
+
+    def put_file_response(self, response):
+        if response.exception() is not None:
+            self.get_logger().error(str(response.exception()))
+            return
+        response = response.result()
+        if not response.success:
+            self.get_logger().warn("Bad result: " + str(response))
+            return
 
     def spin(self):
         while rclpy.ok():

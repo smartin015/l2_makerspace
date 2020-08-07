@@ -33,10 +33,6 @@ func _ready():
   if !vr.initialize():
     print("GDT non-VR demo mode")
   
-  if get_tree().get_current_scene().get_name() != "World":
-    print("Not in main scene; skipping connections")
-    return
-  
   var LISTENERS = {
     "connected_to_server": [get_tree(), "_connected_ok"],
     "connection_failed": [get_tree(), "_connected_fail"],
@@ -91,12 +87,14 @@ func connect_to_server(ip, port):
   get_tree().set_network_peer(host)
 
 func _connected_ok():
-  player.name = str(get_tree().get_network_unique_id())
+  if player != null:
+    player.name = str(get_tree().get_network_unique_id())
   rpc_id(1, "request_init", gamestate.config["alias"])
 
 func _server_disconnected():
   is_initialized = false
-  players.clear()
+  if players != null:
+    players.clear()
   connect_to_server(settings.server_ip, settings.server_port)
 
 func _connected_fail():

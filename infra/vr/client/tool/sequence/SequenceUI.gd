@@ -1,9 +1,5 @@
 extends Control
 
-signal run_sequence
-signal stop_sequence
-
-# onready var label = $ColorRect/Label
 onready var nodes = $MarginContainer/VBoxContainer/Spacer/Nodes
 onready var items = $MarginContainer/VBoxContainer/Controls/MarginContainer/Items
 onready var status = $MarginContainer/VBoxContainer/MarginContainer/HBoxContainer3/Status
@@ -31,6 +27,7 @@ func _set_seq_items(si):
       inst.queue_free()
       continue
     
+  print("Seq items initialized")
   seq_items = items
 
 func clear():
@@ -53,6 +50,12 @@ func _on_GridContainer_connection_request(from, from_slot, to, to_slot):
 
 remotesync func connect_node(from, from_slot, to, to_slot):
   nodes.connect_node(from, from_slot, to, to_slot)
+
+remote func status_update(status_map):
+  for uid in status_map:
+    var n = nodes.get_node(uid)
+    if n != null:
+      n.set_status_label(status_map[uid])
 
 func _on_sequence_item_pressed(n):
   # ID from msec ticks is sloppy and could cause problems
@@ -105,12 +108,13 @@ func _on_Run_pressed():
     cmds.append(nodes.get_node(seq[-1]).title)
   
   running = true
-  emit_signal("run_sequence", cmds, seq)
-  print("TODO run from start %s" % [cmds])
-
+  rpc_id(1, "run_sequence", cmds)
+  _log("Sent run request")
+  
 func _on_Stop_pressed():
   running = false
-  emit_signal("stop_sequence")
+  rpc_id(1, "run_sequence", [])
+  _log("Sent stop request")
 
 func _on_Clear_pressed():
   clear()

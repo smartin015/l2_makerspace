@@ -39,3 +39,4 @@ func _webp_data_received(data, _id):
     itex.create_from_image(img)
     mi.material_override.albedo_texture = itex
   
+  

@@ -4,31 +4,40 @@
 #include <Godot.hpp>
 #include <gst/app/gstappsink.h>
 #include <ImageTexture.hpp>
+#include <AudioStreamGeneratorPlayback.hpp>
 #include <Image.hpp>
 #include <Color.hpp>
 #include <gst/gst.h>
-#include <Control.hpp>
+#include <Node.hpp>
 #include <PoolArrays.hpp>
 #include <atomic>
 
 namespace godot {
 
-class GStreamer : public Control {
-    GODOT_CLASS(GStreamer, Control)
+class GStreamer : public Node {
+    GODOT_CLASS(GStreamer, Node)
 
 private:
-    ImageTexture* it;
+    Ref<ImageTexture> image_texture;
+    Ref<AudioStreamGeneratorPlayback> asgp;
     Ref<Image> im;
     GstElement* pipeline;
-    GstElement* source;
-    GstElement* sink;
     String pipeline_str;
     int width;
     int height;
+    int channels;
     int texture_width;
     int texture_height;
     PoolByteArray* buf;
-    std::atomic_bool has_data;
+
+    // Under the hood, this is a Vector<Vector2>
+    // so needs interleaved audio
+    PoolVector2Array* abuf;
+    std::atomic_bool has_video;
+    std::atomic_bool has_audio;
+    String videosink;
+    String audiosink;
+    GstAppSink* asink;
 public:
     static void _register_methods();
 
@@ -36,7 +45,8 @@ public:
     // static, non-method gstreamer callbacks to
     // write back data. It should not be exposed
     // to GDScript.
-    GstFlowReturn new_sample(GstAppSink *appsink);
+    GstFlowReturn new_video_sample(GstAppSink *appsink);
+    GstFlowReturn new_audio_sample(GstAppSink *appsink);
 
     GStreamer();
     ~GStreamer();
@@ -44,6 +54,7 @@ public:
     void _init(); // our initializer called by Godot
     void _ready();
     void _process(float delta);
+
 };
 
 }

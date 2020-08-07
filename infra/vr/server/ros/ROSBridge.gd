@@ -63,9 +63,7 @@ func _ready():
   else:
     print("RAW listen port ", RAW_PORT)
 
-func _broadcast(id: String, msg):
-  # Serialization done here instead of in the peers to prevent duplicate work
-  var sender = get_tree().get_rpc_sender_id()
+func _prepare_to_send(id: String, msg):
   # msg.id = "%s/%s" % [sender, id]
   msg.id = id
   
@@ -75,7 +73,12 @@ func _broadcast(id: String, msg):
     msg.topic = _ns(msg.topic)
   if msg.get('service'):
     msg.service = _ns(msg.service)
-  var packet = JSON.print(msg).to_utf8()
+  return JSON.print(msg).to_utf8()
+
+func _broadcast(id: String, msg):
+  # Serialization done here instead of in the peers to prevent duplicate work
+  var sender = get_tree().get_rpc_sender_id()
+  var packet = _prepare_to_send(id, msg)
   for c in get_children():
     if c.should_throttle(sender):
       print("Throttling %s->%s " % [sender, c.name])
@@ -154,15 +157,20 @@ func unsubscribe(topic, id: String):
     "topic": topic,
   })
 
-remote func call_service(service, args, id: String):
+remote func call_service(rospeer, service, args, id: String):
+  var sender = get_tree().get_rpc_sender_id()
   # TODO how do we direct calls to the right service location?
   # TODO attach a ROSCall object
-  # _broadcast(id, {
-  #   "op": "call_service",
-  #   "service": service,
-  #   "args": args,
-  # })
-  pass
+  if !rospeer.socket.is_connected_to_host():
+    _disconnected(rospeer.name)
+    return
+  var packet = _prepare_to_send(id, {
+     "op": "call_service",
+     "service": service,
+     "args": args,
+  })
+  calls[id] = sender
+  rospeer.socket.put_packet(packet)
 
 func service_response(service, id, values):
   _broadcast(id, {
@@ -274,6 +282,10 @@ func _handle_result(id, result):
         if s.maybe_handle(result.service, result.id, result.args, id):
           return
       print("ROS(%s) Unhandled call_service: %s" % [id, result.service])
+    "service_response":
+      result.service = _strip_ns(result.service)
+      print("ROS(%s) -> service_response %s" % [id, result.service])
+      print("TODO implement service_response")
     _: 
       print("ROS(%s) Unhandled op: ", [id, result.op])
 

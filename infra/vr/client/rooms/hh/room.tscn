@@ -2,7 +2,6 @@
 
 [ext_resource path="res://rooms/hh/Workshop.obj" type="ArrayMesh" id=1]
 
-
 [node name="MeshInstance" type="MeshInstance"]
 transform = Transform( 0.001, 0, 0, 0, -4.37114e-11, 0.001, 0, -0.001, -4.37114e-11, -5.31628, 0, -7.80967 )
 mesh = ExtResource( 1 )
@@ -40,3 +39,7 @@ material/30 = null
 material/31 = null
 material/32 = null
 material/33 = null
+material/34 = null
+material/35 = null
+material/36 = null
+material/37 = null

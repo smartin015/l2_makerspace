@@ -16,8 +16,18 @@ func _ready():
     recettes = Color(0.58, 0.92, 0.07),
     interet = Color(0.5, 0.22, 0.6)
   })
-
   reset()
+  
+  var tmr = Timer.new()
+  tmr.wait_time = 1.0
+  tmr.connect("timeout", self, "_on_timeout")
+  add_child(tmr)
+  tmr.start()
+
+func _on_timeout():
+  var vp = find_node("Viewport", true, false)
+  vp.set_update_mode(Viewport.UPDATE_ONCE)
+  
 
 func reset():
   chart_node.create_new_point({

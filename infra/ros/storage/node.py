@@ -1,4 +1,4 @@
-from l2_msgs.srv import GetProject, GetFile, GetObject3D
+from l2_msgs.srv import GetProject, GetFile, PutFile, GetObject3D
 from l2_msgs.msg import Object3D
 import time
 
@@ -58,6 +58,7 @@ class DBServer(Node):
         self.create_service(GetProject, 'get_project', self.get_project_callback)
         self.create_service(GetObject3D, 'get_object3d', self.get_object3d_callback)
         self.create_service(GetFile, 'get_file', self.get_file_callback)
+        self.create_service(PutFile, 'put_file', self.put_file_callback)
 
         self.watch_handler = WatchHandler(handler=self.upsert, dirpath=self.dirpath)
         self.observer = Observer()
@@ -156,12 +157,34 @@ class DBServer(Node):
         self.get_logger().info(str(response))
         return response
 
-    def get_file_callback(self, request, response):
-        resolved = os.path.realpath(os.path.join(self.dirpath, request.path))
+    def _resolve_path(self, path):
+        return os.path.realpath(os.path.join(self.dirpath, request.path))
+
+    def put_file_callback(self, request, response):
+        resolved = self._resolve_path(request.path)
         self.get_logger().info("Resolved: %s" % resolved)
         if not resolved.startswith(self.dirpath):
             response.success = False
-            response.data = "Access denied: %s" % request.path
+            response.message = "Access denied: %s" % request.path
+            self.get_logger().info(response.data)
+            return response
+        try:
+            with open(resolved, 'w') as f:
+                f.write(request.data)
+                response.success = True
+                self.get_logger().info('Wrote file (%dB): %s'
+                        % (len(request.data), request.path))
+        except:
+            response.success = False
+            response.message = "Could not write file"
+        return response
+
+    def get_file_callback(self, request, response):
+        resolved = self._resolve_path(request.path)
+        self.get_logger().info("Resolved: %s" % resolved)
+        if not resolved.startswith(self.dirpath):
+            response.success = False
+            response.message = "Access denied: %s" % request.path
             self.get_logger().info(response.data)
             return response
         try:
@@ -171,7 +194,7 @@ class DBServer(Node):
                 self.get_logger().info('Read file (%dB): %s' % (len(response.data), request.path))
         except FileNotFoundError:
             response.success = False
-            response.data = "Not found: %s" % request.path
+            response.message = "Not found: %s" % request.path
             self.get_logger().info(response.data) 
         return response
 

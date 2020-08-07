@@ -13,6 +13,8 @@ script = ExtResource( 3 )
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, 0 )
 
 [node name="SequenceUI" parent="OQ_UI2DCanvas" instance=ExtResource( 2 )]
+margin_right = -512.0
+margin_bottom = -344.0
 
 [node name="Selectable" parent="." instance=ExtResource( 4 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0 )
