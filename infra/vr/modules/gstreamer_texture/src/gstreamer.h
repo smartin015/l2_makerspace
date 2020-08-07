@@ -37,6 +37,7 @@ private:
     std::atomic_bool has_audio;
     String videosink;
     String audiosink;
+    GstAppSink* asink;
 public:
     static void _register_methods();
 

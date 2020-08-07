@@ -52,7 +52,10 @@ GstFlowReturn GStreamer::new_audio_sample(GstAppSink *appsink) {
   }
 
   // Get caps and frame
-  GstSample *sample = gst_app_sink_pull_sample(appsink);
+  GstSample *sample = gst_app_sink_try_pull_sample(appsink, GST_SECOND/100);
+  if (sample == NULL) {
+    return GST_FLOW_OK;
+  }
   GstBuffer *buffer = gst_sample_get_buffer(sample);
 
   // Show caps & record dimensions on first frame
@@ -66,7 +69,7 @@ GstFlowReturn GStreamer::new_audio_sample(GstAppSink *appsink) {
   // Get frame data and convert
   GstMapInfo map;
   gst_buffer_map(buffer, &map, GST_MAP_READ);
-  const int samplen = map.size / channels;
+  const int samplen = map.size / channels / 4; // 4 == sizeof(float32)
   if (abuf->size() != samplen) {
     abuf->resize(samplen);
   }
@@ -158,6 +161,7 @@ void GStreamer::_init() {
   has_data = false;
   width = 0;
   height = 0;
+  channels = 0;
   im = Ref(Image::_new()); // Wait to initialize image
 }
 
@@ -191,12 +195,11 @@ void GStreamer::_ready() {
   }
   
   // Do the same for audio sink
-  sink = gst_bin_get_by_name(GST_BIN(pipeline), audiosink.alloc_c_string());
-  if (sink != NULL) {
-    gst_app_sink_set_emit_signals((GstAppSink*)sink, true);
+  asink = GST_APP_SINK(gst_bin_get_by_name(GST_BIN(pipeline), audiosink.alloc_c_string()));
+  if (asink != NULL) {
+    // gst_app_sink_set_emit_signals(GST_APP_SINK(asink), true);
     GstAppSinkCallbacks callbacks = {nullptr, new_preroll, new_audio_sample_static};
-    gst_app_sink_set_callbacks(GST_APP_SINK(sink), &callbacks, this, nullptr);
-    gst_object_unref(sink);
+    gst_app_sink_set_callbacks(GST_APP_SINK(asink), &callbacks, this, nullptr);
   }
   
   // Declare bus
@@ -229,35 +232,12 @@ void GStreamer::_process(float delta) {
     has_data = false;
   }
 
-  
-  dt += delta;
-  if (has_audio.load() && abuf->size() != 0) {
+  if (has_audio.load()) {
     if (asgp.is_valid() && asgp->can_push_buffer(abuf->size())) {
       asgp->push_buffer(*abuf);
-      at += abuf->size() / 44100.0;
+      has_audio = false;
+      new_audio_sample(asink);
     }
-    has_audio = false;
-    // Continue the pipeline if it's paused
-    // TODO generalize
-    //GstElement* ats = gst_bin_get_by_name(GST_BIN(pipeline), "audiosink");
-    //GstPad* task = gst_element_get_static_pad(ats, "sink");
-    //GST_PAD_UNSET_FLUSHING(task);
   }
-  if (dt - nt > 0.5) {
-    nt = dt;
-    // Godot::print("dt: %f at: %f", dt, at);
-  }
-  
-
-  /*
-  // test audio
-  static float phase;
-  int to_fill = asgp->get_frames_available();
-  while (to_fill > 0) {
-    asgp->push_frame(Vector2(sin(phase * 6.28), sin(phase*6.28)));
-    phase = fmod(phase + (440.0/44100.0), 1.0);
-    to_fill--;
-  }
-  */
 }
 

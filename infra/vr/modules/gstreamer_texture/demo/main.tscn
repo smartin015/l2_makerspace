@@ -7,6 +7,7 @@
 [sub_resource type="ImageTexture" id=2]
 
 [sub_resource type="AudioStreamGenerator" id=3]
+buffer_length = 1.0
 
 [node name="Main" type="Node"]
 script = ExtResource( 3 )
