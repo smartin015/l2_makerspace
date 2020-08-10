@@ -30,9 +30,11 @@ func _init_connection():
   if !socket:
     return
 
+  var keys = []
   var to_send = []
   for msg in ROSBridge.connection_msgs(id):
     if !setup_state.get(msg.id, false):
+      keys.push_back(msg.id)
       to_send.push_back(JSON.print(msg).to_utf8())
       setup_state[msg.id] = false
 
@@ -48,10 +50,11 @@ func _init_connection():
     "id": str(id) + "_setlevel",
     "level": "none", 
   }).to_utf8())
+  keys.push_back(str(id) + "_setlevel")
 
   for pkt in to_send:
     socket.put_packet(pkt)
-  print("ROS(%s) sent %d setup msgs" % [id, len(to_send)])
+  print("ROS(%s) sent %d setup msgs: %s" % [id, len(to_send), keys])
 
 func handle_status(id, level, msg):
   if level == 'none' and msg == 'OK' and setup_state.has(id):

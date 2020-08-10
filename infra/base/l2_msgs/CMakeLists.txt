@@ -44,6 +44,8 @@ set(msg_files
   msg/L2Sequence.msg
   msg/L2SequenceArray.msg
   msg/L2SequenceItem.msg
+  msg/L2File.msg
+  msg/ROSState.msg
   msg/Simulation.msg
   msg/VRLockStatus.msg
   msg/VRPlayers.msg) 
@@ -52,6 +54,8 @@ set(srv_files
   srv/RemoveObject3D.srv
   srv/PushParameter.srv
   srv/GetFile.srv
+  srv/PutFile.srv
+  srv/ListFiles.srv
   srv/GetProject.srv
   srv/GetObject3D.srv)
 set(action_files

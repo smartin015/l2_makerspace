@@ -31,13 +31,14 @@ func connection_msgs(id):
     result.push_back(s.advertisement(id))
   for t in topics:
     result.push_back(t.advertisement(id))
-  for h in handlers:
+  for hk in handlers:
+    var h = handlers[hk]
     if !h.raw:
       result.push_back({
         "op": "subscribe",
         "topic": h.topic,
         "type": h.type,
-        "id": h.id,
+        "id": "%s_%s" % [id, h.id],
         "fragment_size": MAX_WS_MSG,
       })
     
@@ -76,6 +77,7 @@ func _prepare_to_send(id: String, msg):
   return JSON.print(msg).to_utf8()
 
 func _broadcast(id: String, msg):
+  # Broadcast to all ROSPeers
   # Serialization done here instead of in the peers to prevent duplicate work
   var sender = get_tree().get_rpc_sender_id()
   var packet = _prepare_to_send(id, msg)
@@ -266,10 +268,11 @@ func _handle_result(id, result):
       var h = handlers.get(result.topic)
       if h != null:
         for cb in h.callbacks:
-          cb[0].call(cb[1], result.get("msg", ""), result.get("id", ""))
+          cb[0].call(cb[1], result.get("msg", ""), result.get("id", ""), id)
 
-      if len(ls) == 0 && !result.topic[0].is_valid_integer():
-        # Unsubscribe if nobody's listening. Topics that 
+      if len(ls) == 0 && h == null && !result.topic[0].is_valid_integer():
+        # Unsubscribe if nobody's listening and there aren't
+        # any handlers. Topics that 
         # start with a number are invalid to ros2-web-bridge
         # and so are assumed to be raw topics (which cannot be
         # unsubscribed)

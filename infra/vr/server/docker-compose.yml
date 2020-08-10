@@ -2,9 +2,11 @@ version: '3.5'
 
 services:
   vr_server:
+    build: .
     image: l2vr-server
     networks:
       - l2
+      - bridge
     ports:
       - '44444:44444/udp'
       - '4243:4243/tcp'
@@ -13,3 +15,6 @@ networks:
   l2:
     driver: bridge
     name: l2
+  bridge:
+    driver: bridge
+    name: bridge

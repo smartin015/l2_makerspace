@@ -1,6 +1,6 @@
 FROM l2base:latest
 
-SHELL [ "/bin/bash", "-l", "-c" ]
+SHELL [ "/bin/bash", "-i", "-c" ]
 # # rosbridge_suite bridge; connects, but no status handling
 # RUN . /opt/ros/foxy/setup.sh && cd / && git clone -b ros2 --single-branch https://github.com/RobotWebTools/rosbridge_suite.git \
 #     && cd /rosbridge_suite && colcon build \
@@ -20,9 +20,10 @@ RUN . ~/.nvm/nvm.sh && git clone --single-branch --branch foxy-fitzroy https://g
 RUN cd / && wget https://github.com/RobotWebTools/ros2-web-bridge/archive/develop.zip \
   && unzip develop.zip && rm develop.zip \
   && mv ros2-web-bridge-develop ros2-web-bridge
+
 RUN cd /ros2-web-bridge \
-  && bash -c "source ~/.nvm/nvm.sh && source /opt/ros/foxy/setup.bash \
-     && source /l2_msgs/install/setup.bash \
-     && npm install bufferutil@^4.0.1 utf-8-validate@^5.0.2 \
-     && npm install"
-CMD ["bash", "-c", "source /opt/ros/foxy/local_setup.bash && source /l2_msgs/install/setup.bash && rm -r /ros2-web-bridge/node_modules/rclnodejs/generated cd /ros2-web-bridge && DEBUG=ros2-web-bridge:index,ros2-web-bridge:Bridge node bin/rosbridge.js --address=ws://127.0.0.1:4243"]
+  && source ~/.bashrc && source /opt/ros/foxy/setup.bash \
+  && source /l2_msgs/install/setup.bash \
+  && npm install bufferutil@^4.0.1 utf-8-validate@^5.0.2 \
+  && npm install
+CMD ["bash", "-i", "-c", "source /opt/ros/foxy/local_setup.bash && source /l2_msgs/install/setup.bash && rm -r /ros2-web-bridge/node_modules/rclnodejs/generated cd /ros2-web-bridge && DEBUG=ros2-web-bridge:index,ros2-web-bridge:Bridge node bin/rosbridge.js --address=ws://127.0.0.1:4243"]

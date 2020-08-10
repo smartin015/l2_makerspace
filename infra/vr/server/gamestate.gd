@@ -1,11 +1,14 @@
 extends Node
 
+signal topics_updated
+
 const PORT = 44444
 const MAX_PLAYERS = 12
 onready var actors = get_node("/root/World/Actors")
 onready var players = get_node("/root/World/Players")
 onready var tools = get_node("/root/World/Tools")
 var topics = ["test1", "test2", "asdf"] # TODO get from ROS
+var ros_states = {}
 
 # Shapes for CAD
 enum SHAPE {PENCIL, LINE, RECTANGLE, CIRCLE, DRAG}
@@ -22,6 +25,25 @@ func _ready():
   host.create_server(PORT, MAX_PLAYERS)
   get_tree().set_network_peer(host)
   print("GDT listen port ", PORT)
+  
+  # Subscribe to get global state info from ROS topics    
+  ROSBridge.ros_connect("ros_state", 
+    "l2_msgs/ROSState", 
+    self, "_on_ros_state", 
+    "ros_state_sub")
+
+func _on_ros_state(msg, _msg_id, id):
+  ros_states[id] = msg
+  
+  # Recalculate available topics as the
+  # set union of all connected ROS peers
+  var topic_set = {}
+  for k in ros_states:
+    for topic in ros_states[k].topics:
+      topic_set[topic] = true
+  topics = topic_set.keys()
+  print("ROS(%s) state updated; %d topics across all peers" % [id, len(topics)])
+  emit_signal("topics_updated", topics)
 
 remote func set_workspace(ws):
   var sender = get_tree().get_rpc_sender_id()

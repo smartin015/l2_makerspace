@@ -1,25 +1,29 @@
 version: '3.5'
 
+# NOTE: `bash -i` (interactive mode) is used so that `.bashrc` is sourced,
+# which allows invoking nodejs, npm etc
+
 services:
   bridge:
     build: .
     image: l2bridge:latest
-    pid: "host"
-    network_mode: host
-    command: bash -c "source /l2_msgs/install/setup.bash && source /rosbridge_suite/install/setup.bash && /ros_entrypoint.sh ros2 run rosbridge_server rosbridge_websocket"
+    networks: 
+      - l2
     environment:
-      - "PYTHONUNBUFFERED=1"
+      - "DEBUG=ros2-web-bridge:index,ros2-web-bridge:Bridge,ros2-web-bridge:ResourceProvider"
+    command: bash -i -c "source /opt/ros/foxy/setup.bash && source /l2_msgs/install/setup.bash && cd /ros2-web-bridge && rm -r /ros2-web-bridge/node_modules/rclnodejs/generated && node bin/rosbridge.js --address=ws://vr:4243"
   bridge_local:
     build: .
     image: l2bridge:latest
     network_mode: host
-    command: bash -c "source /opt/ros/foxy/setup.bash && source /l2_msgs/install/setup.bash && cd /ros2-web-bridge && rm -r /ros2-web-bridge/node_modules/rclnodejs/generated && node bin/rosbridge.js --address=ws://127.0.0.1:4243"
+    environment:
+      - "DEBUG=ros2-web-bridge:index,ros2-web-bridge:Bridge,ros2-web-bridge:ResourceProvider"
+    command: bash -i -c "source /opt/ros/foxy/setup.bash && source /l2_msgs/install/setup.bash && cd /ros2-web-bridge && rm -r /ros2-web-bridge/node_modules/rclnodejs/generated && node bin/rosbridge.js --address=ws://127.0.0.1:4243"
   bridge_local_dev:
     build: .
     image: l2bridge:latest
     network_mode: host
-    # DEBUG=ros2-web-bridge:index,ros2-web-bridge:Bridge,ros2-web-bridge:ResourceProvider
-    command: bash -c "source /opt/ros/foxy/setup.bash && source /l2_msgs/install/setup.bash && cd /ros2-web-bridge && rm -r /ros2-web-bridge/node_modules/rclnodejs/generated && node bin/rosbridge.js --address=ws://127.0.0.1:4243"
+    command: bash -i -c "source /opt/ros/foxy/setup.bash && source /l2_msgs/install/setup.bash && cd /ros2-web-bridge && rm -r /ros2-web-bridge/node_modules/rclnodejs/generated && node bin/rosbridge.js --address=ws://127.0.0.1:4243"
     volumes:
       - ./ros2-web-bridge:/ros2-web-bridge
   bridge_server:
@@ -27,7 +31,7 @@ services:
     image: l2bridge:latest
     networks:
       - l2
-    command: bash -c "source /opt/ros/foxy/setup.bash && source /l2_msgs/install/setup.bash && cd /ros2-web-bridge && node bin/rosbridge.js --port=4243"
+    command: bash -i -c "source /opt/ros/foxy/setup.bash && source /l2_msgs/install/setup.bash && cd /ros2-web-bridge && node bin/rosbridge.js --port=4243"
 
 networks:
   l2:

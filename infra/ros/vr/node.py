@@ -1,6 +1,6 @@
 # This node handles ROS-side logic for the VR server
-from l2_msgs.srv import GetFile, PutFile SpawnObject3D, RemoveObject3D, GetObject3D
-from l2_msgs.msg import Object3DArray, Object3D, Simulation, L2File
+from l2_msgs.srv import GetFile, PutFile, SpawnObject3D, RemoveObject3D, GetObject3D
+from l2_msgs.msg import Object3DArray, Object3D, Simulation, L2File, ROSState
 from rcl_interfaces.msg import ParameterDescriptor
 from std_msgs.msg import String
 import rclpy
@@ -49,12 +49,15 @@ class VRServer(Node):
 
         self.logtmr = self.create_timer(10.0, self.log_status, callback_group=cb_group)
         self.resolvetmr = self.create_timer(10.0, self.resolve_diffs, callback_group=cb_group)
+        self.rosstatetmr = self.create_timer(10.0, self.publish_ros_state,
+                callback_group=cb_group)
         self.getcli = self.create_client(GetObject3D, 'storage/get_object3d', callback_group=cb_group)
         self.putfilecli = self.create_client(PutFile, 'storage/put_file', callback_group=cb_group)
         self.spawncli = self.create_client(SpawnObject3D, 'vr/SpawnObject3D', callback_group=cb_group)
         self.rmcli = self.create_client(RemoveObject3D, 'vr/RemoveObject3D', callback_group=cb_group)
         self.vr_missing_pub = self.create_publisher(Object3DArray, "vr/missing_object3d", 10)
         self.vr_extra_pub = self.create_publisher(Object3DArray, "vr/extra_object3d", 10)
+        self.ros_state_pub = self.create_publisher(ROSState, "vr/ros_state", 10)
         self.create_subscription(Object3DArray, "vr/Object3D", self.set_vr_state, qos_profile_sensor_data, callback_group=cb_group)
         self.create_subscription(Simulation, "sim/simulation", self.set_sim_state, qos_profile_sensor_data, callback_group=cb_group)
         self.create_subscription(L2File, "vr/PutFile", self.handle_put_file,
@@ -79,6 +82,21 @@ class VRServer(Node):
         future = client.call_async(req)
         future.add_done_callback(callback)
         self.future_deadlines.append((future, self.get_clock().now() + Duration(seconds=seconds)))
+
+    def publish_ros_state(self):
+        nodes, node_ns = list(zip(*self.get_node_names_and_namespaces()))
+        services, service_types = list(zip(*self.get_service_names_and_types()))
+        topics, topic_types = list(zip(*self.get_topic_names_and_types()))
+        self.ros_state_pub.publish(ROSState(
+            topics = topics,
+            topic_types = [t[0] for t in topic_types],
+            services = services,
+            service_types = [s[0] for s in service_types],
+            nodes = nodes,
+            node_namespaces = node_ns
+        ))
+        self.get_logger().info("Published ROS state")
+
 
     def resolve_diffs(self):
         if self.stale():
