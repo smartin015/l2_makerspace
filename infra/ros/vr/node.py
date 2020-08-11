@@ -162,7 +162,7 @@ class VRServer(Node):
     def handle_put_file(self, msg):
         # Repackage and forward file writing request to 
         # storage
-        self.get_logger().info("Put %s (%d)" % (msg.path, len(msg.data)))
+        self.get_logger().info("PutFile %s (%dB)" % (msg.path, len(msg.data)))
         self.call_with_deadline(self.putfilecli, PutFile.Request(path=msg.path,
             data=msg.data), self.put_file_response)
 

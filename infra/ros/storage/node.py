@@ -172,7 +172,7 @@ class DBServer(Node):
             with open(resolved, 'w') as f:
                 f.write(request.data)
                 response.success = True
-                self.get_logger().info('Wrote file (%dB): %s'
+                self.get_logger().info('Wrote (%dB): %s'
                         % (len(request.data), request.path))
         except:
             response.success = False

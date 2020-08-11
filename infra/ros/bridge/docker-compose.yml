@@ -9,9 +9,7 @@ services:
     image: l2bridge:latest
     networks: 
       - l2
-    environment:
-      - "DEBUG=ros2-web-bridge:index,ros2-web-bridge:Bridge,ros2-web-bridge:ResourceProvider"
-    command: bash -i -c "source /opt/ros/foxy/setup.bash && source /l2_msgs/install/setup.bash && cd /ros2-web-bridge && rm -r /ros2-web-bridge/node_modules/rclnodejs/generated && node bin/rosbridge.js --address=ws://vr:4243"
+    command: bash -i -c "source /opt/ros/foxy/setup.bash && source /l2_msgs/install/setup.bash && cd /ros2-web-bridge && rm -r /ros2-web-bridge/node_modules/rclnodejs/generated && node bin/rosbridge.js --address=ws://vr_server:4243"
   bridge_local:
     build: .
     image: l2bridge:latest

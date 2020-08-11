@@ -19,6 +19,29 @@ remote func create_sequence_item(n, uid):
 remote func connect_node(from, from_slot, to, to_slot):
   print("connect_node: %s %s %s %s" % [from, from_slot, to, to_slot])
   nodes.connect_node(from, from_slot, to, to_slot)
+  
+func pack_state():
+  # Pack all node positions, node data/names, and 
+  # connections between nodes
+  var ns = []
+  for n in nodes.get_children():
+    if n.get("offset") != null:
+      ns.push_back([n.title, n.name, n.offset])
+  return {
+    "nodes": ns,
+    "connection_list": nodes.get_connection_list(),
+  }
+  
+remote func save():
+  var path = "%s_%s.sequence.json" % [name, OS.get_unix_time()]
+  ROSBridge.publish("PutFile", "l2_msgs/msg/L2File", {
+    "path": path,
+    "data": JSON.print(pack_state()),
+  }, path)
+  
+  var sender = get_tree().get_rpc_sender_id()
+  # TODO notify write completion
+  rpc_id(sender, "on_save", OK, "writing file") 
 
 remote func run_sequence(cmds):
   var items = []

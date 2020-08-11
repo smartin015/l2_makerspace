@@ -4,17 +4,14 @@ services:
   vr_server:
     build: .
     image: l2vr-server
+    tty: true
     networks:
       - l2
-      - bridge
     ports:
       - '44444:44444/udp'
       - '4243:4243/tcp'
-
+      - '4242:4242/udp'
 networks:
   l2:
     driver: bridge
     name: l2
-  bridge:
-    driver: bridge
-    name: bridge

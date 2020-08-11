@@ -71,10 +71,10 @@ remotesync func create_sequence_item(n, uid):
   return i
 
 func _on_Left_pressed():
-  print("left")
+  print("TODO left")
 
 func _on_Right_pressed():
-  print("right")
+  print("TODO right")
 
 func _on_Run_pressed():
   var seqMap = {}
@@ -110,6 +110,7 @@ func _on_Run_pressed():
   running = true
   rpc_id(1, "run_sequence", cmds)
   _log("Sent run request")
+
   
 func _on_Stop_pressed():
   running = false
@@ -118,3 +119,16 @@ func _on_Stop_pressed():
 
 func _on_Clear_pressed():
   clear()
+
+func _on_Save_pressed():
+  rpc_id(1, "save")
+  
+func _on_Load_pressed():
+  print("TODO load")
+
+remote func on_save(status, name):
+  # Called by server when save action ends
+  if status == OK:
+    gamestate.player.show_toast("Saved to %s" % name)
+  else:
+    gamestate.player.show_toast("Error saving: %s" % status)

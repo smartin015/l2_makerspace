@@ -2,15 +2,27 @@
 # possible work that can be executed.
 # It loosely follows the style of docker-compose, but not
 # all features are present.
-test:
-  test1:
-    image: "hello-world"
-b: 
-  test2:
-    asdf: "herp"
+#
+# Example:
+#
+# example_sequence:
+#   container1: 
+#     image: l2base
+#     cmd: "echo hello world"
+#     volumes: 
+#       - v1:v2
+#     networks:
+#
+#   container2:
+#     ...
 webots_example:
   webots:
     image: "l2sim"
     placement: 
       - "gpu=true"
-
+pub:
+  seqpub:
+    image: "l2base"
+    environment:
+      - "PUBSTR='hello'"
+    cmd: "source /l2_msgs/install/setup.bash && ros2 topic pub test_topic std_msgs/String 'data: $PUBSTR'"

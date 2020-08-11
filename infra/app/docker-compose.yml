@@ -8,5 +8,6 @@ services:
       - src
     command: /bin/bash -c "cd src && python -m SimpleHTTPServer"
   app:
+    build: .
     image: l2app:latest
     network_mode: host

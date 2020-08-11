@@ -29,13 +29,13 @@ __meta__ = {
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
 margin_left = 5.0
 margin_top = 5.0
-margin_right = 763.0
+margin_right = 806.0
 margin_bottom = 512.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="Spacer" type="MarginContainer" parent="MarginContainer/VBoxContainer"]
-margin_right = 758.0
+margin_right = 801.0
 margin_bottom = 400.0
 rect_min_size = Vector2( 0, 400 )
 size_flags_vertical = 3
@@ -50,7 +50,7 @@ __meta__ = {
 [node name="Nodes" type="GraphEdit" parent="MarginContainer/VBoxContainer/Spacer"]
 margin_left = 12.0
 margin_top = 12.0
-margin_right = 746.0
+margin_right = 789.0
 margin_bottom = 388.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -59,7 +59,7 @@ zoom = 0.578704
 
 [node name="Controls" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
 margin_top = 404.0
-margin_right = 758.0
+margin_right = 801.0
 margin_bottom = 444.0
 size_flags_horizontal = 3
 __meta__ = {
@@ -76,7 +76,7 @@ text = "<"
 
 [node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/Controls"]
 margin_left = 44.0
-margin_right = 714.0
+margin_right = 757.0
 margin_bottom = 40.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -85,12 +85,12 @@ custom_constants/margin_left = 8
 
 [node name="Items" type="HBoxContainer" parent="MarginContainer/VBoxContainer/Controls/MarginContainer"]
 margin_left = 8.0
-margin_right = 662.0
+margin_right = 705.0
 margin_bottom = 40.0
 
 [node name="Right" type="Button" parent="MarginContainer/VBoxContainer/Controls"]
-margin_left = 718.0
-margin_right = 758.0
+margin_left = 761.0
+margin_right = 801.0
 margin_bottom = 40.0
 rect_min_size = Vector2( 40, 40 )
 size_flags_horizontal = 0
@@ -99,7 +99,7 @@ text = ">"
 
 [node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer"]
 margin_top = 448.0
-margin_right = 758.0
+margin_right = 801.0
 margin_bottom = 507.0
 custom_constants/margin_right = 100
 custom_constants/margin_top = 20
@@ -108,19 +108,18 @@ custom_constants/margin_left = 100
 [node name="HBoxContainer3" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer"]
 margin_left = 100.0
 margin_top = 20.0
-margin_right = 658.0
+margin_right = 701.0
 margin_bottom = 59.0
 
 [node name="Status" type="Label" parent="MarginContainer/VBoxContainer/MarginContainer/HBoxContainer3"]
 margin_top = 10.0
-margin_right = 224.0
 margin_bottom = 29.0
 size_flags_horizontal = 3
 theme = ExtResource( 2 )
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/HBoxContainer3"]
-margin_left = 228.0
-margin_right = 558.0
+margin_left = 4.0
+margin_right = 601.0
 margin_bottom = 39.0
 custom_constants/separation = 60
 
@@ -135,9 +134,21 @@ margin_right = 192.0
 margin_bottom = 39.0
 text = "Stop"
 
-[node name="Clear" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/HBoxContainer3/HBoxContainer2"]
+[node name="Save" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/HBoxContainer3/HBoxContainer2"]
 margin_left = 252.0
-margin_right = 330.0
+margin_right = 325.0
+margin_bottom = 39.0
+text = "Save"
+
+[node name="Load" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/HBoxContainer3/HBoxContainer2"]
+margin_left = 385.0
+margin_right = 459.0
+margin_bottom = 39.0
+text = "Load"
+
+[node name="Clear" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/HBoxContainer3/HBoxContainer2"]
+margin_left = 519.0
+margin_right = 597.0
 margin_bottom = 39.0
 text = "Clear"
 [connection signal="connection_request" from="MarginContainer/VBoxContainer/Spacer/Nodes" to="." method="_on_GridContainer_connection_request"]
@@ -145,4 +156,6 @@ text = "Clear"
 [connection signal="pressed" from="MarginContainer/VBoxContainer/Controls/Right" to="." method="_on_Right_pressed"]
 [connection signal="pressed" from="MarginContainer/VBoxContainer/MarginContainer/HBoxContainer3/HBoxContainer2/Run" to="." method="_on_Run_pressed"]
 [connection signal="pressed" from="MarginContainer/VBoxContainer/MarginContainer/HBoxContainer3/HBoxContainer2/Stop" to="." method="_on_Stop_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/MarginContainer/HBoxContainer3/HBoxContainer2/Save" to="." method="_on_Save_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/MarginContainer/HBoxContainer3/HBoxContainer2/Load" to="." method="_on_Load_pressed"]
 [connection signal="pressed" from="MarginContainer/VBoxContainer/MarginContainer/HBoxContainer3/HBoxContainer2/Clear" to="." method="_on_Clear_pressed"]

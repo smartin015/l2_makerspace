@@ -28,7 +28,6 @@ remotesync func redo():
       return
 
 remote func save():
-  print("Beginning save")
   var shapes = ""
   for c in get_children():
     if not c.has_method("to_svg"):
@@ -40,7 +39,7 @@ remote func save():
       + shapes
       + "\n</svg>")
   
-  var path = "canvas_%s_%s.svg" % [name, OS.get_unix_time()]
+  var path = "%s_%s.canvas.svg" % [name, OS.get_unix_time()]
   ROSBridge.publish("PutFile", "l2_msgs/msg/L2File", {
     "path": path,
     "data": svg,
