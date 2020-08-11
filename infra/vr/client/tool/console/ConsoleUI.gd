@@ -25,7 +25,6 @@ func set_active_topic(t: String):
   topic.text = "Topic: " + t
 
 func _set_topics(ts):
-  print("Setting topics to %s" % ts)
   topics = ts
   var popup = topic.get_popup()
   popup.clear()

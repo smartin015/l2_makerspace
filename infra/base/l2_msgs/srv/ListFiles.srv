@@ -1,0 +1,3 @@
+string path_glob
+---
+string[] paths

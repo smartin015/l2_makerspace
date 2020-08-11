@@ -42,7 +42,7 @@ func _on_ros_state(msg, _msg_id, id):
     for topic in ros_states[k].topics:
       topic_set[topic] = true
   topics = topic_set.keys()
-  print("ROS(%s) state updated; %d topics across all peers" % [id, len(topics)])
+  # print("ROS(%s) state updated; %d topics across all peers" % [id, len(topics)])
   emit_signal("topics_updated", topics)
 
 remote func set_workspace(ws):

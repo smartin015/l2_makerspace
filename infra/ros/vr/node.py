@@ -95,7 +95,7 @@ class VRServer(Node):
             nodes = nodes,
             node_namespaces = node_ns
         ))
-        self.get_logger().info("Published ROS state")
+        # self.get_logger().info("Published ROS state")
 
 
     def resolve_diffs(self):
@@ -162,8 +162,8 @@ class VRServer(Node):
     def handle_put_file(self, msg):
         # Repackage and forward file writing request to 
         # storage
-        self.get_logger().info("Put %s" % msg.path)
-        self.call_with_deadline(self.getcli, PutFile.Request(path=msg.path,
+        self.get_logger().info("Put %s (%d)" % (msg.path, len(msg.data)))
+        self.call_with_deadline(self.putfilecli, PutFile.Request(path=msg.path,
             data=msg.data), self.put_file_response)
 
     def put_file_response(self, response):

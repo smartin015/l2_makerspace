@@ -40,10 +40,15 @@ remote func save():
       + shapes
       + "\n</svg>")
   
-  print(svg) # TODO publish on ROS topic
+  var path = "canvas_%s_%s.svg" % [name, OS.get_unix_time()]
+  ROSBridge.publish("PutFile", "l2_msgs/msg/L2File", {
+    "path": path,
+    "data": svg,
+  }, path)
   
   var sender = get_tree().get_rpc_sender_id()
-  rpc_id(sender, "on_save", OK, "but_not_implemented")
+  # TODO notify write completion
+  rpc_id(sender, "on_save", OK, "writing file") 
 
 func get_state():
   var shapesList = []

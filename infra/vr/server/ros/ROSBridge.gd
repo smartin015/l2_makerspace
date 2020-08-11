@@ -65,7 +65,6 @@ func _ready():
     print("RAW listen port ", RAW_PORT)
 
 func _prepare_to_send(id: String, msg):
-  # msg.id = "%s/%s" % [sender, id]
   msg.id = id
   
   # ALL godot traffic to and from ROS is namespaced so that it's clearly known

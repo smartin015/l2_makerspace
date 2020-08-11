@@ -158,11 +158,11 @@ class DBServer(Node):
         return response
 
     def _resolve_path(self, path):
-        return os.path.realpath(os.path.join(self.dirpath, request.path))
+        return os.path.realpath(os.path.join(self.dirpath, path))
 
     def put_file_callback(self, request, response):
         resolved = self._resolve_path(request.path)
-        self.get_logger().info("Resolved: %s" % resolved)
+        self.get_logger().info("PutFile resolved: %s" % resolved)
         if not resolved.startswith(self.dirpath):
             response.success = False
             response.message = "Access denied: %s" % request.path

@@ -11,7 +11,6 @@ func _ready():
   set_network_master(0)
   
 remote func set_topics(topics: PoolStringArray):
-  print("set_topics called")
   cui.topics = topics
   
 remote func setup(topic: String, text: PoolStringArray):
