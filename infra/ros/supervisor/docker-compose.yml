@@ -1,7 +1,7 @@
 version: '3.5'
 
 services:
-  main:
+  supervisor:
     build: .
     image: l2supervisor:latest
     networks:
@@ -11,8 +11,8 @@ services:
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "/usr/bin/docker:/usr/bin/docker"
-      - "./config.yaml:/config.yaml"
-  example:
+      - "./config:/config"
+  testenv:
     image: l2base:latest
     pid: host
     networks:
@@ -21,7 +21,7 @@ services:
       - "PYTHONUNBUFFERED=1"
     volumes:
       - ./test:/test
-    command: /test/test_sequence.sh
+    command: /bin/bash
 
 networks:
   l2:

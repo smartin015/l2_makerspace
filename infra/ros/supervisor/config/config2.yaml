@@ -1,0 +1,5 @@
+webots_example:
+  webots:
+    image: "l2sim"
+    placement: 
+      - "gpu=true"

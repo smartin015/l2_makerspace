@@ -15,14 +15,9 @@
 #
 #   container2:
 #     ...
-webots_example:
-  webots:
-    image: "l2sim"
-    placement: 
-      - "gpu=true"
 pub:
   seqpub:
     image: "l2base"
     environment:
       - "PUBSTR='hello'"
-    cmd: "source /l2_msgs/install/setup.bash && ros2 topic pub test_topic std_msgs/String 'data: $PUBSTR'"
+    cmd: "source /l2_msgs/install/setup.bash && ros2 topic pub --once test_topic std_msgs/String 'data: $PUBSTR'"

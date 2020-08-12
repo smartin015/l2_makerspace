@@ -8,6 +8,8 @@ from rclpy.executors import MultiThreadedExecutor
 import docker # https://docker-py.readthedocs.io/en/stable/
 import yaml
 from rclpy.node import Node
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 
 class Work():
     def __init__(self, goal_handle, supervisor):
@@ -130,7 +132,13 @@ class Supervisor(Node):
         self.client = docker.from_env()
         self.config = {}
         self.state = []
+        self.path = "/config/"
         self.load_config()
+        self.watch_handler = FileSystemEventHandler()
+        self.watch_handler.on_modified = self.load_config
+        self.observer = Observer()
+        self.observer.schedule(self.watch_handler, self.path, recursive=True)
+        self.observer.start()
         self._action_server = ActionServer(
             self,
             L2SequenceAction,
@@ -144,15 +152,25 @@ class Supervisor(Node):
         self._action_server.destroy()
         super().destroy_node()
 
-    def load_config(self):
-        path = "/config.yaml"
-        self.get_logger().info("Loading from %s" % path)
-        with open(path, 'r') as stream:
-            try:
-                self.config = yaml.safe_load(stream)
-            except yaml.YAMLError as exc:
-                self.get_logger().error(exc)
-        self.get_logger().info(str(self.config))
+    def load_config(self, event=None):
+        self.get_logger().info("Loading from %s" % self.path)
+        self.config = {}
+        for dirName, subdirList, fileList in os.walk(self.path):
+            for fName in fileList:
+                if os.path.splitext(fName)[1] not in [".yaml", ".yml"]:
+                    continue
+                self.get_logger().info("\t...%s" % fName)
+                with open(os.path.join(dirName, fName), 'r') as stream:
+                    try:
+                        self.config.update(yaml.safe_load(stream))
+                    except yaml.YAMLError as exc:
+                        self.get_logger().error(exc)
+        self.get_logger().info("======== Config ========")
+        for (k,v) in self.config.items():
+            self.get_logger().info(k + ":")
+            for kv2 in v.items():
+                self.get_logger().info("\t%s: %s" % kv2)
+        self.get_logger().info("======== End Config ========")
 
     def goal_callback(self, goal_request):
         """Accepts or rejects a client request to begin an action."""
