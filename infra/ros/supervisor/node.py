@@ -28,7 +28,7 @@ class Work():
     def publish_feedback(self):
         self.goal_handle.publish_feedback(L2SequenceAction.Feedback(current_item=self.sequence.items[self.idx]))
     
-    def stop_sequence(seq):
+    def stop_sequence(self, seq):
         self.info("Stopping")
         statuses = {}
         for c in self.supervisor.client.containers.list(filters=self.filters):
@@ -53,7 +53,7 @@ class Work():
             if image is None:
                 self.supervisor.get_logger().error("Config %s.%s has no image to run; ignoring" % (item.name, c[0]))
                 continue
-            cc = dict([(k, v) for (k, v) in c[1].items() if k in ["cmd", "volumes", "network"]])
+            cc = dict([(k, v) for (k, v) in c[1].items() if k in ["command", "volumes", "network"]])
             labels = {"l2_work_id": self.id}
             #if c[1].get("placement"): # Placement implies swarm / service
             #rp = docker.RestartPolicy(condition="none") # Don't auto restart
@@ -95,10 +95,13 @@ class Work():
                    c.remove()
                    self.info("%s (%s) removed (%s %d)" % (c.name, c.short_id, c.status, details["StatusCode"]))
         
-            for s in self.supervisor.client.services.list(filters=self.filters):
-                print(s.tasks())
-                print("TODO handle service task management")
-                # s.remove() if tasks exited/failed
+            try: 
+                for s in self.supervisor.client.services.list(filters=self.filters):
+                    print(s.tasks())
+                    print("TODO handle service task management")
+                    # s.remove() if tasks exited/failed
+            except docker.errors.APIError:
+                pass # Happens if we're not in a swarm
 
             current = self.sequence.items[self.idx]
             if current.code != 0:
@@ -125,7 +128,7 @@ class Supervisor(Node):
     PUBLISH_PD = 1  # seconds
 
     def __init__(self):
-        super().__init__('l2_example')
+        super().__init__('l2_supervisor')
         self.get_logger().info("Init")
         self.state_pub = self.create_publisher(L2SequenceArray, 'state', 10)
         self.timer = self.create_timer(self.PUBLISH_PD, self.gc_state_callback)
@@ -164,7 +167,7 @@ class Supervisor(Node):
                     try:
                         self.config.update(yaml.safe_load(stream))
                     except yaml.YAMLError as exc:
-                        self.get_logger().error(exc)
+                        self.get_logger().error(str(exc))
         self.get_logger().info("======== Config ========")
         for (k,v) in self.config.items():
             self.get_logger().info(k + ":")
