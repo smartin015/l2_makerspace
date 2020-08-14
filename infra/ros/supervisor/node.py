@@ -53,7 +53,13 @@ class Work():
             if image is None:
                 self.supervisor.get_logger().error("Config %s.%s has no image to run; ignoring" % (item.name, c[0]))
                 continue
-            cc = dict([(k, v) for (k, v) in c[1].items() if k in ["command", "volumes", "network"]])
+            cc = dict([(k, v) for (k, v) in c[1].items() if k in ["command",
+                "volumes", "network", "environment"]])
+
+            # Override environment vars based on item params
+            for p in item.params:
+                cc["environment"][p.key] = p.value
+
             labels = {"l2_work_id": self.id}
             #if c[1].get("placement"): # Placement implies swarm / service
             #rp = docker.RestartPolicy(condition="none") # Don't auto restart
@@ -168,12 +174,12 @@ class Supervisor(Node):
                         self.config.update(yaml.safe_load(stream))
                     except yaml.YAMLError as exc:
                         self.get_logger().error(str(exc))
-        self.get_logger().info("======== Config ========")
+        self.get_logger().info("======== Merged Config ========")
         for (k,v) in self.config.items():
             self.get_logger().info(k + ":")
             for kv2 in v.items():
                 self.get_logger().info("\t%s: %s" % kv2)
-        self.get_logger().info("======== End Config ========")
+        self.get_logger().info("======== End Merged Config ========")
 
     def goal_callback(self, goal_request):
         """Accepts or rejects a client request to begin an action."""
