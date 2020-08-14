@@ -10,7 +10,7 @@ services:
       PGRST_DB_ANON_ROLE: app_user #In production this role should not be the same as the one used for the connection
       #network_mode: bridge
     volumes:
-      - ./files:/volume
+      - ./volumes/files:/volume
     networks:
       - dbnet
       - l2
@@ -25,9 +25,9 @@ services:
       #network_mode: bridge
     # container_name: db
     volumes:
-      - "../pgdata:/var/lib/postgresql/data"
+      - "./volumes/pgdata:/var/lib/postgresql/data"
       # files dir here is mounted just for debugging
-      - "./files:/volume"
+      - "./volumes/files:/volume"
     networks:
       - dbnet
 
