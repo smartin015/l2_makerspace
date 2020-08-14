@@ -133,8 +133,8 @@ class Work():
 class Supervisor(Node):
     PUBLISH_PD = 1  # seconds
 
-    def __init__(self):
-        super().__init__('l2_supervisor')
+    def __init__(self, ns="/l2"):
+        super().__init__('l2_supervisor', namespace=ns)
         self.get_logger().info("Init")
         self.state_pub = self.create_publisher(L2SequenceArray, 'state', 10)
         self.timer = self.create_timer(self.PUBLISH_PD, self.gc_state_callback)

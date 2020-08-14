@@ -1,6 +1,7 @@
 # This node handles ROS-side logic for the VR server
 from l2_msgs.srv import GetFile, PutFile, SpawnObject3D, RemoveObject3D, GetObject3D
-from l2_msgs.msg import Object3DArray, Object3D, Simulation, L2File, ROSState
+from l2_msgs.msg import Object3DArray, Object3D, Simulation, L2File, ROSState, L2Sequence as L2SequenceMsg
+from l2_msgs.action import L2Sequence as L2SequenceAction
 from rcl_interfaces.msg import ParameterDescriptor
 from std_msgs.msg import String
 import rclpy
@@ -8,6 +9,7 @@ from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from rclpy.time import Time
 from rclpy.duration import Duration
+from rclpy.action import ActionClient
 from datetime import datetime
 
 class TimeoutError(Exception):
@@ -55,9 +57,13 @@ class VRServer(Node):
         self.putfilecli = self.create_client(PutFile, 'storage/put_file', callback_group=cb_group)
         self.spawncli = self.create_client(SpawnObject3D, 'vr/SpawnObject3D', callback_group=cb_group)
         self.rmcli = self.create_client(RemoveObject3D, 'vr/RemoveObject3D', callback_group=cb_group)
+        self.seqcli = ActionClient(self, L2SequenceAction, 'sequence')
         self.vr_missing_pub = self.create_publisher(Object3DArray, "vr/missing_object3d", 10)
         self.vr_extra_pub = self.create_publisher(Object3DArray, "vr/extra_object3d", 10)
         self.ros_state_pub = self.create_publisher(ROSState, "vr/ros_state", 10)
+        self.create_subscription(L2SequenceMsg, "vr/Sequence",
+                self.handle_start_sequence, qos_profile_sensor_data,
+                callback_group=cb_group)
         self.create_subscription(Object3DArray, "vr/Object3D", self.set_vr_state, qos_profile_sensor_data, callback_group=cb_group)
         self.create_subscription(Simulation, "sim/simulation", self.set_sim_state, qos_profile_sensor_data, callback_group=cb_group)
         self.create_subscription(L2File, "vr/PutFile", self.handle_put_file,
@@ -74,6 +80,15 @@ class VRServer(Node):
 
     def vr_objset(self):
         return set([v.name for v in self.vr_object3d.objects])
+
+    def send_goal(self, client, goal, callback):
+        if not client.server_is_ready():
+            self.get_logger().error('Action client not ready: %s' % client)
+            return
+        future = client.send_goal_async(goal)
+        future.add_done_callback(callback)
+        #self.future_deadlines.append((future, self.get_clock().now()
+        #    + Duration(seconds=seconds)))
 
     def call_with_deadline(self, client, req, callback, seconds=2):
         if not client.service_is_ready():
@@ -158,6 +173,27 @@ class VRServer(Node):
     def set_sim_state(self, msg):
         self.sim_state = msg
         self.last_sim_msg = self.get_clock().now()
+
+    def handle_start_sequence(self, msg):
+        self.get_logger().info("Sequence %s" % msg)
+        self.send_goal(self.seqcli,
+                L2SequenceAction.Goal(sequence=msg),
+                self.handle_sequence_complete)
+    
+    def handle_sequence_feedback(self, msg):
+        self.get_logger().info("Feedback: %s" % msg.feedback)
+
+    def handle_sequence_complete(self, response):
+        if response.exception() is not None:
+            self.get_logger().error(str(response.exception()))
+            return
+        response = response.result() # Future<ClientGoalHandle>
+        print(response)
+        return
+        #if not response.success:
+        #    self.get_logger().warn("Bad result: " + str(response))
+        #    return
+        #self.get_logger().info("Sequence complete: %s" % response)
 
     def handle_put_file(self, msg):
         # Repackage and forward file writing request to 
