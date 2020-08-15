@@ -1,35 +1,12 @@
 [gd_scene load_steps=2 format=2]
 
-[sub_resource type="GDScript" id=1]
-script/source = "extends Button
+[ext_resource path="res://tool/sequence/SequenceItem.gd" type="Script" id=1]
 
-signal create_item
-
-# Declare member variables here. Examples:
-# var a = 2
-# var b = \"text\"
-
-
-# Called when the node enters the scene tree for the first time.
-func _ready():
-  pass # Replace with function body.
-
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-#func _process(delta):
-#  pass
-
-
-func _on_Button_pressed():
-  emit_signal(\"create_item\", self.text)
-  pass # Replace with function body.
-"
-
-[node name="Button" type="Button"]
+[node name="SequenceItem" type="Button"]
 margin_right = 12.0
 margin_bottom = 20.0
 text = "Test"
-script = SubResource( 1 )
+script = ExtResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }

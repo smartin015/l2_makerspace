@@ -5,6 +5,8 @@ onready var items = $MarginContainer/VBoxContainer/Controls/MarginContainer/Item
 onready var status = $MarginContainer/VBoxContainer/MarginContainer/HBoxContainer3/Status
 onready var seqItemNode = load("res://tool/sequence/SequenceItemNode.tscn")
 onready var seqItem = load("res://tool/sequence/SequenceItem.tscn")
+onready var editModal = $L2ParamEdit
+var editableNode = null
 
 var running = false
 
@@ -20,6 +22,7 @@ func _set_seq_items(si):
   for i in si:
     var inst = seqItem.instance()
     inst.text = i
+    inst.params = si[i]
     items.add_child(inst)
     var err = inst.connect("create_item", self, "_on_sequence_item_pressed")
     if err != OK:
@@ -37,7 +40,11 @@ func clear():
   nodes.clear_connections()
 
 func _ready():
-  _set_seq_items(["test1", "test2"])
+  # TODO set from ROS
+  _set_seq_items({
+    "pub": {"PUBSTR": "test_str"}, 
+    "test2": {},
+  })
   # $MarginContainer/VBoxContainer/Spacer/Nodes.get_zoom_hbox().visible = false
 
 func _on_GridContainer_connection_request(from, from_slot, to, to_slot):
@@ -57,15 +64,27 @@ remote func status_update(status_map):
     if n != null:
       n.set_status_label(status_map[uid])
 
-func _on_sequence_item_pressed(n):
+func _on_sequence_item_pressed(t, p={}):
+  print(t)
+  print(p)
   # ID from msec ticks is sloppy and could cause problems
-  # later on. But hey, it's test code :)
-  rpc("create_sequence_item", n, str(OS.get_ticks_msec()))
+  # later on. But hey, it's test code :) you're welcome, future me.
+  rpc("create_sequence_item", t, str(OS.get_ticks_msec()), p)
 
-remotesync func create_sequence_item(n, uid):
+func _on_sequence_item_node_edit_pressed(n):
+  editModal.fill(n.title, n.params)
+  editModal.visible = true
+
+func _on_L2ParamEdit_close_edit(title, prev, next):
+  editableNode.rpc("set_params", next)
+  editModal.visible = false
+
+remotesync func create_sequence_item(n, uid, params = {}):
   var i = seqItemNode.instance()
   i.name = uid
   i.title = n  
+  i.params = params
+  i.connect("edit_pressed", self, "_on_sequence_item_node_edit_pressed")
   nodes.add_child(i)
   _log("Added node %s" % n)
   return i
@@ -88,9 +107,11 @@ func _on_Run_pressed():
     seqMap[c.from] = c.to
 
   var origins = {}
+  var params = {}
   for c in nodes.get_children():
     if c is GraphNode:
       origins[c.name] = true
+      params[c.name] = c.params
   for k in seqMap:
     origins[seqMap[k]] = false
   var seq = []
@@ -102,14 +123,14 @@ func _on_Run_pressed():
     return
   
   print(seq[0])
-  var cmds = [nodes.get_node(seq[0]).title]
+  var cmds = [nodes.get_node(seq[0]).get_data()]
   while seqMap.get(seq[-1]):
     seq.append(seqMap[seq[-1]])
-    cmds.append(nodes.get_node(seq[-1]).title)
+    cmds.append(nodes.get_node(seq[-1]).get_data())
   
   running = true
   rpc_id(1, "run_sequence", cmds)
-  _log("Sent run request")
+  _log("Sent run request: %s" % cmds)
 
   
 func _on_Stop_pressed():
@@ -132,3 +153,14 @@ remote func on_save(status, name):
     gamestate.player.show_toast("Saved to %s" % name)
   else:
     gamestate.player.show_toast("Error saving: %s" % status)
+
+func _on_Nodes_node_selected(node):
+  if editableNode != null:
+    editableNode.on_unselected()
+  node.on_selected()
+  editableNode = node
+
+func _on_Nodes_node_unselected(node):
+  if node == editableNode:
+    node.on_unselected()
+    editableNode = null

@@ -3,16 +3,14 @@ extends Control
 onready var seqItemNode = load("res://panel/sequence/SequenceItemNode.tscn")
 onready var nodes = $MarginContainer/VBoxContainer/Spacer/Nodes
 
-const topic = "sequence"
+const topic = "Sequence"
 const topic_type = "l2_msgs/msg/L2Sequence"
 
-func _ready():
-  ROSBridge.advertise(topic, topic_type, "run_seq_adv")
-
-remote func create_sequence_item(n, uid):
+remote func create_sequence_item(n, uid, params):
   var i = seqItemNode.instance()
   i.name = uid
   i.title = n  
+  i.params = params
   nodes.add_child(i)
   print("Added node %s" % n)
 
@@ -26,7 +24,7 @@ func pack_state():
   var ns = []
   for n in nodes.get_children():
     if n.get("offset") != null:
-      ns.push_back([n.title, n.name, n.offset])
+      ns.push_back([n.title, n.name, n.offset, n.params])
   return {
     "nodes": ns,
     "connection_list": nodes.get_connection_list(),
@@ -43,25 +41,18 @@ remote func save():
   # TODO notify write completion
   rpc_id(sender, "on_save", OK, "writing file") 
 
-remote func run_sequence(cmds):
-  var items = []
-  for s in cmds:
-    items.append({
-      "name": s,
-      "params": [],
-     })
-    
+remote func run_sequence(items):
   ROSBridge.publish(topic, topic_type, {
     "items": items,
   }, "seq")
-  print("Published seq to run: %s" % [cmds])
+  print("Published seq to run: %s" % [items])
   
   # TODO remove this fake
   var statmap = {}
   for c in nodes.get_children():
     if c.get("title") == null:
       continue
-    if len(cmds) == 0:
+    if len(items) == 0:
       statmap[c.name] = "stopping"
     elif c.title == "test1":
       statmap[c.name] = "test1ing"

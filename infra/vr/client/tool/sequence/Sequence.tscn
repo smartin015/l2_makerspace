@@ -11,12 +11,14 @@ script = ExtResource( 3 )
 
 [node name="OQ_UI2DCanvas" parent="." instance=ExtResource( 1 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, 0 )
+editor_live_update = false
+transparent = false
 
 [node name="SequenceUI" parent="OQ_UI2DCanvas" instance=ExtResource( 2 )]
-margin_right = -512.0
-margin_bottom = -344.0
+anchor_right = 0.824
+anchor_bottom = 1.0
+margin_right = 0.223938
+margin_bottom = -19.0
 
 [node name="Selectable" parent="." instance=ExtResource( 4 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0 )
-[connection signal="run_sequence" from="OQ_UI2DCanvas/SequenceUI" to="." method="_on_SequenceItemUI_run_sequence"]
-[connection signal="stop_sequence" from="OQ_UI2DCanvas/SequenceUI" to="." method="_on_SequenceItemUI_stop_sequence"]

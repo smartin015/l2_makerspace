@@ -1,8 +1,10 @@
 # ROS topics published by tools
 extends Node
 
+# TODO match up with tool values
 const tool_topics = {
   "PutFile": "l2_msgs/msg/L2File",
+  "Sequence": "l2_msgs/msg/L2Sequence",
 }
 
 class ToolTopic:

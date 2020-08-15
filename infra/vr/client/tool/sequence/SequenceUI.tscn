@@ -1,12 +1,15 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=5 format=2]
 
 [ext_resource path="res://OQ_Toolkit/OQ_UI2D/theme/oq_ui2d_standard.theme" type="Theme" id=1]
 [ext_resource path="res://tool/sequence/ui_theme.tres" type="Theme" id=2]
 [ext_resource path="res://tool/sequence/SequenceUI.gd" type="Script" id=3]
+[ext_resource path="res://tool/menu/L2ParamEdit.tscn" type="PackedScene" id=4]
 
 [node name="SequenceUI" type="Control"]
-margin_right = 768.0
-margin_bottom = 512.0
+anchor_right = 1.033
+anchor_bottom = 0.862
+margin_right = 0.208008
+margin_bottom = -0.200012
 theme = ExtResource( 1 )
 script = ExtResource( 3 )
 __meta__ = {
@@ -29,13 +32,13 @@ __meta__ = {
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
 margin_left = 5.0
 margin_top = 5.0
-margin_right = 806.0
+margin_right = 1053.0
 margin_bottom = 512.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="Spacer" type="MarginContainer" parent="MarginContainer/VBoxContainer"]
-margin_right = 801.0
+margin_right = 1048.0
 margin_bottom = 400.0
 rect_min_size = Vector2( 0, 400 )
 size_flags_vertical = 3
@@ -50,7 +53,7 @@ __meta__ = {
 [node name="Nodes" type="GraphEdit" parent="MarginContainer/VBoxContainer/Spacer"]
 margin_left = 12.0
 margin_top = 12.0
-margin_right = 789.0
+margin_right = 1036.0
 margin_bottom = 388.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -59,7 +62,7 @@ zoom = 0.578704
 
 [node name="Controls" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
 margin_top = 404.0
-margin_right = 801.0
+margin_right = 1048.0
 margin_bottom = 444.0
 size_flags_horizontal = 3
 __meta__ = {
@@ -76,7 +79,7 @@ text = "<"
 
 [node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/Controls"]
 margin_left = 44.0
-margin_right = 757.0
+margin_right = 1004.0
 margin_bottom = 40.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -85,12 +88,12 @@ custom_constants/margin_left = 8
 
 [node name="Items" type="HBoxContainer" parent="MarginContainer/VBoxContainer/Controls/MarginContainer"]
 margin_left = 8.0
-margin_right = 705.0
+margin_right = 952.0
 margin_bottom = 40.0
 
 [node name="Right" type="Button" parent="MarginContainer/VBoxContainer/Controls"]
-margin_left = 761.0
-margin_right = 801.0
+margin_left = 1008.0
+margin_right = 1048.0
 margin_bottom = 40.0
 rect_min_size = Vector2( 40, 40 )
 size_flags_horizontal = 0
@@ -99,7 +102,7 @@ text = ">"
 
 [node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer"]
 margin_top = 448.0
-margin_right = 801.0
+margin_right = 1048.0
 margin_bottom = 507.0
 custom_constants/margin_right = 100
 custom_constants/margin_top = 20
@@ -108,18 +111,19 @@ custom_constants/margin_left = 100
 [node name="HBoxContainer3" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer"]
 margin_left = 100.0
 margin_top = 20.0
-margin_right = 701.0
+margin_right = 948.0
 margin_bottom = 59.0
 
 [node name="Status" type="Label" parent="MarginContainer/VBoxContainer/MarginContainer/HBoxContainer3"]
 margin_top = 10.0
+margin_right = 247.0
 margin_bottom = 29.0
 size_flags_horizontal = 3
 theme = ExtResource( 2 )
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/HBoxContainer3"]
-margin_left = 4.0
-margin_right = 601.0
+margin_left = 251.0
+margin_right = 848.0
 margin_bottom = 39.0
 custom_constants/separation = 60
 
@@ -151,7 +155,20 @@ margin_left = 519.0
 margin_right = 597.0
 margin_bottom = 39.0
 text = "Clear"
+
+[node name="L2ParamEdit" parent="." instance=ExtResource( 4 )]
+visible = false
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = -128.0
+margin_top = -127.5
+margin_right = 128.0
+margin_bottom = 127.5
 [connection signal="connection_request" from="MarginContainer/VBoxContainer/Spacer/Nodes" to="." method="_on_GridContainer_connection_request"]
+[connection signal="node_selected" from="MarginContainer/VBoxContainer/Spacer/Nodes" to="." method="_on_Nodes_node_selected"]
+[connection signal="node_unselected" from="MarginContainer/VBoxContainer/Spacer/Nodes" to="." method="_on_Nodes_node_unselected"]
 [connection signal="pressed" from="MarginContainer/VBoxContainer/Controls/Left" to="." method="_on_Left_pressed"]
 [connection signal="pressed" from="MarginContainer/VBoxContainer/Controls/Right" to="." method="_on_Right_pressed"]
 [connection signal="pressed" from="MarginContainer/VBoxContainer/MarginContainer/HBoxContainer3/HBoxContainer2/Run" to="." method="_on_Run_pressed"]
@@ -159,3 +176,4 @@ text = "Clear"
 [connection signal="pressed" from="MarginContainer/VBoxContainer/MarginContainer/HBoxContainer3/HBoxContainer2/Save" to="." method="_on_Save_pressed"]
 [connection signal="pressed" from="MarginContainer/VBoxContainer/MarginContainer/HBoxContainer3/HBoxContainer2/Load" to="." method="_on_Load_pressed"]
 [connection signal="pressed" from="MarginContainer/VBoxContainer/MarginContainer/HBoxContainer3/HBoxContainer2/Clear" to="." method="_on_Clear_pressed"]
+[connection signal="close_edit" from="L2ParamEdit" to="." method="_on_L2ParamEdit_close_edit"]
