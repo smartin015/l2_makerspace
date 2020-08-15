@@ -1,4 +1,5 @@
 string name
+string uid
 diagnostic_msgs/KeyValue[] params
 
 builtin_interfaces/Time started

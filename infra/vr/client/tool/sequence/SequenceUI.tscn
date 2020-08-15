@@ -114,16 +114,8 @@ margin_top = 20.0
 margin_right = 948.0
 margin_bottom = 59.0
 
-[node name="Status" type="Label" parent="MarginContainer/VBoxContainer/MarginContainer/HBoxContainer3"]
-margin_top = 10.0
-margin_right = 247.0
-margin_bottom = 29.0
-size_flags_horizontal = 3
-theme = ExtResource( 2 )
-
 [node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/HBoxContainer3"]
-margin_left = 251.0
-margin_right = 848.0
+margin_right = 597.0
 margin_bottom = 39.0
 custom_constants/separation = 60
 
@@ -155,6 +147,14 @@ margin_left = 519.0
 margin_right = 597.0
 margin_bottom = 39.0
 text = "Clear"
+
+[node name="Status" type="Label" parent="MarginContainer/VBoxContainer/MarginContainer/HBoxContainer3"]
+margin_left = 601.0
+margin_top = 10.0
+margin_right = 848.0
+margin_bottom = 29.0
+size_flags_horizontal = 3
+theme = ExtResource( 2 )
 
 [node name="L2ParamEdit" parent="." instance=ExtResource( 4 )]
 visible = false

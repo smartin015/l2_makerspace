@@ -61,6 +61,8 @@ class VRServer(Node):
         self.vr_missing_pub = self.create_publisher(Object3DArray, "vr/missing_object3d", 10)
         self.vr_extra_pub = self.create_publisher(Object3DArray, "vr/extra_object3d", 10)
         self.ros_state_pub = self.create_publisher(ROSState, "vr/ros_state", 10)
+        self.seq_state_pub = self.create_publisher(L2SequenceMsg,
+            "vr/SequenceUpdate", 10)
         self.create_subscription(L2SequenceMsg, "vr/Sequence",
                 self.handle_start_sequence, qos_profile_sensor_data,
                 callback_group=cb_group)
@@ -81,12 +83,12 @@ class VRServer(Node):
     def vr_objset(self):
         return set([v.name for v in self.vr_object3d.objects])
 
-    def send_goal(self, client, goal, callback):
+    def send_goal(self, client, goal, feedback_cb, done_cb):
         if not client.server_is_ready():
             self.get_logger().error('Action client not ready: %s' % client)
             return
-        future = client.send_goal_async(goal)
-        future.add_done_callback(callback)
+        future = client.send_goal_async(goal,feedback_callback=feedback_cb)
+        future.add_done_callback(done_cb)
         #self.future_deadlines.append((future, self.get_clock().now()
         #    + Duration(seconds=seconds)))
 
@@ -178,22 +180,29 @@ class VRServer(Node):
         self.get_logger().info("Sequence %s" % msg)
         self.send_goal(self.seqcli,
                 L2SequenceAction.Goal(sequence=msg),
-                self.handle_sequence_complete)
+                self.handle_sequence_feedback,
+                self.handle_sequence_accepted)
     
     def handle_sequence_feedback(self, msg):
         self.get_logger().info("Feedback: %s" % msg.feedback)
+        self.seq_state_pub.publish(msg.feedback.sequence)
 
-    def handle_sequence_complete(self, response):
+    def handle_sequence_accepted(self, response):
         if response.exception() is not None:
             self.get_logger().error(str(response.exception()))
             return
-        response = response.result() # Future<ClientGoalHandle>
-        print(response)
-        return
-        #if not response.success:
-        #    self.get_logger().warn("Bad result: " + str(response))
-        #    return
-        #self.get_logger().info("Sequence complete: %s" % response)
+        goal_handle = response.result() # Future<ClientGoalHandle>
+        if not goal_handle.accepted:
+            self.get_logger().error("Goal rejected")
+            reutrn
+        self.get_logger().info("Goal accepted")
+        fut = goal_handle.get_result_async()
+        fut.add_done_callback(self.handle_sequence_result)
+
+    def handle_sequence_result(self, response):
+        response = response.result().result
+        print("Sequence result: %s" % response)
+        self.seq_state_pub.publish(response.sequence)
 
     def handle_put_file(self, msg):
         # Repackage and forward file writing request to 

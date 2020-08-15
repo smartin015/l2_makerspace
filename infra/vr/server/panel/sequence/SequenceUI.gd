@@ -6,10 +6,16 @@ onready var nodes = $MarginContainer/VBoxContainer/Spacer/Nodes
 const topic = "Sequence"
 const topic_type = "l2_msgs/msg/L2Sequence"
 
+func _ready():
+  ROSBridge.ros_connect("SequenceUpdate", 
+    "l2_msgs/msg/L2Sequence", 
+    self, "_on_sequence_update", 
+    "sequence_update_sub")
+
 remote func create_sequence_item(n, uid, params):
   var i = seqItemNode.instance()
   i.name = uid
-  i.title = n  
+  i.title = n
   i.params = params
   nodes.add_child(i)
   print("Added node %s" % n)
@@ -47,16 +53,10 @@ remote func run_sequence(items):
   }, "seq")
   print("Published seq to run: %s" % [items])
   
-  # TODO remove this fake
+func _on_sequence_update(msg, _id, _peer_id):
   var statmap = {}
-  for c in nodes.get_children():
-    if c.get("title") == null:
-      continue
-    if len(items) == 0:
-      statmap[c.name] = "stopping"
-    elif c.title == "test1":
-      statmap[c.name] = "test1ing"
-    elif c.title == "test2":
-      statmap[c.name] = "test2ness"
+  for i in msg.items: 
+    statmap[i.uid] = i.status
   rpc("status_update", statmap)
-  print("Set fake statuses")
+  print("Updated statuses: %s" % statmap)
+  

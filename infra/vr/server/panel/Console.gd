@@ -44,7 +44,7 @@ remote func setup_request():
   rpc_id(sender, "setup", topic, text)
   rpc_id(sender, "set_topics", gamestate.topics)
 
-func _on_console(msg, _id):
+func _on_console(msg, _id, _peer_id):
   print("Pushed: %s" % [msg])
   text.push_back(msg.data)
   rpc("on_console", msg.data)

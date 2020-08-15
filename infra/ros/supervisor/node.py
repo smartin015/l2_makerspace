@@ -26,7 +26,7 @@ class Work():
         self.supervisor.get_logger().info("%s: %s" % (self.id, text))
 
     def publish_feedback(self):
-        self.goal_handle.publish_feedback(L2SequenceAction.Feedback(current_item=self.sequence.items[self.idx]))
+        self.goal_handle.publish_feedback(L2SequenceAction.Feedback(sequence=self.sequence))
     
     def stop_sequence(self, seq):
         self.info("Stopping")
@@ -73,13 +73,18 @@ class Work():
 
     def execute(self):
         while self.active():
+            current = self.sequence.items[self.idx]
             if not self.goal_handle.is_active:
                 self.stop()
-                return L2SequenceAction.Result(success=False, message="Aborted")
+                current.code = 1
+                current.status = "Aborted"
+                return L2SequenceAction.Result(sequence=self.sequence)
             elif self.goal_handle.is_cancel_requested:
                 self.stop()
                 self.goal_handle.canceled()
-                return L2SequenceAction.Result(success=False, message="Canceled")
+                current.code = 1
+                current.status = "Canceled"
+                return L2SequenceAction.Result(sequence=self.sequence)
 
             # Get current container state, update sequence item timestamps
             # Per https://docs.docker.com/engine/reference/commandline/ps/, status is
@@ -89,17 +94,19 @@ class Work():
                 # Paused containers aren't handled by the supervisor.
                 if c.status == "paused":
                     self.supervisor.get_logger().warn("Container %s (%s) paused" % (c.name, c.short_id))
+                    current.status = "paused"
+                    self.publish_feedback()
                     running = True
                 elif c.status in ["created", "restarting", "running", "removing"]:
                     running = True
                 else: # exited or dead
-                   details = c.wait()
-                   print(details)
-                   if details["StatusCode"] != 0:
-                     current.code = details["StatusCode"]
-                     # TODO status string
-                   c.remove()
-                   self.info("%s (%s) removed (%s %d)" % (c.name, c.short_id, c.status, details["StatusCode"]))
+                    details = c.wait()
+                    print(details)
+                    current.status = "exited"
+                    current.code = details["StatusCode"]
+                    c.remove()
+                    self.info("%s (%s) removed (%s %d)" % (c.name, c.short_id, c.status, details["StatusCode"]))
+                    self.publish_feedback()
         
             try: 
                 for s in self.supervisor.client.services.list(filters=self.filters):
@@ -109,26 +116,29 @@ class Work():
             except docker.errors.APIError:
                 pass # Happens if we're not in a swarm
 
-            current = self.sequence.items[self.idx]
             if current.code != 0:
                 self.stop_sequence(current)
                 self.supervisor.get_logger().error
                 self.goal_handle.abort()
-                return L2SequenceAction.Result(success=False, message="Encountered failure in sequence item %s; aborting" % current.name)
+                self.current.status="failed"
+                self.current.code = 3
+                return L2SequenceAction.Result(sequence=self.sequence)
             elif current.started.sec == 0:
                 current.container_ids = self.start_containers(current)
                 current.started = self.supervisor.get_clock().now().to_msg()
+                current.status = "running"
                 self.info("%s started" % current.name)
+                self.publish_feedback()
             elif not running:
                 self.info("%s completed" % current.name)
                 current.stopped = self.supervisor.get_clock().now().to_msg()
+                current.status="completed"
                 self.idx += 1
                 if not self.active():
                     self.info("Succeeded")
                     self.goal_handle.succeed()
-                    return L2SequenceAction.Result(success=True, message="L2Sequence Complete")
+                    return L2SequenceAction.Result(sequence=self.sequence)
 
-            self.publish_feedback()
 
 class Supervisor(Node):
     PUBLISH_PD = 1  # seconds

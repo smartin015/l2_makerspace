@@ -98,6 +98,7 @@ class ROSHandler:
 
 # Subscribes to a ROS topic via the server & ros bridge, and registers a 
 # handler to call when the topic receives messages.
+# This is for server-side message handling.
 func ros_connect(topic: String, type: String, node: Node, handler: String, id: String, raw=false):
   var h = handlers.get(topic)
   if !h:
@@ -108,7 +109,13 @@ func ros_connect(topic: String, type: String, node: Node, handler: String, id: S
   h.id = id
   h.callbacks.push_back([node, handler])
   h.raw = raw
-  subscribe(topic, type, id, raw)
+  if !raw:
+    _broadcast(id, {
+      "op": "subscribe",
+      "topic": topic,
+      "type": type,
+      "fragment_size": MAX_WS_MSG,
+    })
   return h
 
 func ros_disconnect(h: ROSHandler):
@@ -261,7 +268,7 @@ func _handle_result(id, result):
             result.get("id", ""))
         else:
           # Clear out the listener if the user is no longer present
-          print("Clearing unused listener %s" % l)
+          print("Clearing unused listener %s on topic %s" % [l, result.topic])
           ls.erase(l)
 
       var h = handlers.get(result.topic)

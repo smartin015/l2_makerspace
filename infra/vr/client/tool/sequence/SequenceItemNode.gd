@@ -42,4 +42,4 @@ func get_data():
   var ps = []
   for k in params:
     ps.push_back({"key": k, "value": params[k]})
-  return {"name": title, "params": ps}
+  return {"uid": name, "name": title, "params": ps}

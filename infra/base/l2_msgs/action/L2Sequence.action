@@ -1,6 +1,5 @@
 l2_msgs/L2Sequence sequence
 ---
-bool success
-string message
+l2_msgs/L2Sequence sequence
 ---
-l2_msgs/L2SequenceItem current_item
+l2_msgs/L2Sequence sequence
