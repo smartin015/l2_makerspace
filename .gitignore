@@ -15,3 +15,4 @@ infra/app/node_modules
 .bash_history
 .cache
 __pycache__
+todoist.json

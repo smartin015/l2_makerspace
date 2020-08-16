@@ -1,8 +1,17 @@
-version: '3.4'
+version: '3.5'
 
 services:
   main:
     build: .
     image: l2tasks:latest
+    networks:
+      - l2
+    volumes:
+      - ./volumes/config/:/config
     environment:
       PYTHONUNBUFFERED: 1
+
+networks:
+  l2:
+    driver: bridge
+    name: l2

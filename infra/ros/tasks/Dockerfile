@@ -1,11 +1,7 @@
-FROM l2base:latest
+ARG L2PKG=l2_tasks
+ARG L2NODES=node.py
+FROM l2base-pre
+FROM l2base-post
 
-RUN pip3 install todoist-python
-
-ENV L2NAME=l2_tasks
-
-CMD ["bash", "-c", "source /node/install/setup.bash && source /l2_msgs/install/setup.bash && ros2 run ${L2NAME} main"]
-
-COPY . /node
-
-RUN /templates/setup_boilerplate.sh node.py
+RUN apt update && apt install --no-install-recommends -y python3-pip && pip3 install todoist-python && apt clean
+COPY --from=0 /node/install /node/install
