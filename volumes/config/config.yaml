@@ -19,6 +19,7 @@ pub:
   seqpub:
     image: "l2base"
     environment:
-      PUBSTR: "hello"
+      topic: test_topoic
+      str: hello
     network: l2
-    command: "/bin/bash -c \"source /l2_msgs/install/setup.bash && ros2 topic pub --once test_topic std_msgs/String \\\"data: $PUBSTR\\\"\""
+    command: "/bin/bash -c \"source /l2_msgs/install/setup.bash && ros2 topic pub --once $topic std_msgs/String \\\"data: $str\\\"\""

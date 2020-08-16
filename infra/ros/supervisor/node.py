@@ -207,10 +207,10 @@ class Supervisor(Node):
 
     def execute_callback(self, goal_handle):
         """Executes the goal."""
-        self.get_logger().info('Executing goal...')
+        self.get_logger().info('Adding goal to work queue & executing...')
         work = Work(goal_handle, self)
         self.state.append(work)
-        return work.execute()
+        return work.execute() # Blocks thread until execution complete
 
     def gc_state_callback(self):
         seqs = L2SequenceArray()

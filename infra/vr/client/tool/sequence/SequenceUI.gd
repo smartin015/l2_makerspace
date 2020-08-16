@@ -42,7 +42,7 @@ func clear():
 func _ready():
   # TODO set from ROS
   _set_seq_items({
-    "pub": {"PUBSTR": "test_str"}, 
+    "pub": {"topic": "test_topic", "str": "test_str"}, 
     "test2": {},
   })
   # $MarginContainer/VBoxContainer/Spacer/Nodes.get_zoom_hbox().visible = false

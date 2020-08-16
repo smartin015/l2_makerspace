@@ -194,7 +194,7 @@ class VRServer(Node):
         goal_handle = response.result() # Future<ClientGoalHandle>
         if not goal_handle.accepted:
             self.get_logger().error("Goal rejected")
-            reutrn
+            return
         self.get_logger().info("Goal accepted")
         fut = goal_handle.get_result_async()
         fut.add_done_callback(self.handle_sequence_result)
