@@ -29,7 +29,9 @@ services:
     image: l2bridge:latest
     networks:
       - l2
-    command: bash -i -c "source /opt/ros/foxy/setup.bash && source /l2_msgs/install/setup.bash && cd /ros2-web-bridge && node bin/rosbridge.js --port=4243"
+    ports: 
+      - "3000:3000"
+    command: bash -i -c "source /opt/ros/foxy/setup.bash && source /l2_msgs/install/setup.bash && cd /ros2-web-bridge && node bin/rosbridge.js --port=3000"
 
 networks:
   l2:

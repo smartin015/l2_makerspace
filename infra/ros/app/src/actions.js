@@ -1,4 +1,4 @@
-import store from './store.js'
+import {store, Page} from './store.js'
 import bridge from './rosbridge.js'
 const actions = {};
 
@@ -7,17 +7,42 @@ actions.setActiveProject = (msg) => {
   console.log(msg);
 }
 
+actions.connectionStateChanged = (connected) => {
+  store.connected = connected;
+}
+
+actions.mergeDebugJSON = (msg) => {
+  const j = JSON.parse(msg.data);
+  store.debug_json = {...store.debug_json, ...j};
+}
+
+actions.setPage = (page) => {
+  store.page = page;
+}
+
 actions.controlClicked = (evt) => {
-  if (evt.target.id === "estop") {
+  const id = evt.target.closest("button").id;
+  if (id === "estop") {
     console.warn("Sending emergency stop command")
     bridge.publish('emergency_stop', {data: true})
+    return;
+  } else if (id === "debug_json") {
+    store.page = Page.DEBUG_JSON;
+    window.location.hash = "DEBUG_JSON";
+    return;
+  } else if (id === "settings") {
+    store.page = Page.SETTINGS;
+    window.location.hash = "SETTINGS";
+    return;
+  } else if (id === "project_list") {
+    store.page = Page.PROJECT_LIST;
+    window.location.hash = "PROJECT_LIST";
     return;
   }
 
   if (!store.active_project) {
     return;
   }
-  const id = evt.target.id;
   console.log("CLICKED", id);
   const ids = Object.keys(store.projects).sort();
   const i = ids.indexOf(store.active_project.toString());

@@ -5,6 +5,7 @@ from l2_msgs.action import L2Sequence as L2SequenceAction
 from rcl_interfaces.msg import ParameterDescriptor
 from std_msgs.msg import String
 import rclpy
+import json
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from rclpy.time import Time
@@ -63,6 +64,7 @@ class VRServer(Node):
         self.ros_state_pub = self.create_publisher(ROSState, "vr/ros_state", 10)
         self.seq_state_pub = self.create_publisher(L2SequenceMsg,
             "vr/SequenceUpdate", 10)
+        self.debug_pub = self.create_publisher(String, "debug_json", 10)
         self.create_subscription(L2SequenceMsg, "vr/Sequence",
                 self.handle_start_sequence, qos_profile_sensor_data,
                 callback_group=cb_group)
@@ -152,8 +154,10 @@ class VRServer(Node):
     def log_status(self):
         now = self.get_clock().now()
         status = {
-            "sim": ["-%dsec" % (now-self.last_sim_msg).to_msg().sec, self.sim_objset()],
-            "vr": ["-%dsec" % (now-self.last_vr_msg).to_msg().sec, self.vr_objset()],
+            "sim": ["-%dsec" % (now-self.last_sim_msg).to_msg().sec,
+                list(self.sim_objset())],
+            "vr": ["-%dsec" % (now-self.last_vr_msg).to_msg().sec,
+                list(self.vr_objset())],
             "stale": self.stale(),
         }
 
@@ -163,7 +167,7 @@ class VRServer(Node):
                 and self.last_status["sim"][1] == status["sim"][1]
                 and self.last_status["vr"][1] == status["vr"][1]):
             return
-        self.get_logger().info(str(status))
+        self.debug_pub.publish(String(data=json.dumps(status)))
         self.vr_missing_pub.publish(Object3DArray(objects=[Object3D(name=n) for n in self.vr_objset().difference(self.sim_objset())]))
         self.vr_extra_pub.publish(Object3DArray(objects=[Object3D(name=n) for n in self.sim_objset().difference(self.vr_objset())]))
         self.last_status = status

@@ -1,0 +1,29 @@
+version: '3.5'
+
+services:
+  app_local:
+    image: l2app:latest
+    build: .
+    environment:
+      - "PYTHONUNBUFFERED=1"
+    networks:
+      - l2
+    ports:
+      - "8000:8000"
+    volumes: 
+      - ./infra/ros/app/src:/src
+    command: /bin/bash -c "cd /src && python3 -m http.server"
+  app:
+    build: .
+    image: l2app:latest
+    environment:
+      - "PYTHONUNBUFFERED=1"
+    networks:
+      - l2
+    ports:
+      - "8000:8000"
+
+networks:
+  l2:
+    driver: bridge
+    name: l2

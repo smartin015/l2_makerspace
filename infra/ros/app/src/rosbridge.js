@@ -1,6 +1,10 @@
 // Connect and handle rosbridge communications
 
 class ROSBridge {
+  constructor() {
+    this.ns = "l2";
+  }
+
   setUser(username) {
     this.username = username;
   }
@@ -8,7 +12,11 @@ class ROSBridge {
   setHandlers(topicHandlers) {
     this.handlers = {};
     for (let topic of Object.keys(topicHandlers)) {
-      this.handlers[`/${this.username}/${topic}`] = topicHandlers[topic];
+      if (topic.startsWith("/")) {
+        this.handlers[topic] = topicHandlers[topic];
+      } else {
+        this.handlers[`/${this.ns}/${this.username}/${topic}`] = topicHandlers[topic];
+      }
     }
   }
 
@@ -17,7 +25,7 @@ class ROSBridge {
   }
 
   connect(uri) {
-    this.socket = new WebSocket("ws://penguin.linux.test:4243");
+    this.socket = new WebSocket("ws://penguin.linux.test:3000");
     this.socket.onopen = this._onOpen.bind(this);
     this.socket.onmessage = this._onMessage.bind(this);
     this.socket.onerror = this._onError.bind(this);
@@ -26,8 +34,9 @@ class ROSBridge {
 
   _onOpen() {
     console.log("[open] Connection established");
+    this.on_connection_state_change(true);
     for (let advert of Object.keys(this.advertised)) {
-      const topic = `/${this.username}/${advert}`;
+      const topic = `/${this.ns}/${this.username}/${advert}`;
       this.socket.send(JSON.stringify({
         op: 'advertise',
         topic,
@@ -39,13 +48,14 @@ class ROSBridge {
       this.socket.send(JSON.stringify({
         op: 'subscribe', 
         topic,
-        type: 'std_msgs/Int64',
+        type: this.handlers[topic][0],
       }));
       console.log(`Subscribed to ${topic}`);
     }
   }
 
   _onClose(event) {
+    this.on_connection_state_change(false);
     if (event.wasClean) {
       console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
     } else {
@@ -60,11 +70,11 @@ class ROSBridge {
   }
 
   _onMessage(event) {
-    console.log(`[message] Data received from server: ${event.data}`);
+    // console.log(`[message] Data received from server: ${event.data}`);
     try {
       const msg = JSON.parse(event.data);
       if (msg.op === 'publish' && this.handlers[msg.topic]) {
-        this.handlers[msg.topic](msg.msg);
+        this.handlers[msg.topic][1](msg.msg);
       }
     } catch (e) {
       console.log("Failed to parse message:", text);
@@ -75,7 +85,7 @@ class ROSBridge {
   publish(topic, msg) {
     this.socket.send(JSON.stringify({
       op: "publish",
-      topic: `/${this.username}/${topic}`,
+      topic: `/${this.ns}/${this.username}/${topic}`,
       msg,
     }));
   }

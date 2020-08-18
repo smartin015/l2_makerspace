@@ -1,0 +1,97 @@
+:root {
+  /* https://material.io/resources/color/#!/?view.left=0&view.right=0&primary.color=B71C1C */
+  --md-primary: #b71c1c;
+  --md-primary-light: #f05545;
+  --md-primary-dark: #7f0000;
+  --md-primary-f: #ffffff;
+  --md-bg-dark: #E1E2E1;
+  --md-bg: #E9EAE9;
+  --md-bg-light: #F5F5F6;
+  --md-bg-f: #000000;
+}
+
+html, body {
+  margin: 0;
+  background-color: var(--md-bg-dark);
+}
+
+/* All users of primary theme */
+.project > .header {
+  background-color: var(--md-primary);
+  color: var(--md-primary-f);
+}
+
+/* All users of primary-dark */
+button, .banner, .status {
+  background-color: var(--md-primary-dark);
+  color: var(--md-primary-f) !important;
+}
+
+html, button, body {
+  color: var(--md-bg-f);
+  font-size: 7vw;
+  font-family: Sans-Serif;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+img.svg {
+	width: 1em;
+	height: auto; 
+}
+
+button {
+  display: inline-block;
+  text-align: center;
+  text-decoration: none;
+  margin: 2px 0;
+  border: solid 1px transparent;
+  border-radius: 1vh;
+  padding: 0.125em 0.25em;
+	border-color: var(--md-primary-dark);
+	background-color: var(--md-primary);
+	margin: 0.125em;
+}
+button:active {
+	border-color: var(--md-primary);
+}
+button:hover {
+	color: var(--md-primary-fh);
+  border-color: var(--md-primary);
+  background-color: var(--md-primary-light);
+}
+button:disabled {
+  color: var(--md-bg-dark);
+  background-color: var(--md-bg);
+  border-color: var(--md-bg-dark)
+}
+
+.project {
+  width: 100%;
+  flex: 1;
+}
+
+.project > .header {
+  padding: 2vh;
+  text-align: center;
+}
+
+.banner, .status {
+  font-size: 0.5em;
+}
+.status {
+  width: 100%;
+	font-color: var(--md-primary-dark) !important;
+}
+
+.controls > div {
+  background-color: var(--md-bg-light);
+  color: var(--md-bg-f);
+  display: flex;
+  flex-direction: row; 
+  justify-content: space-evenly;
+}
