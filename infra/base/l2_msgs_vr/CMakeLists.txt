@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(l2_msgs)
+project(l2_msgs_vr)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -36,24 +36,10 @@ endif()
 
 
 set(msg_files 
-  msg/L2Actor.msg
-  msg/L2Role.msg
-  msg/Object3D.msg
-  msg/Object3DArray.msg
-  msg/ProjectItem.msg 
-  msg/Project.msg 
-  msg/Projects.msg
-  msg/L2Sequence.msg
-  msg/L2SequenceArray.msg
-  msg/L2SequenceItem.msg)
-set(srv_files 
-  srv/Object3D.srv
-  srv/L2ProjectItem.srv
-  srv/L2Project.srv
-  srv/L2SearchProjects.srv)
-set(action_files
-  action/L2Sequence.action)
-rosidl_generate_interfaces( ${PROJECT_NAME} ${msg_files} ${srv_files} ${action_files} DEPENDENCIES builtin_interfaces std_msgs diagnostic_msgs geometry_msgs)
+  msg/ROSState.msg
+  msg/VRLockStatus.msg
+  msg/VRPlayers.msg) 
+rosidl_generate_interfaces( ${PROJECT_NAME} ${msg_files} DEPENDENCIES builtin_interfaces std_msgs diagnostic_msgs geometry_msgs)
 ament_export_dependencies(rosidl_default_runtime)
 
 ament_package()

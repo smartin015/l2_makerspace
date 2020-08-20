@@ -15,3 +15,5 @@ string name
 string data
 
 geometry_msgs/Vector3 origin
+geometry_msgs/Pose pose
+geometry_msgs/Vector3 scale

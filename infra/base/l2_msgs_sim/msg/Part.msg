@@ -1,7 +1,7 @@
-l2_msgs/Material material
+l2_msgs_sim/Material material
 
 geometry_msgs/Pose pose
 geometry_msgs/Vector3 scale
 
 diagnostic_msgs/KeyValue[] modifiers # e.g. tooth count for a gear
-l2_msgs/Operation[] operations # Operations applied to this part
+l2_msgs_sim/Operation[] operations # Operations applied to this part
