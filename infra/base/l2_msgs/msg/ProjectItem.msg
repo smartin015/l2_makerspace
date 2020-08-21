@@ -1,4 +1,4 @@
-string PG_COLS="all project_id>Project"
+string PG_COLS="all project_id>Project object:int64"
 
 int64 id
 int64 project_id
@@ -26,5 +26,7 @@ string CONTENT_TYPE_L2_TASK="text/l2task"
 # it's very common to be passing strings around.
 # It's easier to read messages via `ros2 topic echo`
 # and there's less casting when treated specially here.
+# Ditto for object3d.
 string content
+l2_msgs/Object3D object
 byte[] data

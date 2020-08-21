@@ -2,6 +2,7 @@
 import os
 import rclpy
 from rclpy.node import Node
+from extra_file import hello
 
 class Example(Node):
     PUBLISH_PD = 60  # seconds

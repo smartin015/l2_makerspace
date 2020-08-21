@@ -1,5 +1,5 @@
 ARG L2PKG=l2_storage
-ARG L2NODES="node.py gen_schema.py"
+ARG L2NODES=node.py
 FROM l2base-pre
 FROM l2base-post
 

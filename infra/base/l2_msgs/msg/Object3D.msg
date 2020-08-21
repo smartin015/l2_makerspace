@@ -1,3 +1,7 @@
+string PG_COLS="-origin -pose -scale"
+
+int64 id
+
 uint8 TYPE_UNKNOWN = 0
 uint8 TYPE_OBJ = 1
 
