@@ -55,6 +55,7 @@ def to_pg_type(msg_type):
         "int64": "BIGINT",
         "string": "TEXT",
         "sequence<octet>": "BYTEA",
+        "builtin_interfaces/Time": "TIME",
     }.get(msg_type.strip(), "UNKNOWN")
 
 def l2_type(pgtype):
@@ -62,16 +63,16 @@ def l2_type(pgtype):
     m = re.search(r"l2\_\w+\/(\w+)", pgtype)
     return m if m is None else m.group(1)
 
-def toposorted_table_msgs(tables):
+def toposorted_table_msgs(tblmap):
     graph = []
-    tblmap = dict([(m().__class__.__name__, m) for m in get_table_msgs()])
+    # Only do toposort for keys that exist.
+    # This allows us to construct tables
+    # when the schema is incomplete
+    keys = set(tblmap.keys())
     for name, msg in tblmap.items():
-        if name not in tables:
-            continue
-        deps = [l2_type(v) for k,v in msg.get_fields_and_field_types().items()]
-        graph.append((name, [d for d in deps if d is not None]))
+        graph.append((name, [v for v in msg[1].values() if v in keys]))
     print("Toposort: %s" % graph)
-    return [tblmap[t] for t in topological_sort(graph)]
+    return topological_sort(graph)
 
 def annotate_msg(msg, tables):
     name = msg().__class__.__name__
@@ -80,6 +81,8 @@ def annotate_msg(msg, tables):
     ft = {k:v for k,v in msg.get_fields_and_field_types().items() if k not in exclude}
     over = dict([a.split(TYPE_SEP, 1) for a in pgcols if TYPE_SEP in a])
 
+    # Note: relations determined by pre-overridden columns 
+    # since overridden columns are typically relational (e.g. project -> project_id)
     relations = dict([(k, l2_type(v)) for k,v in ft.items() if
             'l2' in v and l2_type(v) in tables])
     relations = {**relations,  **dict([i.split(TYPE_REL, 1) for i in pgcols if TYPE_REL in
@@ -88,17 +91,22 @@ def annotate_msg(msg, tables):
     merged = {**ft, **over}
     print("%s: orig %s, excluding %s, merging %s -> %s, relation %s" % (name, str(ft),
         str(exclude), str(over), str(merged), str(relations)))
-    cols = []
+    return [merged, relations]
 
-def to_table(msgs, relations):
-    for n,t in msgs.items():
-        suffix = "REFERENCES %s(id)" % (relations[n]) if n in relations.keys() else ""
-        cols.append(COL_FMT.format(name=n, typ=to_pg_type(t),
-            suffix=suffix).rstrip())
+def to_table(name, tcols, relations):
+    cols = []
+    for cn,ct in tcols.items():
+        suffix = "REFERENCES %s(id)" % (relations[cn]) if cn in relations.keys() else ""
+        ct = "SERIAL PRIMARY KEY" if cn == "id" else to_pg_type(ct)
+        cols.append(COL_FMT.format(name=cn, typ=ct, suffix=suffix).rstrip())
+    if tcols.get("id") is not None:
+        cols = cols + ["UNIQUE (id)"]
     return TABLE_FMT.format(name=name,
                             cols=",\n".join(cols))
 
 def get_table_msgs(include=None):
+    if include is not None:
+        include = [i.lower() for i in include]
     table_msgs = {}
     for msg in dir(l2_msgs):
         if msg.startswith("_"):
@@ -106,17 +114,21 @@ def get_table_msgs(include=None):
         msg = getattr(l2_msgs, msg)
         if not hasattr(msg, 'PG_COLS'):
             continue
-        name = m().__class__.__name__
-        if include is not None and name not in include:
+        name = msg().__class__.__name__
+        if include is not None and name.lower() not in include:
             continue
         table_msgs[name] = msg
     return table_msgs
 
 def gen_schema(include=None):
+    print("Gen Schema:", include)
     mmap = get_table_msgs(include)
-    annotated = dict([(k, annotate_msg(v)) for k,v in mmap.items()])
-    msgs = [annotated[k] for k in toposorted_table_names(annotated)]
-    return SCHEMA_FMT.format(tables="\n\n".join([to_table(m) for m in msgs]))
+    print("Messages:", mmap)
+    annotated = dict([(k, annotate_msg(v, mmap.keys())) for k,v in mmap.items()])
+    print("Annotated:", annotated)
+    msgs = [[k, annotated[k][0], annotated[k][1]] for k in toposorted_table_msgs(annotated)]
+    print(msgs)
+    return SCHEMA_FMT.format(tables="\n\n".join([to_table(m[0], m[1], m[2]) for m in msgs]))
 
 if __name__ == "__main__":
     import sys

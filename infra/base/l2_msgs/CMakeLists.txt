@@ -37,6 +37,7 @@ endif()
 
 set(msg_files 
   msg/L2Actor.msg
+  msg/L2Event.msg
   msg/L2Role.msg
   msg/Object3D.msg
   msg/Object3DArray.msg
@@ -50,6 +51,7 @@ set(srv_files
   srv/Object3D.srv
   srv/L2ProjectItem.srv
   srv/L2Project.srv
+  srv/L2Actor.srv
   srv/L2SearchProjects.srv)
 set(action_files
   action/L2Sequence.action)

@@ -10,6 +10,7 @@ services:
       - l2
     ports:
       - "8000:8000"
+      - "8001:8001"
     volumes: 
       - ./infra/ros/app/src:/src
     command: /bin/bash -c "cd /src && python3 -m http.server"

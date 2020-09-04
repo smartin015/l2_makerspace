@@ -1,15 +1,18 @@
-from l2_msgs.srv import L2Project, L2ProjectItem, Object3D
 from l2_msgs.msg import Object3D
 import psycopg2
+from pymongo import MongoClient
 import os
 import time
+from watchdog.observers import Observer
 
 import rclpy
 from rclpy.node import Node
 
 from l2_storage.file_sync import WatchHandler
 from l2_storage.handlers import StorageHandlers
+from l2_storage.tasks_sync import TaskSyncHandler
 from l2_storage.gen_schema import gen_schema, get_table_msgs
+from l2_storage.mongo import serialize, deserialize
 
 class DBServer(Node):
     SDF_PUBLISH_PD = 10.0
@@ -18,16 +21,13 @@ class DBServer(Node):
         super().__init__('db_server', namespace=ns)
         self.get_logger().info("Init")
         self.connect_to_db()
+        self.connect_to_mongo()
         self.sync_table_schema()
 
-        # Dirpath used for GetFile requests
-        self.dirpath = self.get_parameter_or('dir_path', '/volume')
-    
-        self.handlers = StorageHandlers(self)
-        self.create_service(L2Project, 'project', self.handlers.handle_project)
-        self.create_service(L2ProjectItem, 'project_item', self.handlers.handle_project_item)
-        self.create_service(Object3D, 'object3d', self.handlers.handle_object3d)
+        self.storage_handlers = StorageHandlers(self)
+        self.task_sync_handler = TaskSyncHandler(self)
 
+        self.dirpath = self.get_parameter_or('dir_path', '/volume')
         self.watch_handler = WatchHandler(handler=self.upsert_object3d, dirpath=self.dirpath)
         self.observer = Observer()
         self.observer.schedule(self.watch_handler, self.dirpath, recursive=True)
@@ -60,6 +60,15 @@ class DBServer(Node):
             cols=kv.keys()), kv)
         self.con.commit(cursor)
 
+    def lookup_object3d(self, name):
+        cur = self.con.cursor()
+        cur.execute("SELECT id FROM object3d WHERE name=%(name)s LIMIT 1", {"name": name})
+        row = cur.fetchone()
+        if row is None:
+            self.get_logger().info("Object3D with name %s not found" % name)
+            return None
+        return row[0]
+
 
     def upsert_object3d(self, name, typestr, data):
         objtype = {
@@ -71,19 +80,29 @@ class DBServer(Node):
         if objtype == Object3D.TYPE_UNKNOWN:
             return
 
+        objid = self.lookup_object3d(name)
+        data = {
+            "type": int(objtype),
+            "name": name,
+            "data": data,
+        }
+        if objid is not None:
+            data['id'] = objid
         cursor = self.con.cursor()
         cursor.execute(self.create_upsert_query(
                 table="object3d",
-                pkey=["name"],
-                cols=["objtype", "name", "data"],
-            ), {
-                  "objtype": int(objtype),
-                  "name": name,
-                  "data": data,
-              })
+                pkey=["id"],
+                cols=["type", "name", "data"]),
+                data)
         self.con.commit()
         cursor.close()
         self.get_logger().info("Added %s%s to db" % (name, typestr))
+
+    def connect_to_mongo(self):
+        # TODO configurable
+        self.mongo = MongoClient('mongodb://app_user:password@mongo:27017')
+        self.mongo.l2.object3d.insert_one(serialize(Object3D(name='testproj', id=5)))
+        print(deserialize(self.mongo.l2.object3d.find_one({"name": "testproj"}), Object3D))
 
     def connect_to_db(self):
         from urllib.parse import urlparse
@@ -107,7 +126,7 @@ class DBServer(Node):
         self.get_logger().info("Connected (host: %s, db: %s)" % (hostname, database))
 
     def sync_table_schema(self):
-        expected = set(get_table_msgs(as_strings=True))
+        expected = set([k.lower() for k in get_table_msgs().keys()])
         cur = self.con.cursor()
         cur.execute("""SELECT table_name
             FROM information_schema.tables
@@ -117,12 +136,18 @@ class DBServer(Node):
         cur.close()
         missing = expected - found
         if len(missing) == 0:
+            self.get_logger().info("All expected tables present")
             return
 
         self.get_logger().warn("Creating missing expected tables: %s" % str(missing))
         cur = self.con.cursor()
         cur.execute(gen_schema(missing))
-        print(cur.fetchone())
+        print(cur.statusmessage)
+        cur.close()
+
+        # Ensure we have a root/default user
+        cur = self.con.cursor()
+        cur.execute("INSERT INTO l2actor (id, name) VALUES (1, 'root')")
         cur.close()
 
 def main(args=None):

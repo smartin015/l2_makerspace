@@ -1,6 +1,4 @@
 import os
-
-from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 class WatchHandler(FileSystemEventHandler):
