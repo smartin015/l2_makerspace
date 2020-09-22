@@ -14,6 +14,9 @@ const constants = {
   URI: "ws://penguin.linux.test:4243",
 };
 console.log('main entered');
+window.onhashchange = () => {
+  render();
+}
 bridge.on_connection_state_change = (conn) => {
   actions.connectionStateChanged(conn);
   render();
@@ -24,6 +27,10 @@ bridge.setHandlers({
     actions.setActiveProject(msg);
     render();
   }],
+  "project_list": (msg) => {
+    actions.loadProjects(msg.projects);
+    render();
+  },
   "/l2/debug_json": ["std_msgs/String", (msg) => {
     actions.mergeDebugJSON(msg);
     render();

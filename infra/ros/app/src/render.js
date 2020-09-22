@@ -4,12 +4,10 @@ import actions from './actions.js'
 function renderControls(onClick, page) {
   const result = document.createElement("div");
   result.innerHTML = `
-    <button id="prev"><img class="svg" src="img/keyboard_arrow_left-white-18dp.svg"/></button>
     <button id="project_list" ${(page === Page.PROJECT_LIST) ? 'disabled' : ''}><img class="svg" src="img/view_list-white-18dp.svg"/></button>
     <button id="estop"><img class="svg" src="img/report-white-18dp.svg"/></button>
     <button id="debug_json" ${(page === Page.DEBUG_JSON) ? 'disabled' : ''}><img class="svg" src="img/notes-white-18dp.svg"/></button>
     <button id="settings" ${(page === Page.SETTINGS) ? 'disabled' : ''}><img class="svg" src="img/settings-white-18dp.svg"/></button>
-    <button id="next"><img class="svg" src="img/keyboard_arrow_right-white-18dp.svg"/></button>
   `;
   for (let c of result.children) {
     c.addEventListener("click", onClick);
@@ -17,14 +15,29 @@ function renderControls(onClick, page) {
   return result;
 }
 
-function renderProject(name, owner, items) {
+function renderProjects(projects) {
+  projects = Object.values(projects);
   return `<div>
+    ${projects.map((item) => renderProjectThumbnail(
+      item.id, item.name, item.owner.name, item.items)).join("\n")}
+  </div>`;
+}
+
+function renderProjectThumbnail(id, name, owner, items) {
+  return `<a class="project_thumb" href="#/project/${id}">
       <div class="projectname">${name}</div>
       <div class="projectowner">${owner}</div>
+      <div class="itemcount">${items.length} items</div>
+    </a>`;
+}
+
+function renderProject(name, owner, items) {
+  return [name, `<div>
+      <div class="projectowner">Owner: ${owner}</div>
       <ul>
         ${items.map((item) => `<li>${item.content}</li>`).join("\n")}
       </ul>
-    </div>`;
+    </div>`];
 }
 
 function renderNoProjectSet() {
@@ -50,33 +63,44 @@ function render() {
   controls.appendChild(renderControls((evt) => {
     actions.controlClicked(evt);
     render();
-  }, store.page));
+  }, window.location.hash));
   
-  switch (store.page) {
+  switch (window.location.hash) {
     case Page.PROJECT_LIST:
       header.innerHTML = "Projects";
-      content.innerHTML = "todo project list";
-      break;
-    case Page.PROJECT_DETAILS:
-      let p = store.projects[store.active_project];
-      if (!p) {
-        header.innerHTML = renderNoProjectSet();
-      } else {
-        header.innerHTML = renderProject(p.name, p.owner, p.items);
+      content.innerHTML = renderProjects(store.projects);
+      for (let c of content.children) {
+        c.addEventListener("click", (evt) => {
+          actions.projectClicked(evt);
+          render();
+        });
       }
-      content.innerHTML = "todo";
-      break;
+      return;
     case Page.DEBUG_JSON:
       header.innerHTML = "/l2/debug_json";
       content.innerHTML = renderDebugJSON(store.debug_json);
-      break;
+      return;
     case Page.SETTINGS:
       header.innerHTML = "Settings";
       content.innerHTML = "TODO settings";
-      break;
-    default:
-      console.error("Unknown page " + store.page);
+      return;
   }
+
+  const proj_re = window.location.hash.match(/#\/project\/(\d+)/);
+  console.log(proj_re);
+  if (proj_re) {
+    let p = store.projects[proj_re[1]];
+    if (!p) {
+      header.innerHTML = renderNoProjectSet();
+    } else { 
+      const rp = renderProject(p.name, p.owner.name, p.items);
+      header.innerHTML = rp[0];
+      content.innerHTML = rp[1];
+    }
+    return;
+  }
+ 
+  console.error("Unknown page " + store.page);
 }
 
 export default render;

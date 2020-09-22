@@ -20,46 +20,29 @@ actions.setPage = (page) => {
   store.page = page;
 }
 
+actions.loadProjects = (projects) => {
+  for (const p of projects) {
+    console.log(p.id);
+    store.projects[p.id] = p;
+  }
+}
+
+actions.projectClicked = (evt) => {
+  console.log(evt);
+}
+
 actions.controlClicked = (evt) => {
   const id = evt.target.closest("button").id;
   if (id === "estop") {
     console.warn("Sending emergency stop command")
     bridge.publish('emergency_stop', {data: true})
-    return;
   } else if (id === "debug_json") {
-    store.page = Page.DEBUG_JSON;
-    window.location.hash = "DEBUG_JSON";
-    return;
+    window.location.hash = Page.DEBUG_JSON;
   } else if (id === "settings") {
-    store.page = Page.SETTINGS;
-    window.location.hash = "SETTINGS";
-    return;
+    window.location.hash = Page.SETTINGS;
   } else if (id === "project_list") {
-    store.page = Page.PROJECT_LIST;
-    window.location.hash = "PROJECT_LIST";
-    return;
+    window.location.hash = Page.PROJECT_LIST;
   }
-
-  if (!store.active_project) {
-    return;
-  }
-  console.log("CLICKED", id);
-  const ids = Object.keys(store.projects).sort();
-  const i = ids.indexOf(store.active_project.toString());
-  let next = id;
-  switch (id) {
-    case "next":
-      next = ids[(i+1) % ids.length];
-      break;
-    case "prev":
-      next = ids[(i+ids.length-1) % ids.length];
-      break;
-    default:
-      console.error("Unknown control id", id);
-      return;
-  }
-  console.log('next ID is', next, "ids", ids, "i", i);
-  bridge.publish('set_active_project', {data: next});
 };
 
 

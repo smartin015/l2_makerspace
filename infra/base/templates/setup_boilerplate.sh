@@ -17,7 +17,7 @@ for path in $(echo $@); do
 done
 
 # Move all other *py files into the python module
-for path in $(ls $(pwd)/*.py); do
+for path in $(ls $(pwd) | grep "\.py$"); do
   mv $path ${L2PKG}/
 done
 

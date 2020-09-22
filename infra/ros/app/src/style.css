@@ -75,6 +75,15 @@ button:disabled {
   flex: 1;
 }
 
+.project_thumb {
+  width: 100%;
+  padding: 2vh;
+  background-color: var(--md-primary-dark);
+  display: block;
+  color: var(--md-bg-dark);
+  text-decoration: none;
+}
+
 .project > .header {
   padding: 2vh;
   text-align: center;
