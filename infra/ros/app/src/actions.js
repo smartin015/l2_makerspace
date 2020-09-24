@@ -2,9 +2,14 @@ import {store, Page} from './store.js'
 import bridge from './rosbridge.js'
 const actions = {};
 
-actions.setActiveProject = (msg) => {
-  store.active_project = msg.data;
-  console.log(msg);
+actions.setActiveProject = (id) => {
+  store.active_project = id;
+  console.log(`Active project now: ${store.active_project}`);
+  actions.pubActiveProject(id);
+}
+
+actions.pubActiveProject = (id) => {
+  bridge.publish(JSON.stringify({"l2app": "active_project", "id": id}));
 }
 
 actions.connectionStateChanged = (connected) => {
@@ -27,23 +32,13 @@ actions.loadProjects = (projects) => {
   }
 }
 
-actions.projectClicked = (evt) => {
-  console.log(evt);
+actions.emergencyStop = () => {
+  console.warn("Sending emergency stop command")
+  bridge.publish('STOP')
 }
 
-actions.controlClicked = (evt) => {
-  const id = evt.target.closest("button").id;
-  if (id === "estop") {
-    console.warn("Sending emergency stop command")
-    bridge.publish('emergency_stop', {data: true})
-  } else if (id === "debug_json") {
-    window.location.hash = Page.DEBUG_JSON;
-  } else if (id === "settings") {
-    window.location.hash = Page.SETTINGS;
-  } else if (id === "project_list") {
-    window.location.hash = Page.PROJECT_LIST;
-  }
-};
-
+actions.nav = (page) => {
+  window.location.hash = page;
+}
 
 export default actions;

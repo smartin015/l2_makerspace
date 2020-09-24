@@ -23,21 +23,18 @@ bridge.on_connection_state_change = (conn) => {
 };
 bridge.setUser(constants.USER);
 bridge.setHandlers({
-  "active_project_id": ["std_msgs/Int64", (msg) => {
+  "active_project_id": (msg) => {
     actions.setActiveProject(msg);
     render();
-  }],
+  },
   "project_list": (msg) => {
     actions.loadProjects(msg.projects);
     render();
   },
-  "/l2/debug_json": ["std_msgs/String", (msg) => {
+  "debug_json": (msg) => {
     actions.mergeDebugJSON(msg);
     render();
-  }],
-});
-bridge.setAdvertisedTopics({
-  "emergency_stop": "std_msgs/Bool",
+  },
 });
 bridge.connect(constants.URI); 
 render();

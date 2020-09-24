@@ -1,38 +1,38 @@
 import {store, Page} from './store.js'
 import actions from './actions.js'
 
-function renderControls(onClick, page) {
-  const result = document.createElement("div");
-  result.innerHTML = `
-    <button id="project_list" ${(page === Page.PROJECT_LIST) ? 'disabled' : ''}><img class="svg" src="img/view_list-white-18dp.svg"/></button>
+function renderControls(page) {
+  return `
+    <button id="${Page.PROJECT_LIST}" ${(page === Page.PROJECT_LIST) ? 'disabled' : ''}><img class="svg" src="img/view_list-white-18dp.svg"/></button>
     <button id="estop"><img class="svg" src="img/report-white-18dp.svg"/></button>
-    <button id="debug_json" ${(page === Page.DEBUG_JSON) ? 'disabled' : ''}><img class="svg" src="img/notes-white-18dp.svg"/></button>
-    <button id="settings" ${(page === Page.SETTINGS) ? 'disabled' : ''}><img class="svg" src="img/settings-white-18dp.svg"/></button>
+    <button id="${Page.DEBUG_JSON}" ${(page === Page.DEBUG_JSON) ? 'disabled' : ''}><img class="svg" src="img/notes-white-18dp.svg"/></button>
+    <button id="${Page.SETTINGS}" ${(page === Page.SETTINGS) ? 'disabled' : ''}><img class="svg" src="img/settings-white-18dp.svg"/></button>
   `;
-  for (let c of result.children) {
-    c.addEventListener("click", onClick);
-  }
-  return result;
 }
 
-function renderProjects(projects) {
+function renderProjects(projects, active_project = null) {
   projects = Object.values(projects);
-  return `<div>
-    ${projects.map((item) => renderProjectThumbnail(
-      item.id, item.name, item.owner.name, item.items)).join("\n")}
-  </div>`;
+  return projects.map((p) => renderProjectThumbnail(
+    p.id, 
+    p.name, 
+    p.owner.name, 
+    p.items,
+    p.id == active_project
+  )).join("\n");
 }
 
-function renderProjectThumbnail(id, name, owner, items) {
-  return `<a class="project_thumb" href="#/project/${id}">
+function renderProjectThumbnail(id, name, owner, items, active = false) {
+  return `<a class="project_thumb ${active ? "active" : ""}" 
+           href="#/project/${id}">
       <div class="projectname">${name}</div>
       <div class="projectowner">${owner}</div>
       <div class="itemcount">${items.length} items</div>
     </a>`;
 }
 
-function renderProject(name, owner, items) {
+function renderProject(name, owner, items, active=false) {
   return [name, `<div>
+      <button id="set_active" ${active ? "disabled" : ""}>Set active project</button>
       <div class="projectowner">Owner: ${owner}</div>
       <ul>
         ${items.map((item) => `<li>${item.content}</li>`).join("\n")}
@@ -58,23 +58,25 @@ const controls = document.querySelector(".controls");
 const content = document.querySelector(".project > .content");
 const header = document.querySelector(".project > .header");
 function render() {
-  controls.innerHTML = "";
   status.innerHTML = (store.connected) ? "Connected" : "Not connected";
-  controls.appendChild(renderControls((evt) => {
-    actions.controlClicked(evt);
-    render();
-  }, window.location.hash));
+  controls.innerHTML = renderControls(window.location.hash);
+  for (let c of controls.children) {
+    c.addEventListener("click", (evt) => {
+			const id = evt.target.closest("button").id;
+			if (id === "estop") {
+        actions.emergencyStop()
+			} else {
+        actions.nav(id); 
+      }
+      render();
+    });
+  }
   
   switch (window.location.hash) {
+    case '':
     case Page.PROJECT_LIST:
       header.innerHTML = "Projects";
-      content.innerHTML = renderProjects(store.projects);
-      for (let c of content.children) {
-        c.addEventListener("click", (evt) => {
-          actions.projectClicked(evt);
-          render();
-        });
-      }
+      content.innerHTML = renderProjects(store.projects, store.active_project);
       return;
     case Page.DEBUG_JSON:
       header.innerHTML = "/l2/debug_json";
@@ -93,9 +95,13 @@ function render() {
     if (!p) {
       header.innerHTML = renderNoProjectSet();
     } else { 
-      const rp = renderProject(p.name, p.owner.name, p.items);
+      const rp = renderProject(p.name, p.owner.name, p.items, p.id === store.active_project);
       header.innerHTML = rp[0];
       content.innerHTML = rp[1];
+      content.querySelector("#set_active").addEventListener("click", (evt) => {
+        actions.setActiveProject(p.id);
+        render();
+      });
     }
     return;
   }

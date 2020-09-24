@@ -60,10 +60,15 @@ class App(Node):
             if msg == "STOP":
                 self.estop_pub.publish(True)
                 await asyncio.gather([c.send("STOPPING") for c in self.ws_clients])
-            if msg == "PROJECTS?":
+            elif msg == "PROJECTS?":
                 pd = to_dict(self.projects)
                 pd["l2app"] = "project_list"
                 await ws.send(json.dumps(pd))
+            else:
+                try:
+                    json.loads(msg)
+                    if msg.l2app === "active_project":
+                        print("TODO publish active project", msg)
 
     async def on_app_ws(self, ws, path):
         self.ws_clients.add(ws)

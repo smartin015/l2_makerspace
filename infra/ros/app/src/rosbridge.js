@@ -13,10 +13,6 @@ class ROSBridge {
     this.handlers = topicHandlers;
   }
 
-  setAdvertisedTopics(topics) {
-    this.advertised = topics;
-  }
-
   connect(uri) {
     this.socket = new WebSocket("ws://localhost:8001");
     this.socket.onopen = this._onOpen.bind(this);
@@ -60,12 +56,8 @@ class ROSBridge {
     }
   }
 
-  publish(topic, msg) {
-    this.socket.send(JSON.stringify({
-      op: "publish",
-      topic: `/${this.ns}/${this.username}/${topic}`,
-      msg,
-    }));
+  publish(msg) {
+    this.socket.send(msg);
   }
 }
 
