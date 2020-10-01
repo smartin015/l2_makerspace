@@ -1,6 +1,6 @@
 # This node handles ROS-side logic for the VR server
 from l2_msgs.srv import GetFile, PutFile, SpawnObject3D, RemoveObject3D, GetObject3D
-from l2_msgs.msg import Object3DArray, Object3D, Simulation, L2File, ROSState, L2Sequence as L2SequenceMsg
+from l2_msgs.msg import Object3DArray, Object3D, Simulation, ProjectItem, ROSState, L2Sequence as L2SequenceMsg
 from l2_msgs.action import L2Sequence as L2SequenceAction
 from rcl_interfaces.msg import ParameterDescriptor
 from std_msgs.msg import String
@@ -70,7 +70,8 @@ class VRServer(Node):
                 callback_group=cb_group)
         self.create_subscription(Object3DArray, "vr/Object3D", self.set_vr_state, qos_profile_sensor_data, callback_group=cb_group)
         self.create_subscription(Simulation, "sim/simulation", self.set_sim_state, qos_profile_sensor_data, callback_group=cb_group)
-        self.create_subscription(L2File, "vr/PutFile", self.handle_put_file,
+        self.create_subscription(ProjectItem, "vr/PutProjectItem",
+                self.handle_put_project_item,
                 qos_profile_sensor_data, callback_group=cb_group)
 
     def stale(self):

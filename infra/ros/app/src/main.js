@@ -14,23 +14,27 @@ const constants = {
   URI: "ws://penguin.linux.test:4243",
 };
 console.log('main entered');
+window.onhashchange = () => {
+  render();
+}
 bridge.on_connection_state_change = (conn) => {
   actions.connectionStateChanged(conn);
   render();
 };
 bridge.setUser(constants.USER);
 bridge.setHandlers({
-  "active_project_id": ["std_msgs/Int64", (msg) => {
+  "active_project_id": (msg) => {
     actions.setActiveProject(msg);
     render();
-  }],
-  "/l2/debug_json": ["std_msgs/String", (msg) => {
+  },
+  "project_list": (msg) => {
+    actions.loadProjects(msg.projects);
+    render();
+  },
+  "debug_json": (msg) => {
     actions.mergeDebugJSON(msg);
     render();
-  }],
-});
-bridge.setAdvertisedTopics({
-  "emergency_stop": "std_msgs/Bool",
+  },
 });
 bridge.connect(constants.URI); 
 render();

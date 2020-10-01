@@ -43,16 +43,12 @@ set(msg_files
   msg/L2Role.msg
   msg/Object3D.msg
   msg/Object3DArray.msg
+  msg/ProjectItem.msg 
   msg/Project.msg 
   msg/Projects.msg
   msg/L2Sequence.msg
   msg/L2SequenceArray.msg
-  msg/L2SequenceItem.msg
-  msg/L2File.msg
-  msg/ROSState.msg
-  msg/Simulation.msg
-  msg/VRLockStatus.msg
-  msg/VRPlayers.msg) 
+  msg/L2SequenceItem.msg)
 set(srv_files 
   srv/SpawnObject3D.srv
   srv/RemoveObject3D.srv

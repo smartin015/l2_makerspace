@@ -5,19 +5,19 @@ services:
     image: l2app:latest
     build: .
     environment:
-      - "PYTHONUNBUFFERED=1"
+      PYTHONUNBUFFERED: 1
     networks:
       - l2
     ports:
       - "8000:8000"
+      - "8001:8001"
     volumes: 
       - ./infra/ros/app/src:/src
-    command: /bin/bash -c "cd /src && python3 -m http.server"
   app:
     build: .
     image: l2app:latest
     environment:
-      - "PYTHONUNBUFFERED=1"
+      PYTHONUNBUFFERED: 1
     networks:
       - l2
     ports:

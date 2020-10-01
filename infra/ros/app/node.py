@@ -1,6 +1,8 @@
 # from l2_msgs.srv import GetProject
 import os
+import websockets
 import rclpy
+import random
 from rclpy.node import Node
 from std_msgs.msg import Bool, String
 import http.server
@@ -17,13 +19,22 @@ from l2_msgs_exec.dict import to_dict
 class App(Node):
     PUBLISH_PD = 60  # seconds
     PORT = 8000
+    WS_PORT = 8001
+    ALLOWED_PUBLISH_TOPICS = [
+        "/l2/app/emergency_stop"
+    ]
 
-    def __init__(self):
-        super().__init__('l2_app')
+    def __init__(self, ns='l2'):
+        super().__init__('l2_app', namespace=ns)
+        self.ws_clients = set()
         self.get_logger().info("Init")
-        self.handler = http.server.SimpleHTTPRequestHandler(directory='/src')
-        self.httpd = socketserver.TCPServer(("", self.PORT), self.handler)
-        self.get_logger().info("serving at port %d" % PORT)
+        os.chdir('/src')
+        self.httpd = socketserver.TCPServer(('', self.PORT), http.server.SimpleHTTPRequestHandler)
+        self.wss = websockets.serve(self.on_app_ws, '', self.WS_PORT)
+        asyncio.get_event_loop().run_until_complete(self.wss)
+        self.wst = threading.Thread(target=asyncio.get_event_loop().run_forever)
+        self.wst.start()
+        self.get_logger().info("serving at port %d" % self.PORT)
         self.httpd_thread = threading.Thread(target=self.httpd.serve_forever,
                 daemon=true).start()
         #self.pub = self.create_publisher(ProjectsUpdate, 'project', 10)

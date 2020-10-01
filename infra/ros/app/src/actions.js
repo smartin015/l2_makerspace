@@ -2,9 +2,14 @@ import {store, Page} from './store.js'
 import bridge from './rosbridge.js'
 const actions = {};
 
-actions.setActiveProject = (msg) => {
-  store.active_project = msg.data;
-  console.log(msg);
+actions.setActiveProject = (id) => {
+  store.active_project = id;
+  console.log(`Active project now: ${store.active_project}`);
+  actions.pubActiveProject(id);
+}
+
+actions.pubActiveProject = (id) => {
+  bridge.publish(JSON.stringify({"l2app": "active_project", "id": id}));
 }
 
 actions.connectionStateChanged = (connected) => {
@@ -20,47 +25,20 @@ actions.setPage = (page) => {
   store.page = page;
 }
 
-actions.controlClicked = (evt) => {
-  const id = evt.target.closest("button").id;
-  if (id === "estop") {
-    console.warn("Sending emergency stop command")
-    bridge.publish('emergency_stop', {data: true})
-    return;
-  } else if (id === "debug_json") {
-    store.page = Page.DEBUG_JSON;
-    window.location.hash = "DEBUG_JSON";
-    return;
-  } else if (id === "settings") {
-    store.page = Page.SETTINGS;
-    window.location.hash = "SETTINGS";
-    return;
-  } else if (id === "project_list") {
-    store.page = Page.PROJECT_LIST;
-    window.location.hash = "PROJECT_LIST";
-    return;
+actions.loadProjects = (projects) => {
+  for (const p of projects) {
+    console.log(p.id);
+    store.projects[p.id] = p;
   }
+}
 
-  if (!store.active_project) {
-    return;
-  }
-  console.log("CLICKED", id);
-  const ids = Object.keys(store.projects).sort();
-  const i = ids.indexOf(store.active_project.toString());
-  let next = id;
-  switch (id) {
-    case "next":
-      next = ids[(i+1) % ids.length];
-      break;
-    case "prev":
-      next = ids[(i+ids.length-1) % ids.length];
-      break;
-    default:
-      console.error("Unknown control id", id);
-      return;
-  }
-  console.log('next ID is', next, "ids", ids, "i", i);
-  bridge.publish('set_active_project', {data: next});
-};
+actions.emergencyStop = () => {
+  console.warn("Sending emergency stop command")
+  bridge.publish('STOP')
+}
 
+actions.nav = (page) => {
+  window.location.hash = page;
+}
 
 export default actions;

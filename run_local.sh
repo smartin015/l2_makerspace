@@ -29,7 +29,7 @@ docker-compose \
   db storage \
   vr_syncer vr_fwd bridge $VR \
   supervisor \
-  $APP bridge_server \
+  $APP \
 
 # echo "TODO vdi/ to start up the virtual desktop server container"
 # echo "TODO rpi/ to start up the PXE / netboot container"
