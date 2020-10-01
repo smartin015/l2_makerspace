@@ -25,20 +25,65 @@ class Server(Node):
         
         self.seq_queue = [] # Extracted sequences from tasks
         self.tasks_with_commands = set() # Note: not all tasks have valid commands
+        self.active_project_sub = self.create_service(l2.L2ActiveProjects, 'set_active_project', handle_active_project)
+        self.active_project_pub = self.create_publisher(l2.L2ActiveProjects, 'active_projects', 10)
         self.pub = self.create_publisher(l2.Projects, 'projects', 10)
         self.seqcli = ActionClient(self, L2SequenceAction, 'sequence')
         self.timer = self.create_timer(self.PUBLISH_PD, self.timer_callback)
         self.ticks = 0
+
+        # Active projects map (held in memory)
+        # Each user can have exactly one active project
+        self.active_projects = {}
 
         # Init the todoist client and prime the system
         self.setup_todoist()
         self.timer_callback()
 
     def setup_todoist(self):
+        self.fake_tasks = self.config['FAKE'] or False
+
+        if self.fake_tasks:
+            self.get_logger().info('Not creating project, config set to fake')
+            return
+
         self.todoist = TodoistAPI(self.config['TODOIST_API_TOKEN'])
         self.root_project_id = int(self.config['TODOIST_ROOT_PROJECT_ID'] or '-1') 
         self.get_logger().info('Root project id: %d' % self.root_project_id)
 
+    def handle_active_project(self, request, response):
+        if request.method != "PUT":
+            response.status = 400
+            response.message = "Unknown method " + request.method
+            return response
+
+        rap = request.active_projects
+        l = len(rap.actor_ids)
+        if l != len(rap.project_ids):
+            response.status = 400
+            response.message = "Malformed project list; length mismatch"
+            return response
+
+        for i in range(l):
+            self.active_projects[rap.actor_ids[i]] = rap.project_ids[i]
+        
+        response.status = 200
+        response.message = "ok"
+        response.active_projects = self.active_projects_msg()
+        return response
+
+    def active_projects_msg(self):
+        project_ids, actor_ids = unzip(self.active_projects.items())
+        return l2.L2ActiveProjects(project_ids=project_ids, actor_ids=actor_ids)
+
+    def publish_fake(self):
+        self.pub.publish(l2.Projects([l2.Project(name='Fake project', id=-1, tasks=[
+                l2.ProjectItem(id=0, location="https://fake/#task/%s" % ti['id'],
+                        content_type=l2.ProjectItem.CONTENT_TYPE_L2_TASK,
+                        content = "test content")
+            ])]))
+
+>>>>>>> Stashed changes
     def add_comment(self, task_id, content):
         self.todoist.notes.add(task_id, '[l2.%s]: %s' % (self.name, content))
         self.get_logger().info('Comment %s: %s' % (task_id, content))
@@ -114,6 +159,15 @@ class Server(Node):
         self.add_comment(response.sequence.uid, "result: %s" % response)
 
     def timer_callback(self):
+<<<<<<< Updated upstream
+=======
+        self.active_projects_pub.publish(self.active_projects_msg())
+        
+        if self.fake_tasks:
+            self.publish_fake()
+            return
+
+>>>>>>> Stashed changes
         self.todoist.sync()
 
         # Get all subprojects of root project
