@@ -1,13 +1,13 @@
 export const Page = {
-  PROJECT_LIST: 0,
-  PROJECT_DETAILS: 1,
-  DEBUG_JSON: 2,
-  SETTINGS: 3,
+  PROJECT_LIST: "#PROJECT_LIST",
+  DEBUG_JSON: "#DEBUG_JSON",
+  SETTINGS: "#SETTINGS",
 };
 
 export const store = {
   connected: false,
   projects: {
+    /*
     "8675309":
     {name: 'proj', id: 8675309, owner: 'testuser', items:[
       {content: 'item1'},
@@ -18,10 +18,14 @@ export const store = {
     {name: 'anotherproj', id: 12345, owner: 'smartin015', items:[
       {content: 'theonlyitem'},
     ]},
+    */
   },
   active_project: null,
-  page: Page.PROJECT_LIST,
   debug_json: {},
 };
+
+// For debugging; assigned as object reference
+// so you can interrogate window.store in the console
+window.store = store;
 
 export default store;

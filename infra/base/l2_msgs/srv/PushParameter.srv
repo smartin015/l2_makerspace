@@ -1,5 +1,0 @@
-string key
-string value
----
-bool success # did the push succeed
-string message # informational, e.g. for error messages

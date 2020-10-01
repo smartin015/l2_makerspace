@@ -35,16 +35,29 @@ class Server(Node):
         self.timer_callback()
 
     def setup_todoist(self):
+        self.fake = self.config['FAKE'] or False
+
+        if self.fake:
+            self.get_logger().info('Not creating project, config set to fake')
+            return
+
         self.todoist = TodoistAPI(self.config['TODOIST_API_TOKEN'])
         self.root_project_id = int(self.config['TODOIST_ROOT_PROJECT_ID'] or '-1') 
         self.get_logger().info('Root project id: %d' % self.root_project_id)
+
+    def publish_fake(self):
+        self.pub.publish(l2.Projects([l2.Project(name='Fake project', id=-1, tasks=[
+                l2.ProjectItem(id=0, location="https://fake/#task/%s" % ti['id'],
+                        content_type=l2.ProjectItem.CONTENT_TYPE_L2_TASK,
+                        content = "test content")
+            ])]))
 
     def add_comment(self, task_id, content):
         self.todoist.notes.add(task_id, '[l2.%s]: %s' % (self.name, content))
         self.get_logger().info('Comment %s: %s' % (task_id, content))
 
     def parse_sequence(self, uid, seqstr):
-        seq = l2.L2Sequence(uid=uid)
+        seq = l2.L2Sequence(id=uid)
         for part in seqstr.strip().split('|'):
             (name, params) = part.split(' ', 1)
             item = l2.L2SequenceItem(name=name)
@@ -95,7 +108,7 @@ class Server(Node):
                 self.handle_sequence_accepted)
 
     def handle_sequence_feedback(self, msg):
-        self.add_comment(int(msg.feedback.sequence.uid), "Feedback: %s" % msg.feedback)
+        self.add_comment(int(msg.feedback.sequence.id), "Feedback: %s" % msg.feedback)
 
     def handle_sequence_accepted(self, response):
         if response.exception() is not None:
@@ -111,9 +124,13 @@ class Server(Node):
 
     def handle_sequence_result(self, response):
         response = response.result().result
-        self.add_comment(response.sequence.uid, "result: %s" % response)
+        self.add_comment(response.sequence.id, "result: %s" % response)
 
     def timer_callback(self):
+        if self.fake:
+            self.publish_fake()
+            return
+
         self.todoist.sync()
 
         # Get all subprojects of root project
@@ -138,9 +155,11 @@ class Server(Node):
             proj = projects.get(str(ti['project_id']))
             if proj is not None:
                 nitems += 1
-                item = l2.Item()
-                item.id = ti['id']
-                item.content = ti['content']
+                item = l2.ProjectItem(
+                        id = ti['id'],
+                        location="https://todoist.com/app/#task/%s" % ti['id'],
+                        content_type=l2.ProjectItem.CONTENT_TYPE_L2_TASK,
+                        content = ti['content'])
                 proj.items.append(item)
         self.get_logger().info('Publishing %d projects with %d total items'
                 % (len(projects), nitems))

@@ -1,0 +1,17 @@
+# A postgresql "full text search" query (using plainto_tsquery)
+# https://www.postgresql.org/docs/9.1/textsearch-controls.html
+string search
+
+# Whether to include items in the project results.
+bool show_items
+
+# Return only items matching this content type.
+string content_type_regex
+
+# Max entries to return
+int32 max_projects # Default: infinite
+int32 max_items # Default: 0
+---
+int32 status
+int32 message
+l2_msgs/Project[] projects

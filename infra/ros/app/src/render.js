@@ -1,30 +1,43 @@
 import {store, Page} from './store.js'
 import actions from './actions.js'
 
-function renderControls(onClick, page) {
-  const result = document.createElement("div");
-  result.innerHTML = `
-    <button id="prev"><img class="svg" src="img/keyboard_arrow_left-white-18dp.svg"/></button>
-    <button id="project_list" ${(page === Page.PROJECT_LIST) ? 'disabled' : ''}><img class="svg" src="img/view_list-white-18dp.svg"/></button>
+function renderControls(page) {
+  return `
+    <button id="${Page.PROJECT_LIST}" ${(page === Page.PROJECT_LIST) ? 'disabled' : ''}><img class="svg" src="img/view_list-white-18dp.svg"/></button>
     <button id="estop"><img class="svg" src="img/report-white-18dp.svg"/></button>
-    <button id="debug_json" ${(page === Page.DEBUG_JSON) ? 'disabled' : ''}><img class="svg" src="img/notes-white-18dp.svg"/></button>
-    <button id="settings" ${(page === Page.SETTINGS) ? 'disabled' : ''}><img class="svg" src="img/settings-white-18dp.svg"/></button>
-    <button id="next"><img class="svg" src="img/keyboard_arrow_right-white-18dp.svg"/></button>
+    <button id="${Page.DEBUG_JSON}" ${(page === Page.DEBUG_JSON) ? 'disabled' : ''}><img class="svg" src="img/notes-white-18dp.svg"/></button>
+    <button id="${Page.SETTINGS}" ${(page === Page.SETTINGS) ? 'disabled' : ''}><img class="svg" src="img/settings-white-18dp.svg"/></button>
   `;
-  for (let c of result.children) {
-    c.addEventListener("click", onClick);
-  }
-  return result;
 }
 
-function renderProject(name, owner, items) {
-  return `<div>
+function renderProjects(projects, active_project = null) {
+  projects = Object.values(projects);
+  return projects.map((p) => renderProjectThumbnail(
+    p.id, 
+    p.name, 
+    p.owner.name, 
+    p.items,
+    p.id == active_project
+  )).join("\n");
+}
+
+function renderProjectThumbnail(id, name, owner, items, active = false) {
+  return `<a class="project_thumb ${active ? "active" : ""}" 
+           href="#/project/${id}">
       <div class="projectname">${name}</div>
       <div class="projectowner">${owner}</div>
+      <div class="itemcount">${items.length} items</div>
+    </a>`;
+}
+
+function renderProject(name, owner, items, active=false) {
+  return [name, `<div>
+      <button id="set_active" ${active ? "disabled" : ""}>Set active project</button>
+      <div class="projectowner">Owner: ${owner}</div>
       <ul>
         ${items.map((item) => `<li>${item.content}</li>`).join("\n")}
       </ul>
-    </div>`;
+    </div>`];
 }
 
 function renderNoProjectSet() {
@@ -45,38 +58,55 @@ const controls = document.querySelector(".controls");
 const content = document.querySelector(".project > .content");
 const header = document.querySelector(".project > .header");
 function render() {
-  controls.innerHTML = "";
   status.innerHTML = (store.connected) ? "Connected" : "Not connected";
-  controls.appendChild(renderControls((evt) => {
-    actions.controlClicked(evt);
-    render();
-  }, store.page));
+  controls.innerHTML = renderControls(window.location.hash);
+  for (let c of controls.children) {
+    c.addEventListener("click", (evt) => {
+			const id = evt.target.closest("button").id;
+			if (id === "estop") {
+        actions.emergencyStop()
+			} else {
+        actions.nav(id); 
+      }
+      render();
+    });
+  }
   
-  switch (store.page) {
+  switch (window.location.hash) {
+    case '':
     case Page.PROJECT_LIST:
       header.innerHTML = "Projects";
-      content.innerHTML = "todo project list";
-      break;
-    case Page.PROJECT_DETAILS:
-      let p = store.projects[store.active_project];
-      if (!p) {
-        header.innerHTML = renderNoProjectSet();
-      } else {
-        header.innerHTML = renderProject(p.name, p.owner, p.items);
-      }
-      content.innerHTML = "todo";
-      break;
+      content.innerHTML = renderProjects(store.projects, store.active_project);
+      return;
     case Page.DEBUG_JSON:
       header.innerHTML = "/l2/debug_json";
       content.innerHTML = renderDebugJSON(store.debug_json);
-      break;
+      return;
     case Page.SETTINGS:
       header.innerHTML = "Settings";
       content.innerHTML = "TODO settings";
-      break;
-    default:
-      console.error("Unknown page " + store.page);
+      return;
   }
+
+  const proj_re = window.location.hash.match(/#\/project\/(\d+)/);
+  console.log(proj_re);
+  if (proj_re) {
+    let p = store.projects[proj_re[1]];
+    if (!p) {
+      header.innerHTML = renderNoProjectSet();
+    } else { 
+      const rp = renderProject(p.name, p.owner.name, p.items, p.id === store.active_project);
+      header.innerHTML = rp[0];
+      content.innerHTML = rp[1];
+      content.querySelector("#set_active").addEventListener("click", (evt) => {
+        actions.setActiveProject(p.id);
+        render();
+      });
+    }
+    return;
+  }
+ 
+  console.error("Unknown page " + store.page);
 }
 
 export default render;

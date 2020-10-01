@@ -8,13 +8,34 @@ This repository contains design docs, software tools, work tracking, and other d
 
 See [docs/design.md](https://github.com/smartin015/l2_makerspace/blob/master/docs/design.md) for more detail on the overall mission and planning.
 
-## Docker
+## History & Current State
 
-This repo relies heavily on Docker containers to keep everything modular and self-contained.
+This is a passion project which started in late 2019 as a chance to collect several technologies and skills which were fun to learn
+and had the potential for really interesting applications in making.
 
-See ./base for base image (available publicly for download at gcr.io/l2-making/base)
+Through 2020, my focus has been on prototyping and proving various concepts, including:
 
-### Tricky Details
+* Templates & basic protocols & frameworks (e.g. ROS2, ./infra/base messages & docker container processes)
+* Integrations (e.g. Todoist for creating projects, Docker for launching sequences)
+* Early hardware proofs of concept (simulation with Webots and publishing compressed point cloud data from Realsense D435 cameras)
+* Visualization (particularly in VR, see ./infra/vr/client)
+* Networking (e.g. routing between internal ROS network and external VR/app server)
+
+## Roadmap
+
+* See http://app.l2making.com/#project/TODO
+
+## Support
+
+This software is provided as-is with no guarantee of support. 
+
+However, contributions are welcome - please reach out if you're interested
+in helping with development.
+
+### Lessons Learned
+
+The following is a colleciton of details which were learned over hours of frustration. Please read through these if you're stuck on something, and
+add new lessons learned.
 
 * ROS2 uses DDS as a backing networking protocol - and it [has issues](https://answers.ros.org/question/296828/ros2-connectivity-across-docker-containers-via-host-driver/) when your run docker containers with the "host" network mode. For simplicity, always use `network_mode: bridge` when setting up docker nodes via docker-compose.
 * Docker support for GPU acceleration is device-specific: http://wiki.ros.org/docker/Tutorials/Hardware%20Acceleration#Intel

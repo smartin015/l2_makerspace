@@ -36,28 +36,23 @@ endif()
 
 
 set(msg_files 
-  msg/Item.msg 
+  msg/L2Actor.msg
+  msg/L2Event.msg
+  msg/L2Role.msg
   msg/Object3D.msg
   msg/Object3DArray.msg
+  msg/ProjectItem.msg 
   msg/Project.msg 
   msg/Projects.msg
   msg/L2Sequence.msg
   msg/L2SequenceArray.msg
-  msg/L2SequenceItem.msg
-  msg/L2File.msg
-  msg/ROSState.msg
-  msg/Simulation.msg
-  msg/VRLockStatus.msg
-  msg/VRPlayers.msg) 
+  msg/L2SequenceItem.msg)
 set(srv_files 
-  srv/SpawnObject3D.srv
-  srv/RemoveObject3D.srv
-  srv/PushParameter.srv
-  srv/GetFile.srv
-  srv/PutFile.srv
-  srv/ListFiles.srv
-  srv/GetProject.srv
-  srv/GetObject3D.srv)
+  srv/Object3D.srv
+  srv/L2ProjectItem.srv
+  srv/L2Project.srv
+  srv/L2Actor.srv
+  srv/L2SearchProjects.srv)
 set(action_files
   action/L2Sequence.action)
 rosidl_generate_interfaces( ${PROJECT_NAME} ${msg_files} ${srv_files} ${action_files} DEPENDENCIES builtin_interfaces std_msgs diagnostic_msgs geometry_msgs)

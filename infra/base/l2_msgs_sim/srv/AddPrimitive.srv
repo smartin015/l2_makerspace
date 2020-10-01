@@ -7,7 +7,7 @@ uint8 type
 
 ---
 bool valid # does the addition produce a valid structure?
-l2_msgs/Constraint[] invalid
-double score # lower score --> better 
+l2_msgs_sim/Constraint[] invalid
+float32 score # lower score --> better 
 
 string message # informational, e.g. for error messages

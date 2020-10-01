@@ -1,9 +1,12 @@
 :root {
-  /* https://material.io/resources/color/#!/?view.left=0&view.right=0&primary.color=B71C1C */
+  /* https://material.io/resources/color/#!/?view.left=0&view.right=0&primary.color=B71C1C&secondary.color=F44336 */
   --md-primary: #b71c1c;
   --md-primary-light: #f05545;
   --md-primary-dark: #7f0000;
   --md-primary-f: #ffffff;
+  --md-secondary: #f44336;
+  --md-secondary-light: #ff7961;
+  --md-secondary-dark: #ba000d;
   --md-bg-dark: #E1E2E1;
   --md-bg: #E9EAE9;
   --md-bg-light: #F5F5F6;
@@ -13,6 +16,7 @@
 html, body {
   margin: 0;
   background-color: var(--md-bg-dark);
+  touch-action: manipulation;
 }
 
 /* All users of primary theme */
@@ -75,9 +79,28 @@ button:disabled {
   flex: 1;
 }
 
+.project_thumb {
+  width: 100%;
+  background-color: var(--md-bg);
+  display: block;
+  color: var(--md-bg-f);
+  text-decoration: none;
+  margin: 1vh 0;
+}
+.project_thumb > * {
+  padding: 0 2vh;
+}
+.project_thumb.active {
+  background-color: var(--md-primary-dark);
+  color: var(--md-primary-f);
+}
+
 .project > .header {
   padding: 2vh;
   text-align: center;
+}
+.project #set_active {
+  width: 100%;
 }
 
 .banner, .status {
@@ -88,7 +111,7 @@ button:disabled {
 	font-color: var(--md-primary-dark) !important;
 }
 
-.controls > div {
+.controls {
   background-color: var(--md-bg-light);
   color: var(--md-bg-f);
   display: flex;

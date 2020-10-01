@@ -10,22 +10,11 @@ class ROSBridge {
   }
 
   setHandlers(topicHandlers) {
-    this.handlers = {};
-    for (let topic of Object.keys(topicHandlers)) {
-      if (topic.startsWith("/")) {
-        this.handlers[topic] = topicHandlers[topic];
-      } else {
-        this.handlers[`/${this.ns}/${this.username}/${topic}`] = topicHandlers[topic];
-      }
-    }
-  }
-
-  setAdvertisedTopics(topics) {
-    this.advertised = topics;
+    this.handlers = topicHandlers;
   }
 
   connect(uri) {
-    this.socket = new WebSocket("ws://penguin.linux.test:3000");
+    this.socket = new WebSocket("ws://localhost:8001");
     this.socket.onopen = this._onOpen.bind(this);
     this.socket.onmessage = this._onMessage.bind(this);
     this.socket.onerror = this._onError.bind(this);
@@ -35,23 +24,7 @@ class ROSBridge {
   _onOpen() {
     console.log("[open] Connection established");
     this.on_connection_state_change(true);
-    for (let advert of Object.keys(this.advertised)) {
-      const topic = `/${this.ns}/${this.username}/${advert}`;
-      this.socket.send(JSON.stringify({
-        op: 'advertise',
-        topic,
-        type: this.advertised[advert],
-      }));
-      console.log(`Advertising ${topic}`);
-    }
-    for (let topic of Object.keys(this.handlers)) {
-      this.socket.send(JSON.stringify({
-        op: 'subscribe', 
-        topic,
-        type: this.handlers[topic][0],
-      }));
-      console.log(`Subscribed to ${topic}`);
-    }
+    this.socket.send("PROJECTS?");
   }
 
   _onClose(event) {
@@ -73,21 +46,18 @@ class ROSBridge {
     // console.log(`[message] Data received from server: ${event.data}`);
     try {
       const msg = JSON.parse(event.data);
-      if (msg.op === 'publish' && this.handlers[msg.topic]) {
-        this.handlers[msg.topic][1](msg.msg);
+      console.log(msg);
+      if (msg.l2app !== undefined) {
+        this.handlers[msg.l2app](msg);
       }
     } catch (e) {
-      console.log("Failed to parse message:", text);
+      console.log("Failed to parse message:", e.toString());
       return;
     }
   }
 
-  publish(topic, msg) {
-    this.socket.send(JSON.stringify({
-      op: "publish",
-      topic: `/${this.ns}/${this.username}/${topic}`,
-      msg,
-    }));
+  publish(msg) {
+    this.socket.send(msg);
   }
 }
 
