@@ -18,10 +18,12 @@ print("%d threads (%d per block, %d blocks per grid)" % (
     NTHREADS, THREADS_PER_BLOCK, BLOCKS_PER_GRID))
 
 # Load test image M*N*bytes
+# Note that column order is height-first
 PX_B = 2
-input_dim_realsense = (720, 1280) # Data is received Y-first
+input_dim_realsense = (720, 1280)
+input_dim_realsense_reg = (480, 848)
 input_dim_trvl = (576, 640)
-dim = input_dim_realsense
+dim = input_dim_realsense_reg
 
 # Compute kernel bounds. Example:
 # 1280x720 -> 256 threads -> 3600 16z samples -> 7200B max output per thread 
@@ -162,7 +164,7 @@ print(ctx.get_memory_info())
 print("Running on img shape {}, output shape {} (Ctl+C to stop)...".format(dim, result.shape))
 sample = None
 nsamp = 0
-while nsamp < 3:
+while nsamp < 20:
     try:
         has, frame = pipeline.try_wait_for_frames()
         if not has:
@@ -178,8 +180,10 @@ while nsamp < 3:
     except KeyboardInterrupt:
         break
 
+print("(Actual image shape received: {})".format(data.shape))
 
 def decodeSector(sector, result):
+    start = datetime.now()
     x = int(sector[0]) & 0xffff
     y = (int(sector[0]) >> 16) & 0xffff
 
@@ -218,7 +222,7 @@ def decodeSector(sector, result):
 
         # Reset counts if we've written a set of [zero, nonzero, data]
         if zeros == 0 and nonzeros == 0:
-            return ((x,y), result, [])
+            return ((x,y), result, datetime.now() - start)
         elif zeros is not None and nonzeros is not None and written >= nonzeros:
             zeros = None
             nonzeros = None
@@ -234,12 +238,12 @@ def decodeSector(sector, result):
             #dbg[0] += 1 # Num sections written
         else: # written < nonzeros
             if outIdx >= PX_KB:
-                return ((x,y), result, [])
+                return ((x,y), result, datetime.now() - start)
             result[x+int(outIdx % KB[0])][y+int(outIdx // KB[0])] = value
             written += 1
             outIdx += 1
 
-    return ((x,y), result, [])
+    return ((x,y), result, datetime.now() - start)
 
 
 
@@ -262,22 +266,31 @@ sample_nonzeros = np.count_nonzero(sample)
 print("pre-encoded sums: %d zeros, %d nonzeros (total %d) for segment of size %d shape %s" % (pre_zeros, pre_nonzeros, pre_zeros+pre_nonzeros, sample.size, str(sample.shape)))
 print("actual image: %d zeros, %d nonzeros" % (sample.size-sample_nonzeros, sample_nonzeros))
 
+cv2.imshow("original", data / np.max(data))
 cv2.imshow("encoded", result / np.max(result))
 
 # Decode each part of the original image
 import concurrent.futures
 decodeImg = np.zeros(dim, dtype=np.uint16)
+
+cpu_timings = []
+allstart = datetime.now()
 with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
     futures = []
     for i in range(result.shape[0]):
         futures.append(executor.submit(decodeSector, result[i], decodeImg))
     for future in concurrent.futures.as_completed(futures):
-        (s, result, dbg) = future.result()
+        (s, result, threadtime) = future.result()
+        cpu_timings.append(threadtime.total_seconds())
         print("decoded {}".format(s))
         cv2.imshow("decodeImg", decodeImg / np.max(decodeImg))
         cv2.waitKey(30)
+walltime = datetime.now() - allstart
 
-resize = tuple(np.multiply(sample.shape, 4)[0:2])
+print("=== CPU decode stats ===\nWall time: {}\nAvg seconds per thread: {}\nFastest thread seconds: {}\nSlowest thread seconds: {}".format(
+        walltime, np.mean(cpu_timings), np.min(cpu_timings), np.max(cpu_timings)
+    ))
+
 cv2.waitKey(0)
 #sample = sample / np.max(sample)
 #ss_re = cv2.resize(sample, resize, interpolation=cv2.INTER_AREA)
