@@ -19,13 +19,9 @@ print("%d threads (%d per block, %d blocks per grid)" % (
 
 # Load test image M*N*bytes
 PX_B = 2
-input_dim_realsense = (1280, 720)
-input_dim_trvl = (640, 576)
+input_dim_realsense = (720, 1280) # Data is received Y-first
+input_dim_trvl = (576, 640)
 dim = input_dim_realsense
-
-# Allocate destination space M*(header+N)
-# header = 1B command + 2B identifier
-dest = "TODO"
 
 # Compute kernel bounds. Example:
 # 1280x720 -> 256 threads -> 3600 16z samples -> 7200B max output per thread 
@@ -43,17 +39,16 @@ def kernel_bounds(dim):
 KB = kernel_bounds(dim)
 CUDA_THREAD_DIM = tuple(np.divide(dim, KB).astype(int))
 PX_KB = np.prod(KB)
-print("Kernel bounds: {}, thread shape: {}".format(KB, CUDA_THREAD_DIM))
+print("Kernel bounds: {} ({} pixels), thread shape: {}".format(KB, PX_KB, CUDA_THREAD_DIM))
 
 # =========== CALCULATIONS ===========
 # CUDA kernel. For each thread
 @cuda.jit
 def rvl_kernel(im, out, dbg):
     x, y = cuda.grid(2)
-    outx = CUDA_THREAD_DIM[0]*y + x # Linear output id
+    outx = cuda.gridsize(2)[1]*x + y
     x = KB[0]*x
     y = KB[1]*y
-    # im[x][y] += 1
 
     # Variable length encoding tracking
     word = 0
@@ -65,33 +60,39 @@ def rvl_kernel(im, out, dbg):
 
     dbgIdx = 1    
     i = 0
+    # TODO failing to write last section
     while i < PX_KB:
-        dbg[outx][0] += 1 # Num iterations
-        # Count zeros and nonzeros
         zeros = 0
         nonzeros = 0
-        z = 1
-        while i < PX_KB and (zeros == 0 or nonzeros == 0 or not z):
+        while i < PX_KB:
             ix = x + (i % KB[0])
             iy = y + (i // KB[0])
-            z = (im[ix][iy] == 0) # Or below delta
+            z = 0
+            if im[ix][iy] == 0: # Or below delta
+                z = 1
+
+            # Stop when we've hit a new string of zeros
+            if zeros != 0 and nonzeros != 0 and z == 1:
+                break
+            
             zeros += z
-            nonzeros += (not z)
+            nonzeros += (1-z)
             i += 1
-        
+
+        dbg[outx][0] += 1 # Num iterations        
         # Write out segment (zeros, nonzeros, values[])
         j = i - nonzeros
-        while j < i and outIdx < PX_KB:
+        while True:
             if zeros != -1:
                 value = zeros
-                zeros = -1
-                dbg[outx][dbgIdx] = value
+                dbg[outx][dbgIdx] += zeros
                 dbgIdx += 1
+                zeros = -1
             elif nonzeros != -1:
                 value = nonzeros
-                nonzeros = -1
-                dbg[outx][dbgIdx] = value
+                dbg[outx][dbgIdx] += nonzeros
                 dbgIdx += 1
+                nonzeros = -1
             else:
                 jx = x + (j % KB[0])
                 jy = y + (j // KB[0])
@@ -120,6 +121,8 @@ def rvl_kernel(im, out, dbg):
 
                 # Flush word when complete (Tegra is 64bit architecture)
                 if nibblesWritten == 16: 
+                    if outIdx >= PX_KB:
+                        break
                     out[outx][outIdx] = word
                     outIdx += 1
                     nibblesWritten = 0
@@ -128,7 +131,14 @@ def rvl_kernel(im, out, dbg):
                 # We're done when there's no more data
                 if value == 0:
                     break
-     #TODO flush
+            
+            # Check end condition after start of loop 
+            if zeros == -1 and nonzeros == -1 and j >= i:
+                break
+
+    # Flush any remaining values, offsetting word to end first
+    word = (word << (4 * (16-nibblesWritten)))
+    out[outx][outIdx] = word
     
 
 block_per_grid = (1,1) # tuple(np.divide(img.shape, CUDA_THREAD_DIM).astype(int))
@@ -137,8 +147,7 @@ from datetime import datetime
 timings = []
 # One row per thread, with length allowing maximum compression size
 # TODO size PX_KB properly
-result = np.zeros((NTHREADS, PX_KB+1), dtype=np.uint64)
-dbg = np.zeros((NTHREADS, 256), dtype=np.int16) # TODO remove for better performance
+result = np.zeros((NTHREADS, int((PX_KB / 2) + 1)), dtype=np.uint64)
 
 pipeline = rs.pipeline()
 config = rs.config()
@@ -161,96 +170,123 @@ while nsamp < 3:
         print(frame)
         start = datetime.now()
         data = np.asanyarray(frame.get_depth_frame().get_data())
+        dbg = np.zeros((NTHREADS, 256), dtype=np.int16) # TODO remove for better performance
         rvl_kernel[block_per_grid, CUDA_THREAD_DIM](data, result, dbg)
         timings.append(datetime.now() - start)
-        sample = data[0:KB[0]][0:KB[1]]
+        sample = data[0:KB[0], 0:KB[1]]
         nsamp += 1
     except KeyboardInterrupt:
         break
 
 
-def decodeSector(sector):
+def decodeSector(sector, result):
     x = int(sector[0]) & 0xffff
     y = (int(sector[0]) >> 16) & 0xffff
-    print("decoding sector {}, {}".format(x,y))
 
     i = 1
     word = 0
     nibblesWritten = 0
 
-    dbg = [0]
+    #dbg = [0]
 
     zeros = None
     nonzeros = None
+    outIdx = 0
     written = 0
-    result = np.zeros(KB, dtype=np.uint16)
-    while i < len(sector):
+    while True:
         # Decode variable
-        nibble = 0
-        value = 0
+        nibble = np.uint64(0)
+        value = np.uint16(0)
         bits = 61 # 64 - 3 bits
         while True:
             if not nibblesWritten:
-                word = int(sector[i])
+                if i >= len(sector):
+                    break
+                word = np.uint64(sector[i])
                 i += 1
                 nibblesWritten = 16
             nibble = word & 0xf000000000000000
-            value = value | (nibble << 1) >> bits
-            word = (word << 4)
+            value = value | (nibble << np.uint64(1)) >> np.uint8(bits)
+            word = (word << np.uint64(4))
             nibblesWritten -= 1
             bits -= 3
             if not (nibble & 0x8000000000000000):
                 break
-            
+        
         # Value is now assigned; reverse positive flipping from compression
-        value = (value >> 1) ^ -(value & 1)
-        if zeros is None:
-            zeros = value
-            written += zeros
-        elif nonzeros is None:
-            nonzeros = value
-        elif zeros == 0 and nonzeros == 0:
-            return (result, dbg)
-        elif written < nonzeros:
-            result[written % KB[0]][written // KB[0]] = value
-            written += 1
-        else:
-            dbg[0] += 1 # Num sections written
-            dbg.append(zeros)
-            dbg.append(nonzeros)
+        value = np.bitwise_xor((value >> np.uint64(1)), -(value & np.uint8(1)))
+
+        # Reset counts if we've written a set of [zero, nonzero, data]
+        if zeros == 0 and nonzeros == 0:
+            return ((x,y), result, [])
+        elif zeros is not None and nonzeros is not None and written >= nonzeros:
             zeros = None
             nonzeros = None
             written = 0
-    return result
+
+        if zeros is None:
+            zeros = value
+            outIdx += zeros
+            #dbg.append(zeros)
+        elif nonzeros is None:
+            nonzeros = value
+            #dbg.append(nonzeros)
+            #dbg[0] += 1 # Num sections written
+        else: # written < nonzeros
+            if outIdx >= PX_KB:
+                return ((x,y), result, [])
+            result[x+int(outIdx % KB[0])][y+int(outIdx // KB[0])] = value
+            written += 1
+            outIdx += 1
+
+    return ((x,y), result, [])
 
 
 
 
 cuda.close()
 # np.set_printoptions(threshold=np.inf)
-print("{} result ({} initial, {} post-avg, {} samples):\n"
-      "top left quadrant\n{}\npre-encoded\n{}".format(
-          result.shape, timings[0], np.mean(timings[1:]), len(timings[1:]), 
-          sample, dbg[0]))
+print("{} result ({} initial, {} post-avg, {} samples)".format(
+          result.shape, timings[0], np.mean(timings[1:]), len(timings[1:])))
+print("pre-encoded dbg\n{}".format(dbg[0]))
 
 # Count zeroes and nonzeros from debug info
 pre_zeros = 0
 pre_nonzeros = 0
 for i in range(1, len(dbg[0])):
-    if i % 2:
+    if i % 2 == 0:
         pre_nonzeros += dbg[0][i]
     else:
         pre_zeros += dbg[0][i]
 sample_nonzeros = np.count_nonzero(sample)
-print("pre-encoded sums: %d zeros, %d zeros\nactual image: %d zeros, %d nonzeros" % (pre_zeros, pre_nonzeros, len(sample)-sample_nonzeros, sample_nonzeros))
+print("pre-encoded sums: %d zeros, %d nonzeros (total %d) for segment of size %d shape %s" % (pre_zeros, pre_nonzeros, pre_zeros+pre_nonzeros, sample.size, str(sample.shape)))
+print("actual image: %d zeros, %d nonzeros" % (sample.size-sample_nonzeros, sample_nonzeros))
 
-decoded, decodeDbg = decodeSector(result[0])
-print("decode dbg\n{}\ndecoded\n{}".format(decodeDbg, decoded))
+cv2.imshow("encoded", result / np.max(result))
 
-cv2.imshow("sample encoded", sample / np.max(sample))
-cv2.imshow("img", result / np.max(result))
-cv2.imshow("sample decoded", decoded / np.max(decoded))
+# Decode each part of the original image
+import concurrent.futures
+decodeImg = np.zeros(dim, dtype=np.uint16)
+with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+    futures = []
+    for i in range(result.shape[0]):
+        futures.append(executor.submit(decodeSector, result[i], decodeImg))
+    for future in concurrent.futures.as_completed(futures):
+        (s, result, dbg) = future.result()
+        print("decoded {}".format(s))
+        cv2.imshow("decodeImg", decodeImg / np.max(decodeImg))
+        cv2.waitKey(30)
+
+resize = tuple(np.multiply(sample.shape, 4)[0:2])
 cv2.waitKey(0)
+#sample = sample / np.max(sample)
+#ss_re = cv2.resize(sample, resize, interpolation=cv2.INTER_AREA)
+#cv2.imshow("sample sector", ss_re)
+# de_re = cv2.resize(decoded / np.max(decoded), resize, interpolation=cv2.INTER_AREA)
+# cv2.imshow("decoded", de_re) 
+#diff = np.abs(sample - decoded)
+#diff_re = cv2.resize(diff, resize, interpolation=cv2.INTER_AREA)
+#cv2.imshow("sample vs decode diff (black=good)", diff_re / max(np.max(diff_re), 1))
 
 # Compute thread image bounds Ioffs, Iwidth, Iheight = (threadID * stride, M/(stride1/N), N/(stride2/M))
 # Loop i = 0...Iwidth*Iheight
