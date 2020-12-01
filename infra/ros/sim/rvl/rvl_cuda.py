@@ -46,7 +46,7 @@ print("Kernel bounds: {} ({} pixels), thread shape: {}".format(KB, PX_KB, CUDA_T
 # =========== CALCULATIONS ===========
 # CUDA kernel. For each thread
 @cuda.jit
-def rvl_kernel(im, out, dbg):
+def rvl_kernel(im, out):
     x, y = cuda.grid(2)
     outx = cuda.gridsize(2)[1]*x + y
     x = KB[0]*x
@@ -60,7 +60,6 @@ def rvl_kernel(im, out, dbg):
     out[outx][0] = (y << 16) | x
     outIdx = 1
 
-    dbgIdx = 1    
     i = 0
     # TODO failing to write last section
     while i < PX_KB:
@@ -81,19 +80,14 @@ def rvl_kernel(im, out, dbg):
             nonzeros += (1-z)
             i += 1
 
-        dbg[outx][0] += 1 # Num iterations        
         # Write out segment (zeros, nonzeros, values[])
         j = i - nonzeros
         while True:
             if zeros != -1:
                 value = zeros
-                dbg[outx][dbgIdx] += zeros
-                dbgIdx += 1
                 zeros = -1
             elif nonzeros != -1:
                 value = nonzeros
-                dbg[outx][dbgIdx] += nonzeros
-                dbgIdx += 1
                 nonzeros = -1
             else:
                 jx = x + (j % KB[0])
@@ -105,7 +99,7 @@ def rvl_kernel(im, out, dbg):
 
             # Embed negative values in positive space 
             # sequence is 0, 1, -1, 2, -2...
-            value = (value << 1) ^ (value >> 31)
+            value = (value << 1) ^ (value >> 15) # 16-bit values
 
             # Write data (variable length encoding)
             while True:
@@ -172,27 +166,25 @@ while nsamp < 20:
         print(frame)
         start = datetime.now()
         data = np.asanyarray(frame.get_depth_frame().get_data())
-        dbg = np.zeros((NTHREADS, 256), dtype=np.int16) # TODO remove for better performance
-        rvl_kernel[block_per_grid, CUDA_THREAD_DIM](data, result, dbg)
+        rvl_kernel[block_per_grid, CUDA_THREAD_DIM](data, result)
         timings.append(datetime.now() - start)
         sample = data[0:KB[0], 0:KB[1]]
         nsamp += 1
     except KeyboardInterrupt:
         break
 
-print("(Actual image shape received: {})".format(data.shape))
+print("(Actual image shape received: {} dtype {})".format(data.shape, data.dtype))
 
 def decodeSector(sector, result):
     start = datetime.now()
+
+    # Extract header
     x = int(sector[0]) & 0xffff
     y = (int(sector[0]) >> 16) & 0xffff
 
-    i = 1
+    i = 1 # Skip header word
     word = 0
     nibblesWritten = 0
-
-    #dbg = [0]
-
     zeros = None
     nonzeros = None
     outIdx = 0
@@ -206,19 +198,20 @@ def decodeSector(sector, result):
             if not nibblesWritten:
                 if i >= len(sector):
                     break
-                word = np.uint64(sector[i])
+                word = int(sector[i])
                 i += 1
                 nibblesWritten = 16
             nibble = word & 0xf000000000000000
-            value = value | (nibble << np.uint64(1)) >> np.uint8(bits)
-            word = (word << np.uint64(4))
+            value = value | ((nibble << 1) & 0xffffffffffffffff) >> bits
+            word = (word << 4) & 0xffffffffffffffff
             nibblesWritten -= 1
             bits -= 3
             if not (nibble & 0x8000000000000000):
                 break
         
         # Value is now assigned; reverse positive flipping from compression
-        value = np.bitwise_xor((value >> np.uint64(1)), -(value & np.uint8(1)))
+        value = int(value)
+        value = (value >> 1) ^ -(value & 1)
 
         # Reset counts if we've written a set of [zero, nonzero, data]
         if zeros == 0 and nonzeros == 0:
@@ -231,11 +224,8 @@ def decodeSector(sector, result):
         if zeros is None:
             zeros = value
             outIdx += zeros
-            #dbg.append(zeros)
         elif nonzeros is None:
             nonzeros = value
-            #dbg.append(nonzeros)
-            #dbg[0] += 1 # Num sections written
         else: # written < nonzeros
             if outIdx >= PX_KB:
                 return ((x,y), result, datetime.now() - start)
@@ -252,19 +242,6 @@ cuda.close()
 # np.set_printoptions(threshold=np.inf)
 print("{} result ({} initial, {} post-avg, {} samples)".format(
           result.shape, timings[0], np.mean(timings[1:]), len(timings[1:])))
-print("pre-encoded dbg\n{}".format(dbg[0]))
-
-# Count zeroes and nonzeros from debug info
-pre_zeros = 0
-pre_nonzeros = 0
-for i in range(1, len(dbg[0])):
-    if i % 2 == 0:
-        pre_nonzeros += dbg[0][i]
-    else:
-        pre_zeros += dbg[0][i]
-sample_nonzeros = np.count_nonzero(sample)
-print("pre-encoded sums: %d zeros, %d nonzeros (total %d) for segment of size %d shape %s" % (pre_zeros, pre_nonzeros, pre_zeros+pre_nonzeros, sample.size, str(sample.shape)))
-print("actual image: %d zeros, %d nonzeros" % (sample.size-sample_nonzeros, sample_nonzeros))
 
 cv2.imshow("original", data / np.max(data))
 cv2.imshow("encoded", result / np.max(result))
@@ -272,7 +249,6 @@ cv2.imshow("encoded", result / np.max(result))
 # Decode each part of the original image
 import concurrent.futures
 decodeImg = np.zeros(dim, dtype=np.uint16)
-
 cpu_timings = []
 allstart = datetime.now()
 with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
@@ -287,9 +263,18 @@ with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
         cv2.waitKey(30)
 walltime = datetime.now() - allstart
 
-print("=== CPU decode stats ===\nWall time: {}\nAvg seconds per thread: {}\nFastest thread seconds: {}\nSlowest thread seconds: {}".format(
+print("""=== Summary Performance Stats ===
+    Encode first frame: {}
+    Encode warmed-up wall time (avg): {}
+    Encode #samples: {}
+    Decode wall time: {}
+    Decode avg sec/thread: {}
+    Decode fastest thread (s): {}
+    Decode slowest thread (s): {}""".format(
+        timings[0], np.mean(timings[1:]), len(timings[1:]),
         walltime, np.mean(cpu_timings), np.min(cpu_timings), np.max(cpu_timings)
     ))
+
 
 cv2.waitKey(0)
 #sample = sample / np.max(sample)
@@ -304,7 +289,7 @@ cv2.waitKey(0)
 # Compute thread image bounds Ioffs, Iwidth, Iheight = (threadID * stride, M/(stride1/N), N/(stride2/M))
 # Loop i = 0...Iwidth*Iheight
 # Run RVL algorithm
-# If dest space exceeded,  resent command to "raw", then copy image bounds right shifted 1
+# If dest space exceeded,  reset command to "raw", then copy image bounds right shifted 1
 # Send each row in dest as UDP packet
 # 7200B output @ 20x compression + 28B IP header + 3B preamble -> 391 bytes per thread-frame
 # Frame overhead is 0.83%, contributes 3*256*30*8=184kbps to total bitrate. Each byte is ~61kbps
