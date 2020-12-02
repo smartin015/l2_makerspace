@@ -34,7 +34,7 @@ in helping with development.
 
 ### Lessons Learned
 
-The following is a colleciton of details which were learned over hours of frustration. Please read through these if you're stuck on something, and
+The following is a collection of details which were learned over hours of frustration. Please read through these if you're stuck on something, and
 add new lessons learned.
 
 * ROS2 uses DDS as a backing networking protocol - and it [has issues](https://answers.ros.org/question/296828/ros2-connectivity-across-docker-containers-via-host-driver/) when your run docker containers with the "host" network mode. For simplicity, always use `network_mode: bridge` when setting up docker nodes via docker-compose.
