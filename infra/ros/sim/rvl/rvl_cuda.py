@@ -1,21 +1,8 @@
 from numba import cuda
-from math import sqrt
+from math import sqrt, ceil
 import numpy as np
 import cv2
 import pyrealsense2 as rs
-
-# 128 cores
-# Threads per block must be multiple of warp size (32), typically between 128 and 512
-# Number of blocks in grid should be 2-4x the number of multiprocessors (1) -> 2-4.
-WARP = 32
-MPROC = 1
-
-THREADS_PER_BLOCK = WARP*4
-BLOCKS_PER_GRID = MPROC*2
-NTHREADS = THREADS_PER_BLOCK * BLOCKS_PER_GRID
-
-print("%d threads (%d per block, %d blocks per grid)" % (
-    NTHREADS, THREADS_PER_BLOCK, BLOCKS_PER_GRID))
 
 # Load test image M*N*bytes
 # Note that column order is height-first
@@ -24,24 +11,111 @@ input_dim_realsense = (720, 1280)
 input_dim_realsense_reg = (480, 848)
 input_dim_trvl = (576, 640)
 dim = input_dim_realsense_reg
+print("Image dimensions", dim)
 
-# Compute kernel bounds. Example:
+# Evaluate the attached GPU to see what we're working with
+# Cuda relations:
+# - Grids --> GPUs
+# - Blocks --> Multi Processors (MP)
+# - Threads --> Stream Processors (SP)
+# - Warps --> 32 threads executing simultaneously
+# https://stackoverflow.com/questions/63823395/how-can-i-get-the-number-of-cuda-cores-in-my-gpu-using-python-and-numba
+CC_CORES_PER_SM_DICT = {
+    (2,0) : 32,
+    (2,1) : 48,
+    (3,0) : 192,
+    (3,5) : 192,
+    (3,7) : 192,
+    (5,0) : 128,
+    (5,2) : 128,
+    (5,3) : 128, # Jetson nano
+    (6,0) : 64,
+    (6,1) : 128,
+    (7,0) : 64,
+    (7,5) : 64,
+    (8,0) : 64,
+}
+WARP = 32
+d = cuda.get_current_device()
+MPROC = getattr(d, 'MULTIPROCESSOR_COUNT', 1)
+MAX_THREADS_PER_SM = CC_CORES_PER_SM_DICT.get(getattr(d, 'COMPUTE_CAPABILITY'), 0)
+print({WARP, MPROC, MAX_THREADS_PER_SM})
+
+# Compute kernel bounds based on estimated thread count. Example:
 # 1280x720 -> 256 threads -> 3600 16z samples -> 7200B max output per thread 
 # X*Y = M*N/T, X=K*M, Y=K*N, X*Y = K^2*M*N, K = sqrt((X*Y)/(M*N)) = sqrt((M*N/T)/(M*N)) = sqrt(1/T),
 # X = 1280*sqrt(1/256) = 80
 # Y = 720*sqrt(1/256) = 45
-# Each thread is an 80x45 segment of the 16z image
-K = sqrt(1.0/NTHREADS)
-def kernel_bounds(dim):
+# In this example, each thread is an 80x45 segment of the 16z image
+def kernel_bounds(dim, mproc, sm_cores):
+    # Come up with a guess for the number of threads & CUDA kernel shape
+    if dim[0] >= dim[1]:
+         raise Exception("Image dimensions must be X,Y where X < Y")
     px = np.prod(dim)
-    tpx = px/NTHREADS
-    return (int(dim[0]*K), int(dim[1]*K))
+
+    # Threads per block must be multiple of warp size, typically between 128 and 512
+    if px % WARP != 0:
+        raise Exception("Not possible to make # kernels a multiple of WARP {}; total pixel count {}".format(WARP, numKernels))
+
+    # Subtract factors of 2 until we get WARP - this gives us certainty in matching warp size
+    # This assumes that WARP is a power of 2
+    dimSub = list(dim)
+    fact = [1,1]
+    while np.prod(fact) < WARP:
+        if dimSub[0] % 1 != 0 or dimSub[1] % 1 != 0:
+            raise Exception("Could not factor {} from image dimensions - got to {} with {}".format(WARP, fact, dimSub))
+        if dimSub[0] < dimSub[1]:
+            dimSub[1] = dimSub[1] / 2
+            fact[1] = fact[1] * 2
+        else:
+           dimSub[0] = dimSub[0] / 2
+           fact[0] = fact[0] * 2
+
+    # Good starting guess, but maybe not evenly dividing the pixels
+    threadguess = (WARP*4) * (mproc*2)
+    K = sqrt(1.0/threadguess)
+    raw = [ceil(dimSub[0]*K), ceil(dimSub[1]*K)]
+    print("Raw bounds %s (ballpark %d threads)" % (raw, threadguess))
+
+    # Align bounds so that they evenly divide the dimensions
+    while dimSub[0] % raw[0] != 0:
+        raw[0] += 1
+    while dimSub[1] % raw[1] != 0:
+        raw[1] += 1
+    raw = np.multiply(raw, fact) # Add the factored values back in
+    print("rawfact", raw)
+    numKernels = np.divide(dim, raw)
+    print("Adjusted %s" % raw)
+    print("numKernels", numKernels)
 
 
-KB = kernel_bounds(dim)
-CUDA_THREAD_DIM = tuple(np.divide(dim, KB).astype(int))
+    # Size bpg so it fits evenly given the kernel
+    # Number of blocks in grid should be 2-4x the number of multiprocessors (1) -> 2-4.
+    # bpgScale[X/Y] * bpg = threads[X/Y]
+    # thread[X/Y] / bpgScale[X/Y] = bpg[X/Y] > 2*MPROC 
+    # thread[X/Y] / 2*MPROC > bpgScale[X/Y]
+    bpgScale = 1
+    while True:
+        bpg = tuple(np.divide(numKernels, bpgScale).astype(int))
+        if np.prod(bpg) < 4*mproc:
+            break
+        bpgScale += 1
+    print("bpgScale", bpgScale)
+
+    # Now come up with runnable 2d dimensions for the kernel
+    # We want to size the threads per block so they fit within MAX_THREADS_PER_SM
+    # and so that when multiplied elementwise by BLOCKS_PER_GRID they don't exceed 
+    tpb = tuple(np.divide(numKernels, bpg).astype(int))
+    return (tuple(raw), bpg, tpb)
+
+KB, BLOCKS_PER_GRID, THREADS_PER_BLOCK = kernel_bounds(dim, MPROC, MAX_THREADS_PER_SM)
 PX_KB = np.prod(KB)
-print("Kernel bounds: {} ({} pixels), thread shape: {}".format(KB, PX_KB, CUDA_THREAD_DIM))
+print({
+  "KB": KB, 
+  "PX_KB": PX_KB, 
+  "BLOCKS_PER_GRID": BLOCKS_PER_GRID, 
+  "THREADS_PER_BLOCK": THREADS_PER_BLOCK
+})
 
 # =========== CALCULATIONS ===========
 # CUDA kernel. For each thread
@@ -49,6 +123,7 @@ print("Kernel bounds: {} ({} pixels), thread shape: {}".format(KB, PX_KB, CUDA_T
 def rvl_kernel(im, out):
     x, y = cuda.grid(2)
     outx = cuda.gridsize(2)[1]*x + y
+    #print(x, y, g[0], g[1])
     x = KB[0]*x
     y = KB[1]*y
 
@@ -135,15 +210,12 @@ def rvl_kernel(im, out):
     # Flush any remaining values, offsetting word to end first
     word = (word << (4 * (16-nibblesWritten)))
     out[outx][outIdx] = word
-    
 
-block_per_grid = (1,1) # tuple(np.divide(img.shape, CUDA_THREAD_DIM).astype(int))
 from datetime import datetime
-
 timings = []
 # One row per thread, with length allowing maximum compression size
 # TODO size PX_KB properly
-result = np.zeros((NTHREADS, int((PX_KB / 2) + 1)), dtype=np.uint64)
+result = np.zeros((np.product(np.multiply(BLOCKS_PER_GRID, THREADS_PER_BLOCK)), int((PX_KB / 2) + 1)), dtype=np.uint64)
 
 pipeline = rs.pipeline()
 config = rs.config()
@@ -166,7 +238,7 @@ while nsamp < 20:
         print(frame)
         start = datetime.now()
         data = np.asanyarray(frame.get_depth_frame().get_data())
-        rvl_kernel[block_per_grid, CUDA_THREAD_DIM](data, result)
+        rvl_kernel[BLOCKS_PER_GRID, THREADS_PER_BLOCK](data, result)
         timings.append(datetime.now() - start)
         sample = data[0:KB[0], 0:KB[1]]
         nsamp += 1
