@@ -96,7 +96,7 @@ def kernel_bounds(dim, mproc, sm_cores):
     # thread[X/Y] / 2*MPROC > bpgScale[X/Y]
     bpgScale = 1
     while True:
-        bpg = tuple(np.divide(numKernels, bpgScale).astype(int))
+        bpg = tuple(np.ceil(np.divide(numKernels, bpgScale)).astype(int))
         if np.prod(bpg) < 4*mproc:
             break
         bpgScale += 1
@@ -105,7 +105,7 @@ def kernel_bounds(dim, mproc, sm_cores):
     # Now come up with runnable 2d dimensions for the kernel
     # We want to size the threads per block so they fit within MAX_THREADS_PER_SM
     # and so that when multiplied elementwise by BLOCKS_PER_GRID they don't exceed 
-    tpb = tuple(np.divide(numKernels, bpg).astype(int))
+    tpb = tuple(np.ceil(np.divide(numKernels, bpg)).astype(int))
     return (tuple(raw), bpg, tpb)
 
 KB, BLOCKS_PER_GRID, THREADS_PER_BLOCK = kernel_bounds(dim, MPROC, MAX_THREADS_PER_SM)
@@ -114,13 +114,14 @@ print({
   "KB": KB, 
   "PX_KB": PX_KB, 
   "BLOCKS_PER_GRID": BLOCKS_PER_GRID, 
-  "THREADS_PER_BLOCK": THREADS_PER_BLOCK
+  "THREADS_PER_BLOCK": THREADS_PER_BLOCK,
+  "dim composed": np.multiply(np.multiply(KB, THREADS_PER_BLOCK), BLOCKS_PER_GRID),
 })
 
 # =========== CALCULATIONS ===========
 # CUDA kernel. For each thread
 @cuda.jit
-def rvl_kernel(im, out):
+def rvl_encode(im, out):
     x, y = cuda.grid(2)
     outx = cuda.gridsize(2)[1]*x + y
     #print(x, y, g[0], g[1])
@@ -211,11 +212,76 @@ def rvl_kernel(im, out):
     word = (word << (4 * (16-nibblesWritten)))
     out[outx][outIdx] = word
 
+
+@cuda.jit()
+def rvl_decode(enc, out):
+    encx = cuda.grid(1)
+    # Extract header & start on next word
+    x = enc[encx][0] & 0xffff
+    y = (enc[encx][0] >> 16) & 0xffff
+    i = 1
+
+    word = np.uint64(0)
+    nibblesWritten = 0
+    zeros = -1
+    nonzeros = -1
+    outIdx = 0
+    written = 0
+    bits = 61
+    value = 0
+    while True:
+        # Decode variable
+        value = 0
+        nibble = 0
+        bits = 61 # 64 - 3 bits
+        while True:
+            if i >= SECTOR_LEN:
+                return
+            if nibblesWritten == 0:
+                word = enc[encx][i]
+                i += 1
+                nibblesWritten = 16
+            nibble = word & 0xf000000000000000
+            value = value | (nibble << 1) >> bits
+            word = word << 4
+            nibblesWritten -= 1
+            bits -= 3
+            if not (nibble & 0x8000000000000000):
+                break
+        
+        # Value is now assigned; reverse positive flipping from compression
+        value = (value >> 1) ^ -(value & 1)
+
+        # Reset counts if we've written a set of [zero, nonzero, data]
+        if zeros == 0 and nonzeros == 0:
+            return
+        elif zeros != -1 and nonzeros != -1 and written >= nonzeros:
+            zeros = -1
+            nonzeros = -1
+            written = 0
+
+        if zeros == -1:
+            zeros = value
+            outIdx += zeros
+        elif nonzeros == -1:
+            nonzeros = value
+        else: # written < nonzeros
+            if outIdx >= PX_KB:
+                return
+            out[x + (outIdx % KB[0])][y + (outIdx // KB[0])] = value
+            written += 1
+            outIdx += 1
+
+        # Check end conditions
+        #if i >= SECTOR_LEN or outIdx >= PX_KB:
+        #    break
+
 from datetime import datetime
-timings = []
 # One row per thread, with length allowing maximum compression size
-# TODO size PX_KB properly
-result = np.zeros((np.product(np.multiply(BLOCKS_PER_GRID, THREADS_PER_BLOCK)), int((PX_KB / 2) + 1)), dtype=np.uint64)
+SECTOR_LEN = int(PX_KB / 2) # TODO size SECTOR_LEN properly
+NUM_SECTOR = np.product(np.multiply(BLOCKS_PER_GRID, THREADS_PER_BLOCK))
+encoded = np.zeros((NUM_SECTOR, SECTOR_LEN), dtype=np.uint64)
+decoded = np.zeros(dim, dtype=np.uint16)
 
 pipeline = rs.pipeline()
 config = rs.config()
@@ -226,125 +292,50 @@ pipeline.start(config)
 ctx = cuda.current_context()
 ctx.reset()
 print(ctx.get_memory_info())
-
-print("Running on img shape {}, output shape {} (Ctl+C to stop)...".format(dim, result.shape))
+print("Running on img shape {}, output shape {} (Ctl+C to stop)...".format(dim, encoded.shape))
 sample = None
 nsamp = 0
+timings = [[], []]
 while nsamp < 20:
     try:
         has, frame = pipeline.try_wait_for_frames()
         if not has:
             break
         print(frame)
-        start = datetime.now()
         data = np.asanyarray(frame.get_depth_frame().get_data())
-        rvl_kernel[BLOCKS_PER_GRID, THREADS_PER_BLOCK](data, result)
-        timings.append(datetime.now() - start)
-        sample = data[0:KB[0], 0:KB[1]]
+        start = datetime.now()
+        rvl_encode[BLOCKS_PER_GRID, THREADS_PER_BLOCK](data, encoded)
+        timings[0].append(datetime.now() - start)
+        
+	print([hex(e) for e in encoded[529][0:10]]) # 529 80w624h
+        start = datetime.now()
+        rvl_decode[4, int(NUM_SECTOR/4)](encoded, decoded)
+        timings[1].append(datetime.now() - start)
+        #print(rvl_decode.inspect_types())
+        #import sys
+        #sys.exit(0)
+        print(decoded[80][624:634])
         nsamp += 1
     except KeyboardInterrupt:
         break
 
-print("(Actual image shape received: {} dtype {})".format(data.shape, data.dtype))
-
-def decodeSector(sector, result):
-    start = datetime.now()
-
-    # Extract header
-    x = int(sector[0]) & 0xffff
-    y = (int(sector[0]) >> 16) & 0xffff
-
-    i = 1 # Skip header word
-    word = 0
-    nibblesWritten = 0
-    zeros = None
-    nonzeros = None
-    outIdx = 0
-    written = 0
-    while True:
-        # Decode variable
-        nibble = np.uint64(0)
-        value = np.uint16(0)
-        bits = 61 # 64 - 3 bits
-        while True:
-            if not nibblesWritten:
-                if i >= len(sector):
-                    break
-                word = int(sector[i])
-                i += 1
-                nibblesWritten = 16
-            nibble = word & 0xf000000000000000
-            value = value | ((nibble << 1) & 0xffffffffffffffff) >> bits
-            word = (word << 4) & 0xffffffffffffffff
-            nibblesWritten -= 1
-            bits -= 3
-            if not (nibble & 0x8000000000000000):
-                break
-        
-        # Value is now assigned; reverse positive flipping from compression
-        value = int(value)
-        value = (value >> 1) ^ -(value & 1)
-
-        # Reset counts if we've written a set of [zero, nonzero, data]
-        if zeros == 0 and nonzeros == 0:
-            return ((x,y), result, datetime.now() - start)
-        elif zeros is not None and nonzeros is not None and written >= nonzeros:
-            zeros = None
-            nonzeros = None
-            written = 0
-
-        if zeros is None:
-            zeros = value
-            outIdx += zeros
-        elif nonzeros is None:
-            nonzeros = value
-        else: # written < nonzeros
-            if outIdx >= PX_KB:
-                return ((x,y), result, datetime.now() - start)
-            result[x+int(outIdx % KB[0])][y+int(outIdx // KB[0])] = value
-            written += 1
-            outIdx += 1
-
-    return ((x,y), result, datetime.now() - start)
-
-
-
+cv2.imshow("original", data / np.max(data))
+cv2.imshow("encoded", encoded / max(1, np.max(encoded)))
+cv2.imshow("decoded", decoded / max(1, np.max(decoded)))
 
 cuda.close()
-# np.set_printoptions(threshold=np.inf)
-print("{} result ({} initial, {} post-avg, {} samples)".format(
-          result.shape, timings[0], np.mean(timings[1:]), len(timings[1:])))
-
-cv2.imshow("original", data / np.max(data))
-cv2.imshow("encoded", result / np.max(result))
-
-# Decode each part of the original image
-import concurrent.futures
-decodeImg = np.zeros(dim, dtype=np.uint16)
-cpu_timings = []
-allstart = datetime.now()
-with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-    futures = []
-    for i in range(result.shape[0]):
-        futures.append(executor.submit(decodeSector, result[i], decodeImg))
-    for future in concurrent.futures.as_completed(futures):
-        (s, result, threadtime) = future.result()
-        cpu_timings.append(threadtime.total_seconds())
-        print("decoded {}".format(s))
-        cv2.imshow("decodeImg", decodeImg / np.max(decodeImg))
-        cv2.waitKey(30)
-walltime = datetime.now() - allstart
 
 print("""=== Summary Performance Stats ===
-    Encode first frame: {}
-    Encode warmed-up wall time (avg): {}
-    Encode #samples: {}
-    Decode wall time: {}
-    Decode avg sec/thread: {}
-    Decode fastest thread (s): {}
-    Decode slowest thread (s): {}""".format(
-        timings[0], np.mean(timings[1:]), len(timings[1:]),
-        walltime, np.mean(cpu_timings), np.min(cpu_timings), np.max(cpu_timings)
+    #samples: {}
+    First frame: 
+        {} encode
+        {} decode
+    Warmed-up wall time (avg): 
+        {} encode
+        {} decode""".format(
+        len(timings[1:]),
+        timings[0][0], np.mean(timings[1][1:]), 
+        timings[1][0], np.mean(timings[1][1:])
     ))
 
 
