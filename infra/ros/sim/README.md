@@ -82,4 +82,12 @@ ros2 topic echo /l2/vr/joint_state
 
 Can [install a VPN](https://www.cyberciti.biz/faq/howto-setup-openvpn-server-on-ubuntu-linux-14-04-or-16-04-lts/) to allow for ROS2 comms between server and client.
 
+### Running standalone webots in docker
 
+Requires the nvidia-docker installation
+
+```
+xhost +
+docker run --gpus=all -it -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix:rw cyberbotics/webots:latest
+webots
+```

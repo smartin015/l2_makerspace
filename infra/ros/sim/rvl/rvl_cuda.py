@@ -307,7 +307,7 @@ while nsamp < 20:
         rvl_encode[BLOCKS_PER_GRID, THREADS_PER_BLOCK](data, encoded)
         timings[0].append(datetime.now() - start)
         
-	print([hex(e) for e in encoded[529][0:10]]) # 529 80w624h
+        print([hex(e) for e in encoded[529][0:10]]) # 529 80w624h
         start = datetime.now()
         rvl_decode[4, int(NUM_SECTOR/4)](encoded, decoded)
         timings[1].append(datetime.now() - start)
