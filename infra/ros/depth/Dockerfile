@@ -22,7 +22,8 @@ RUN wget https://github.com/IntelRealSense/librealsense/archive/master.zip && \
 	export NUM_CPU=$(nproc) && \
 	make -j$((NUM_CPU - 1)) && make install 
 
-RUN apt-get update && apt-get install -y --no-install-recommends python3-tk && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends python3-tk && \
+    rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install opencv-python numba matplotlib
 
