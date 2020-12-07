@@ -13,4 +13,5 @@ TexturedBackgroundLight {
 RectangleArena {
 }
 ar2 {
+  controller "simple_controller"
 }
