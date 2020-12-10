@@ -36,9 +36,7 @@ endif()
 
 
 set(msg_files 
-  msg/Item.msg 
   msg/L2Actor.msg
-  msg/L2ActiveProjects.msg
   msg/L2Event.msg
   msg/L2Role.msg
   msg/Object3D.msg
@@ -50,16 +48,7 @@ set(msg_files
   msg/L2SequenceArray.msg
   msg/L2SequenceItem.msg)
 set(srv_files 
-  srv/SpawnObject3D.srv
-  srv/RemoveObject3D.srv
-  srv/PushParameter.srv
-  srv/GetFile.srv
-  srv/PutFile.srv
-  srv/ListFiles.srv
-  srv/GetProject.srv
-  srv/GetObject3D.srv)
   srv/Object3D.srv
-  srv/L2ActiveProjects.srv
   srv/L2ProjectItem.srv
   srv/L2Project.srv
   srv/L2Actor.srv

@@ -14,8 +14,12 @@ RUN . /opt/ros/$ROS_DISTRO/setup.sh && mkdir -p /webots_ros2/src && cd /webots_r
 # TODO accept ARGs to select particular GPU type
 RUN \
   apt-get update && \
-  apt-get -y install --no-install-recommends libgl1-mesa-glx libgl1-mesa-dri libnss3 libasound2 && \
+  DEBIAN_FRONTEND=noninteractive apt-get -y install --no-install-recommends libgl1-mesa-glx libgl1-mesa-dri libnss3 libasound2 wget software-properties-common && \
   rm -rf /var/lib/apt/lists/*
+
+RUN wget -qO- https://cyberbotics.com/Cyberbotics.asc | sudo apt-key add - && \
+    apt-add-repository 'deb https://cyberbotics.com/debian/ binary-amd64/' && \
+    apt-get update && apt-get -y install --no-install-recommends webots
 
 COPY Webots-R2020a.conf /root/.config/Cyberbotics/
 

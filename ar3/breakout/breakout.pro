@@ -1,4 +1,4 @@
-update=Sun 29 Nov 2020 09:11:13 PM EST
+update=Wed 09 Dec 2020 05:07:37 PM EST
 version=1
 last_client=kicad
 [general]
@@ -24,7 +24,7 @@ LabSize=50
 ERC_TestSimilarLabels=1
 [pcbnew]
 version=1
-PageLayoutDescrFile=
+PageLayoutDescrFile=empty_layout.kicad_wks
 LastNetListRead=breakout.net
 CopperLayerCount=2
 BoardThickness=1.6
@@ -233,7 +233,7 @@ Enabled=1
 [pcbnew/Layer.F.Fab]
 Enabled=1
 [pcbnew/Layer.Rescue]
-Enabled=1
+Enabled=0
 [pcbnew/Netclasses]
 [pcbnew/Netclasses/Default]
 Name=Default
