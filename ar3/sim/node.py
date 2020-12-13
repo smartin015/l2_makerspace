@@ -5,10 +5,12 @@ from rclpy.node import Node
 from controller import Robot, Motor, PositionSensor
 from std_msgs.msg import Float64
 
+NUM_JOINTS = 6
 targets = [
     [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
     [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
 ]
+
 class AR3(Node):
     PUBLISH_PD = 60  # seconds
 
