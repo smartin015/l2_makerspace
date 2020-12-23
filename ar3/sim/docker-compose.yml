@@ -1,5 +1,15 @@
 version: '3.5'
 
+# Manual testing:
+# ```
+# docker run --gpus=all --name l2_ar3 -it -e DISPLAY -v $(pwd)/webots:/usr/local/webots/resources/projects/ -v $(pwd)/config:/root/.config/Cyberbotics/ -v /tmp/.X11-unix:/tmp/.X11-unix:rw -v $(pwd):/volume l2ar3sim /bin/bash
+# ```
+#
+# `ros2 launch servo.launch.py` to launch servo & robot description / TF publishers
+# `ros2 run l2_ar3 node` to run the simulation controller / joint state publisher
+# `ros2 service call /servo_server/start_servo std_srvs/Trigger` to begin servoing
+# `webots` to start webots
+
 services:
   main:
     build: .
