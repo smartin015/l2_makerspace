@@ -19,7 +19,6 @@ def generate_launch_description():
     with open(os.path.join(package_path, YAML_PATH), 'r') as f:
         servo_yaml = yaml.safe_load(f)
     servo_params = {'moveit_servo' : servo_yaml}
-    print(servo_params)
 
     # Get URDF and SRDF
     with open(os.path.join(package_path, URDF_PATH), 'r') as f:
@@ -41,12 +40,13 @@ def generate_launch_description():
                     package='robot_state_publisher',
                     plugin='robot_state_publisher::RobotStatePublisher',
                     name='robot_state_publisher',
-                    parameters=[robot_description]),
-                ComposableNode(
-                    package='tf2_ros',
-                    plugin='tf2_ros::StaticTransformBroadcasterNode',
-                    name='static_tf2_broadcaster',
-                    parameters=[ {'/child_frame_id' : 'base_link', '/frame_id' : 'world'} ]),
+                    parameters=[robot_description, {'publish_frequency': 20.0}],
+                    extra_arguments=[{'--ros-args': '--log-level DEBUG'}]),
+                #ComposableNode(
+                #    package='tf2_ros',
+                #    plugin='tf2_ros::StaticTransformBroadcasterNode',
+                #    name='static_tf2_broadcaster',
+                #    parameters=[ {'/child_frame_id' : 'base_link', '/frame_id' : 'world'} ]),
                 ComposableNode(
                     package='moveit_servo',
                     plugin='moveit_servo::ServoServer',

@@ -5,7 +5,7 @@ from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from tf2_ros import TransformBroadcaster, StaticTransformBroadcaster
 from controller import Robot, Motor, PositionSensor
-from std_msgs.msg import Float64
+from std_msgs.msg import Float64, Header
 from trajectory_msgs.msg import JointTrajectory
 from rosgraph_msgs.msg import Clock
 from builtin_interfaces.msg import Time
@@ -61,7 +61,11 @@ class AR3(Node):
             self.clockpub.publish(Clock(clock=Time(sec=int(now), nanosec=int((now % 1) * 1000000000))))
 
     def handle_joint_trajectory(self, jt):
-        print(jt) # TODO handle setting joint trajectory
+        # print(jt) # TODO handle setting joint trajectory
+        for (i, name) in enumerate(jt.joint_names):
+            # TODO - catch exceptions
+            mi = int(name[-1]) - 1 # Convert to index into motors
+            self.motors[mi].setPosition(jt.points[0].positions[i])
 
 
     def mktf(self, parent, child, xyz, quat):
@@ -89,6 +93,7 @@ class AR3(Node):
             vel=[(a-b)/dt for (a,b) in zip(pos, self.last_joint_state)]
 
         self.joint_state_pub.publish(JointState(
+            header=Header(stamp=now.to_msg()),
             name=self.joint_names,
             position=pos,
             velocity=vel,
