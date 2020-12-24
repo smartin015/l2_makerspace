@@ -1,53 +1,62 @@
-import math
+import threading
+import time
+import os
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import TwistStamped
-from visualization_msgs.msg import Marker
+import moveit_commander
+import moveit_msgs.msg
+import geometry_msgs.msg
 
-class AR3Jogger(Node):
-    PUBLISH_PD = 0.05
-
+class MoveItDemo(Node):
     def __init__(self):
-        super().__init__('ar3_jogger')
-        self.timer = self.create_timer(self.PUBLISH_PD, self.timer_callback)
-        self.pub = self.create_publisher(TwistStamped, "servo_server/delta_twist_cmds", 10)
-        self.marker_pub = self.create_publisher(Marker, "/delta_twist_marker", 10)
-        self.i = 0
+        super().__init__('moveit')
 
-    def timer_callback(self):
-        m = TwistStamped()
-        m.header.stamp = self.get_clock().now().to_msg()
-        m.header.frame_id = "base_link"
-        theta = (0.5 * self.get_clock().now().nanoseconds / 1000000000.0) % (2*3.14159265)
-        m.twist.linear.x = 0.0
-        m.twist.linear.z = math.sin(theta) * 0.3
-        m.twist.linear.y = 0.0
-        m.twist.angular.z = 0.0
-        m.twist.angular.y = 0.0
-        m.twist.angular.x = 0.0
-        self.i = self.i + 1
-        if self.i % 20 == 0:
-            print(m.twist)
-        self.pub.publish(m)
+    def run(self):
+        self.get_logger().info("Wawiting to let RViz initialize")
+        time.sleep(5)
+        self.get_logger().info("Initialzie MoveIt")
+        robot = moveit_commander.RobotCommander()
+        scene = moveit_commander.PlanningSceneInterface()
+        group = moveit_commander.MoveGroupCommander("manipulator")
+        display_trajectory_publisher = rclpy.create_publisher('/move_group/display_planned_path', DisplayTrajectory, 20)
+        print(group.get_planning_frame())
+        print(group.get_end_effector_link())
+        print(robot.get_group_names())
+        print(robot.get_current_state())
+#self.m.getPlanningSceneMonitor().providePlanningSceneService()
+#self.m.getPlanningSceneMonitor().setPlanningScenePublishingFrequency(100)
+#self.get_logger().info("Init PlanningComponent")
+#self.arm = PlanningComponent("manipulator", self.m)
+# Delay before running plan
+#time.sleep(1)
+# Create collision object
+#obj = CollisionObject()
+#obj.header.frame_id = "base_link"
+#obj.id = "box"
+#box = SolidPrimitive()
+#box.type = box.BOX
+#box.dimensions = (0.1, 0.4, 0.1)
+#box_pose = Pose()
+#box_pose.position.x = 0.4
+#box_pose.position.z = 1.0
+#obj.primitives.append(box)
+#obj.primitive_poses.append(box_pose)
+#obj.operation = obj.ADD
+# Add to planning scene (may need to lock this)
+# scene = self.m.getPlanningSceneMonitor().processCollisionObjectMsg(obj)
+# Set goal
+#self.get_logger().info("Set goal")
+#self.arm.setGoal("extended")
+#self.get_logger().info("Plan to goal")
+#solution = self.arm.plan()
+#if solution:
+#    self.get_logger().info("Execute")
+#    self.arm.execute()
 
-        # TODO servo to position, publish marker
-        """
-        mk = Marker()
-        mk.header.stamp = m.header.stamp
-        mk.header.frame_id = m.header.frame_id
-        self.marker_pub.publish(Marker(
-            header=m.header,
-            ns='l2_ar3', 
-            id=0,
-            type=0,
-            action=0,
-            pose
-        ))
-        """
-                
 def main(args=None):
     rclpy.init(args=args)
-    server = AR3Jogger()
+    demo = MoveItDemo()
+    threading.Thread(target=demo.run, name='sim', daemon=True).start()
     rclpy.spin(server)
     rclpy.shutdown()
 

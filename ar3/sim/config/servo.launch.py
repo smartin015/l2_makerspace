@@ -15,6 +15,10 @@ def generate_launch_description():
     # package_path = get_package_share_directory('l2_ar3')
     package_path = '/volume/config/'
 
+    # TODO moveit yaml file
+    # TODO kinematics yaml file
+    # TODO Controllers yaml file
+
     # Get parameters for the Servo node
     with open(os.path.join(package_path, YAML_PATH), 'r') as f:
         servo_yaml = yaml.safe_load(f)
