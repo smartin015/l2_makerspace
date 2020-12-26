@@ -40,8 +40,8 @@ def factors(n):
 # X = 1280*sqrt(1/256) = 80
 # Y = 720*sqrt(1/256) = 45
 # In this example, each thread is an 80x45 segment of the 16z image
-def kernel_bounds(dim, mproc=MPROC, sm_cores=MAX_THREADS_PER_SM):
-    print("Warp: {0}\tMultiprocessors: {1}\tThread limit per mproc: {2}".format(WARP, MPROC, MAX_THREADS_PER_SM))
+def kernel_bounds(dim, warp=WARP, mproc=MPROC, sm_cores=MAX_THREADS_PER_SM):
+    print("Warp: {0}\tMultiprocessors: {1}\tThread limit per mproc: {2}".format(warp, mproc, sm_cores))
     # Come up with a guess for the number of threads & CUDA kernel shape
     if dim[0] >= dim[1]:
          raise Exception("Image dimensions must be X,Y where X < Y")
@@ -49,16 +49,16 @@ def kernel_bounds(dim, mproc=MPROC, sm_cores=MAX_THREADS_PER_SM):
 
     # Threads per block must be multiple of warp size, typically between 128 and 512
     if px % WARP != 0:
-        raise Exception("Not possible to make # kernels a multiple of WARP {}; total pixel count {}".format(WARP, numKernels))
+        raise Exception("Not possible to make # kernels a multiple of WARP {}; total pixel count {}".format(warp, numKernels))
 
 
     # Subtract factors of 2 until we get WARP - this gives us certainty in matching warp size
     # This assumes that WARP is a power of 2
     dimSub = list(dim)
     fact = [1,1]
-    while np.prod(fact) < WARP:
+    while np.prod(fact) < warp:
         if dimSub[0] % 1 != 0 or dimSub[1] % 1 != 0:
-            raise Exception("Could not factor {} from image dimensions - got to {} with {}".format(WARP, fact, dimSub))
+            raise Exception("Could not factor {} from image dimensions - got to {} with {}".format(warp, fact, dimSub))
         if dimSub[0] < dimSub[1]:
             dimSub[1] = dimSub[1] / 2
             fact[1] = fact[1] * 2
@@ -67,7 +67,7 @@ def kernel_bounds(dim, mproc=MPROC, sm_cores=MAX_THREADS_PER_SM):
            fact[0] = fact[0] * 2
     print("Warp factor:", fact)
     # Good starting guess, but maybe not evenly dividing the pixels
-    threadguess = (WARP*2) * (mproc*8)
+    threadguess = (warp*2) * (mproc*8)
     print("Threadcount guess:", threadguess)
     
     best = (1,1,dimSub[0]*dimSub[1]-threadguess)

@@ -15,6 +15,7 @@ class Sender():
     def __init__(self, args):
         self.pipeline = rs.pipeline()
         self.config = rs.config()
+        self.debug = args.debug
 
         if args.path is not None:
             print("Enabling recorded bag:", args.path)
@@ -24,12 +25,14 @@ class Sender():
             self.config.enable_stream(rs.stream.depth, args.dim[0], args.dim[1], rs.format.z16, args.hz)
 
         self.dim = (args.dim[1], args.dim[0])
-        self.KB, self.BLOCKS_PER_GRID, self.THREADS_PER_BLOCK, self.NUM_SECTOR = kernel_bounds(self.dim)
+        if args.mproc is not None and args.mpthread is not None:
+            self.KB, self.BLOCKS_PER_GRID, self.THREADS_PER_BLOCK, self.NUM_SECTOR = kernel_bounds(self.dim, mproc=args.mproc, sm_cores=args.mpthread)
+        else:
+            self.KB, self.BLOCKS_PER_GRID, self.THREADS_PER_BLOCK, self.NUM_SECTOR = kernel_bounds(self.dim)
         rvl_cuda.configure(self.KB, self.NUM_SECTOR)
         
         self.sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
         self.dest = (args.dest, args.port)
-        # self.sock.connect(self.dest)
 
         self.stats = dict([(n,0) for n in ['skipped_frames', 'avg_fetch_latency', 'avg_encode_latency', 'avg_send_latency', 'avg_latency']])
         self.print_pd = args.print_pd
@@ -84,6 +87,11 @@ class Sender():
                     self.sock.sendto(encoded[i:(i+sectors_per_packet),:width].tobytes(), self.dest)
                 send_end = time.perf_counter()
 
+                if self.debug:
+                    cv2.imshow("frame", frame_data / max(1, np.max(frame_data)))
+                    cv2.imshow("encoded", encoded / max(1, np.max(encoded)))
+                    cv2.waitKey(1)
+
                 # Update stats
                 self.stats['skipped_frames'] += frame.get_frame_number() - self.last_frame_num - 1
                 self.avg_ms("avg_fetch_latency", enc_start - start)
@@ -106,6 +114,9 @@ if __name__ == "__main__":
     parser.add_argument("--dim", nargs=2, metavar=('width', 'height'), help="Dimensions of depth image", default=(848, 480))
     parser.add_argument("--hz", type=int, help="Frequency of depth image", default=30)
     parser.add_argument("--print_pd", type=float, help="Period (in seconds) to print performance stats", default=2.0)
+    parser.add_argument("--debug", type=bool, default=True, help="Show debug visualization")
+    parser.add_argument("--mproc", type=int, default=None, help="Override GPU mproc count")
+    parser.add_argument("--mpthread", type=int, default=None, help="Override max threads per mproc")
     args = parser.parse_args()
 
     s = Sender(args)
