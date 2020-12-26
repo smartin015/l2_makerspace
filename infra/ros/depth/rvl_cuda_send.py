@@ -15,8 +15,10 @@ BLOCKS_PER_GRID = (8, 7)
 THREADS_PER_BLOCK = (8, 8)
 NUM_SECTOR = 3584
 KB = (8, 16)
-rvl_cuda.configure(KB, NUM_SECTOR)
-print(rvl_cuda.SECTOR_LEN)
+rvl_cuda.configure(KB, NUM_SECTOR, {
+    "ppx": 422.946, "ppy": 238.06,
+    "fx": 426.192, "fy": 426.192,
+})
 
 def send_loop(sock):
     original = np.zeros(dim, dtype=np.uint16)
