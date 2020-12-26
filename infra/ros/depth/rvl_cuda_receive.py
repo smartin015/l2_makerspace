@@ -24,28 +24,25 @@ def serve_forever(sock):
     print("UDP server listening")
     while(True):
         (data, src) = sock.recvfrom(BUFSZ)
+        src=src[0]
         if len(data) != 512:
             continue
 
-        src=src[0]
         if encoded.get(src) is None:
             print("New client", src)
             encoded[src] = np.zeros((SECTOR_BATCH, SECTOR_LEN), dtype=np.uint64)
             decoded[src] = np.zeros(dim, dtype=np.uint16)
 
+        # TODO handle calibration packets (intrinsics / extrinsics)
         encoded[src][i,:] = np.frombuffer(data, dtype=np.uint64)
         i += 1
         if i >= SECTOR_BATCH:
             rvl_cuda.decode[4, int(SECTOR_BATCH/4)](encoded[src], decoded[src], DEPROJECT)
-            i = 0
             cv2.imshow(src, decoded[src] / max(1, np.max(decoded[src])))
             cv2.waitKey(1)
+            i = 0
 
 if __name__ == "__main__":
-    #import argparse
-    #parser = argparse.ArgumentParser()
-    #parser.add_argument("res")
-    #args = parser.parse_args()
     sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
     sock.bind(UDP)
     try: 
