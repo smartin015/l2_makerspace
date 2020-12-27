@@ -55,7 +55,6 @@ void command_label_init() {
   label = lv_label_create(screenMain, NULL);
   lv_obj_add_style(label, LV_LABEL_PART_MAIN, &style1);
   lv_label_set_long_mode(label, LV_LABEL_LONG_BREAK);
-  lv_label_set_text(label, "NO CONNECTION"); // TODO sense
   lv_label_set_align(label, LV_LABEL_ALIGN_CENTER);
   lv_obj_set_size(label, 240, 40);
   lv_obj_set_pos(label, 0, 0);
@@ -67,9 +66,10 @@ void limit_leds_init() {
   lv_obj_set_auto_realign(limits, true);
   lv_cont_set_fit(limits, LV_FIT_TIGHT);
   lv_cont_set_layout(limits, LV_LAYOUT_COLUMN_MID);
-  lv_obj_align(limits, NULL, LV_ALIGN_IN_RIGHT_MID, 0, 0);
+  //lv_obj_set_style_local_margin_top(limits, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 50);
+  lv_obj_align(limits, NULL, LV_ALIGN_IN_BOTTOM_RIGHT, 0, 0);
 
-  int led_side = LV_VER_RES_MAX / (NUM_J + 5);
+  int led_side = LV_VER_RES_MAX / (NUM_J + 8);
 	for (int i = 0; i < NUM_J; i++) {
 		limit_leds[i] = lv_led_create(limits, NULL);
     lv_obj_set_size(limit_leds[i], led_side+10, led_side);
@@ -86,32 +86,22 @@ void joint_gauge_init() {
   lv_obj_add_style(gauge, LV_OBJ_PART_MAIN, &gauge_style);
   lv_obj_add_style(gauge, LV_GAUGE_PART_NEEDLE, &gauge_style);
   lv_gauge_set_needle_count(gauge, NUM_J, JOINT_COLORS);
-  lv_gauge_set_scale(gauge, 180 /* degrees */, 9 /* ticks */, 0 /* labels */);
+  lv_gauge_set_scale(gauge, 180 /* degrees */, 17 /* ticks */, 0 /* labels */);
   int gaugesz = LV_VER_RES_MAX+55;
 	lv_obj_set_size(gauge, gaugesz, gaugesz);
   lv_gauge_set_range(gauge, 0, 360);
-  lv_gauge_set_angle_offset(gauge, 90);
   lv_gauge_set_critical_value(gauge, 361); // Highlight 360
-  lv_obj_align(gauge, NULL, LV_ALIGN_IN_LEFT_MID, -gaugesz/2, 0);
+  lv_obj_align(gauge, NULL, LV_ALIGN_IN_BOTTOM_MID, 0, gaugesz/2);
 
   // Inlaid targets inthe gauge
 	target_gauge = lv_gauge_create(screenMain, gauge);
   int tgaugesz = gaugesz / 2 + 10;
   lv_gauge_set_scale(target_gauge, 180 /* degrees */, 9 /* ticks */, 0 /* labels */);
   lv_obj_set_size(target_gauge, tgaugesz, tgaugesz);
-	lv_gauge_set_angle_offset(target_gauge, 90);
-	lv_obj_align(target_gauge, NULL, LV_ALIGN_IN_LEFT_MID, -tgaugesz/2, 0);
+	lv_obj_align(target_gauge, NULL, LV_ALIGN_IN_BOTTOM_MID, 0, tgaugesz/2);
 }
 
-void setup() {
-  Serial.begin(115200);
-  tft.init();
-  tft.setRotation(1); // Landscape
-  lv_init();
-#if USE_LV_LOG != 0
-  lv_log_register_print_cb(print); /* register print function for debugging */
-#endif
-
+void main_screen_init() {
   lv_style_init(&style1);
   lv_style_set_text_color(&style1, LV_STATE_DEFAULT, LV_COLOR_GRAY);
   lv_style_set_bg_color(&style1, LV_STATE_DEFAULT, LV_COLOR_BLACK);
@@ -129,7 +119,18 @@ void setup() {
 
 	screenMain = lv_obj_create(NULL, NULL);
 	lv_obj_add_style(screenMain, LV_OBJ_PART_MAIN, &style1);
+}
 
+void setup() {
+  Serial.begin(115200);
+  tft.init();
+  tft.setRotation(1); // Landscape
+  lv_init();
+#if USE_LV_LOG != 0
+  lv_log_register_print_cb(print); /* register print function for debugging */
+#endif
+
+  main_screen_init();
   command_label_init();
   limit_leds_init();
   joint_gauge_init();
@@ -141,11 +142,11 @@ void spinner() {
   // Spinning animation for when there is no connection
   uint64_t now = millis();
   bool update_targets = (now > last_update_targets + 1000);
+  lv_label_set_text(label, "WAITING FOR CONNECTION");
 	for (int i = 0; i < NUM_J; i++) {
 		//lv_linemeter_set_value(limit_leds[i], ((now / 10) % 360) - 180); 
-    uint64_t r = (now / 10 + (360/NUM_J) * i) % 360;
-    if (r > 360) {
-      r = 720 - r;
+    uint64_t r = (now / 10 - (360/NUM_J) * i) % 360;
+    if (r <= 180) {
       lv_led_on(limit_leds[i]);
 		} else {
 			lv_led_off(limit_leds[i]);
