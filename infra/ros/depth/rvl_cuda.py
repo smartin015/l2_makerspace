@@ -119,6 +119,9 @@ def encode(im, out):
     # Flush any remaining values, offsetting word to end first
     word = (word << (4 * (16-nibblesWritten)))
     out[outx][outIdx] = word
+    
+    # Write final length in top 32 bits of first entry
+    out[outx][0] |= (outIdx << 32)
 
 
 @cuda.jit()
