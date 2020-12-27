@@ -12,7 +12,7 @@ import json
 import asyncio
 from random import choice
 from rclpy.qos import qos_profile_sensor_data
-from l2_msgs.msg import Projects, Project, ProjectItem, L2ActiveProject
+from l2_msgs.msg import Projects, Project, ProjectItem, L2ActiveProjects
 from l2_msgs.srv import L2ActiveProject as L2ActiveProjectSrv
 from l2_msgs_exec.dict import to_dict
 
@@ -73,7 +73,7 @@ class App(Node):
                     json.loads(msg)
                     if msg.l2app == "active_project":
                         self.active_project_cli.call(L2ActiveProjectSrv(method="PUT", 
-                            active_projects=L2ActiveProject(actor_id=[1], project_id=[msg.id]))
+                            active_projects=L2ActiveProjects(actor_id=[1], project_id=[msg.id])))
                 except Exception as e:
                     self.get_logger().error(str(e))
 
