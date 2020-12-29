@@ -1,0 +1,3 @@
+[submodule "infra/ros/depth/temporal-shift-module"]
+	path = infra/ros/depth/gesture/temporal-shift-module
+	url = https://github.com/mit-han-lab/temporal-shift-module.git

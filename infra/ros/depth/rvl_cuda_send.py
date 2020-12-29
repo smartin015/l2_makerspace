@@ -64,7 +64,6 @@ class Sender():
         delta = cuda.mapped_array(self.dim, dtype=np.uint16)
         last_frame = delta
         while(True):
-            # TODO: tune rvl_cuda config to minimize latency
             try:
                 start = time.perf_counter()
                 has, frame = self.pipeline.try_wait_for_frames()
@@ -72,7 +71,9 @@ class Sender():
                     break
                 frame_data = np.asanyarray(frame.get_depth_frame().get_data())
                 fnum = frame.get_frame_number()
-                delta[:,:] = frame_data - last_frame
+                # PERF_TODO actually take delta between frames
+                #delta[:,:] = frame_data - last_frame
+                delta[:,:] = frame_data
                 last_frame = frame_data
 
                 enc_start = time.perf_counter()
@@ -80,8 +81,9 @@ class Sender():
                 enc_end_send_start = time.perf_counter()
                 prep_amt = 0
                 for i in range(1, encoded.shape[0], sectors_per_packet):
-                    width = np.max(np.right_shift(encoded[i:(i+sectors_per_packet),0], 32))
-                    self.sock.sendto(encoded[i:(i+sectors_per_packet),:width].tobytes(), self.dest)
+                    # PERF_TODO restrict width to max packet width
+                    # width = np.max(np.right_shift(encoded[i:(i+sectors_per_packet),0], 32))
+                    self.sock.sendto(encoded[i:(i+sectors_per_packet),:].tobytes(), self.dest)
                 send_end = time.perf_counter()
 
                 # Update stats
