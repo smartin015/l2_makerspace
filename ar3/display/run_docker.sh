@@ -20,6 +20,7 @@ fi
 RESOLVE_PATH=$(pwd)
   # --env="QT_X11_NO_MITSHM=1" \
 docker run -v $RESOLVE_PATH:/volume \
+  --net host \
   --env="DISPLAY=${DISPLAY}" \
   --env="XAUTHORITY=${XAUTH}" \
   -v /tmp/.X11-unix:/tmp/.X11-unix:rw \

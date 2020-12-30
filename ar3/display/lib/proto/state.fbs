@@ -1,0 +1,8 @@
+
+table State {
+  pos:[ushort];
+  target:[ushort];
+  herp:string;
+}
+
+root_type State;

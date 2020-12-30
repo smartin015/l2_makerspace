@@ -2,8 +2,6 @@
 #define SDL_MAIN_HANDLED        /*To fix SDL's "undefined reference to WinMain" issue*/
 #include <SDL2/SDL.h>
 #include "display/monitor.h"
-#include "indev/mouse.h"
-#include "indev/mousewheel.h"
 #include "indev/keyboard.h"
 #include <stdio.h>
 
@@ -58,30 +56,31 @@ void hal_setup(void)
 
     /* Add the mouse as input device
      * Use the 'mouse' driver which reads the PC's mouse*/
-    mouse_init();
+    keyboard_init();
     lv_indev_drv_t indev_drv;
     lv_indev_drv_init(&indev_drv);          /*Basic initialization*/
-    indev_drv.type = LV_INDEV_TYPE_POINTER;
-    indev_drv.read_cb = mouse_read;         /*This function will be called periodically (by the library) to get the mouse position and state*/
+    indev_drv.type = LV_INDEV_TYPE_KEYPAD;
+    indev_drv.read_cb = keyboard_read;
     lv_indev_drv_register(&indev_drv);
 
     /* Tick init.
      * You have to call 'lv_tick_inc()' in periodically to inform LittelvGL about how much time were elapsed
      * Create an SDL thread to do this*/
-    SDL_CreateThread(tick_thread, "tick", NULL);
+    //SDL_CreateThread(tick_thread, "tick", NULL);
 }
 
-void hal_loop(void)
-{
-    while(1) {
-        SDL_Delay(5);
-        lv_task_handler();
-    }
+void hal_loop(void) {
+  SDL_Delay(5);
+  lv_tick_inc(5); /*Tell LittelvGL that 5 milliseconds were elapsed*/
+  lv_task_handler();
+  ms_since_start += 5;
 }
 
 void setup();
 void loop();
 int main() {
   setup();
-  loop();
+  while (1) {
+    loop();
+  }
 }
