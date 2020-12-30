@@ -1,5 +1,6 @@
 #include "gui.h"
 #include "app_hal.h"
+#include "ros_hal.h"
 #include <stdio.h>
 #define NUM_J 6
 
@@ -12,7 +13,7 @@ lv_obj_t *target_gauge;
 lv_obj_t *limit_leds[NUM_J];
 lv_color_t * JOINT_COLORS;
 
-static void spinner(lv_task_t * task);
+static void update(lv_task_t * task);
 
 void command_label_init() {
   label = lv_label_create(lv_scr_act(), NULL);
@@ -93,20 +94,41 @@ void gui_create(void) {
   limit_leds_init();
   joint_gauge_init();
 
-  lv_task_create(spinner, 5, LV_TASK_PRIO_MID, NULL);
+  lv_task_create(update, 5, LV_TASK_PRIO_MID, NULL);
 }
 
 uint64_t last_update_targets = 0;
-static void spinner(lv_task_t * task) {
-  // Spinning animation for when there is no connection
+static void update(lv_task_t * task) {
   uint64_t now = millis();
+
+  lv_label_set_text(label, ros_hal::get_status());
+
+  const State* s = ros_hal::get_state();
+  if (s) {
+    if (s->pos()->size() != NUM_J || s->target()->size() != NUM_J) {
+      lv_label_set_text(label, "ERR");
+    }
+    lv_label_set_text(label, "CONNECTED");
+    for (int i = 0; i < NUM_J; i++) {
+      lv_gauge_set_value(gauge, i, s->pos()->Get(i));
+      lv_gauge_set_value(target_gauge, i, s->target()->Get(i));
+      if (s->limit()->Get(i)) {
+			  lv_led_on(limit_leds[i]);
+      } else {
+        lv_led_off(limit_leds[i]);
+      }
+    }
+    return;
+  }
+
+  // Spinning animation for when there is no connection
   bool update_targets = (now > last_update_targets + 1000);
-  lv_label_set_text(label, "WAITING FOR CONNECTION");
+  // lv_label_set_text(label, "WAITING FOR CONNECTION");
 	for (int i = 0; i < NUM_J; i++) {
 		//lv_linemeter_set_value(limit_leds[i], ((now / 10) % 360) - 180); 
     uint64_t r = (now / 10 - (360/NUM_J) * i) % 360;
     if (r <= 180) {
-      lv_led_on(limit_leds[i]);
+			lv_led_on(limit_leds[i]);
 		} else {
 			lv_led_off(limit_leds[i]);
 		}

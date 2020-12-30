@@ -11,6 +11,7 @@
 flatbuffers::Parser parser;
 
 struct lws *web_socket = NULL;
+bool valid_state = false;
 
 static int ws_cb( struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len ) {
   const State *s;
@@ -21,13 +22,10 @@ static int ws_cb( struct lws *wsi, enum lws_callback_reasons reason, void *user,
 
 		case LWS_CALLBACK_CLIENT_RECEIVE:
 			/* Handle incomming messages here. */
-      printf("Inbound msg: %s\n", (char*)in);
       if (!parser.Parse((char*)in)) {
         printf("Parser error: %s\n", parser.error_.c_str());
       } else {
-        s = GetState(parser.builder_.GetBufferPointer());
-        printf("State created\n");
-        printf("Herp %d\n", s->pos()->Get(3));
+        valid_state = true;
       }
 			break;
 
@@ -57,11 +55,9 @@ struct lws_protocols protocols[] = {
 	{ NULL, NULL, 0, 0 } /* terminator */
 };
 
-std::vector<std::pair<std::string, ros_hal::CallbackFunc>> *cb_funcs;
 struct lws_context_creation_info info;
 struct lws_context *context;
-void ros_hal::init(const char* server_ip, const char* server_port) {
-  cb_funcs = new std::vector<std::pair<std::string, ros_hal::CallbackFunc>>();
+void ros_hal::init() {
 	memset( &info, 0, sizeof(info) );
 	info.port = CONTEXT_PORT_NO_LISTEN;
 	info.protocols = protocols;
@@ -78,8 +74,15 @@ void ros_hal::init(const char* server_ip, const char* server_port) {
   }
 }
 
-void ros_hal::sub(const char* topic, const char* type, ros_hal::CallbackFunc func) {
-  cb_funcs->push_back(std::make_pair(type, func));
+const char* ros_hal::get_status() {
+  return "TODO status";
+}
+
+const State* ros_hal::get_state() {
+  if (!valid_state) {
+    return nullptr;
+  }
+  return GetState(parser.builder_.GetBufferPointer());
 }
 
 void ros_hal::spin() {

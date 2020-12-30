@@ -7,9 +7,7 @@ void hal_setup(void) {
 }
 
 void hal_loop(void) {
-  while(1) {
-    delay(5);
-    lv_tick_inc(5);
-		lv_task_handler();
-  }
+  delay(5);
+  lv_tick_inc(5);
+	lv_task_handler();
 }

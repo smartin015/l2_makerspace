@@ -1,6 +1,7 @@
 #ifndef ROS_HAL_H
 #define ROS_HAL_H
 
+#include <Arduino.h> // Needed for flatbuffers import
 #include "state_generated.h"
 
 namespace ros_hal {

@@ -2,7 +2,7 @@
 table State {
   pos:[ushort];
   target:[ushort];
-  herp:string;
+  limit:[bool];
 }
 
 root_type State;

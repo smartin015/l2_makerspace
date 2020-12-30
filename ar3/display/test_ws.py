@@ -3,16 +3,31 @@ import asyncio
 import websockets
 import time
 import json
+from random import random
+
+NUM_J = 6
+TARGET_PD = 3.0
 
 async def handler(websocket, path):
     print("Handler starting")
+    p = [0] * NUM_J
+    last_target = 0
     while True:
-        await asyncio.sleep(2)
+        await asyncio.sleep(0.05)
         print("sending msg")
+        now = time.time()
+
+        if now > last_target + TARGET_PD:
+            t = [int(random() * 360) for i in range(NUM_J)]
+            last_target = now
+        for i in range(NUM_J):
+            d = t[i] - p[i]
+            if d != 0:
+                p[i] = int(p[i] + (d / abs(d)) * min(3, abs(d)))
         await websocket.send(json.dumps({
-            "pos":    [0, 10, 20, 30, 40, 50],
-            "target": [10, 20, 30, 40, 50, 60],
-            "herp": "hi",
+            "pos": p,
+            "target": t,
+            "limit": [p[i] == t[i] for i in range(NUM_J)],
         }))
 
 start_server = websockets.serve(handler, "localhost", 8000)

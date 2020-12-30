@@ -13,7 +13,7 @@ struct StateT : public flatbuffers::NativeTable {
   typedef State TableType;
   std::vector<uint16_t> pos;
   std::vector<uint16_t> target;
-  std::string herp;
+  std::vector<bool> limit;
   StateT() {
   }
 };
@@ -23,7 +23,7 @@ struct State FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_POS = 4,
     VT_TARGET = 6,
-    VT_HERP = 8
+    VT_LIMIT = 8
   };
   const flatbuffers::Vector<uint16_t> *pos() const {
     return GetPointer<const flatbuffers::Vector<uint16_t> *>(VT_POS);
@@ -31,8 +31,8 @@ struct State FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::Vector<uint16_t> *target() const {
     return GetPointer<const flatbuffers::Vector<uint16_t> *>(VT_TARGET);
   }
-  const flatbuffers::String *herp() const {
-    return GetPointer<const flatbuffers::String *>(VT_HERP);
+  const flatbuffers::Vector<uint8_t> *limit() const {
+    return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_LIMIT);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -40,8 +40,8 @@ struct State FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.VerifyVector(pos()) &&
            VerifyOffset(verifier, VT_TARGET) &&
            verifier.VerifyVector(target()) &&
-           VerifyOffset(verifier, VT_HERP) &&
-           verifier.VerifyString(herp()) &&
+           VerifyOffset(verifier, VT_LIMIT) &&
+           verifier.VerifyVector(limit()) &&
            verifier.EndTable();
   }
   StateT *UnPack(const flatbuffers::resolver_function_t *_resolver = nullptr) const;
@@ -58,8 +58,8 @@ struct StateBuilder {
   void add_target(flatbuffers::Offset<flatbuffers::Vector<uint16_t>> target) {
     fbb_.AddOffset(State::VT_TARGET, target);
   }
-  void add_herp(flatbuffers::Offset<flatbuffers::String> herp) {
-    fbb_.AddOffset(State::VT_HERP, herp);
+  void add_limit(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> limit) {
+    fbb_.AddOffset(State::VT_LIMIT, limit);
   }
   explicit StateBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -77,9 +77,9 @@ inline flatbuffers::Offset<State> CreateState(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flatbuffers::Vector<uint16_t>> pos = 0,
     flatbuffers::Offset<flatbuffers::Vector<uint16_t>> target = 0,
-    flatbuffers::Offset<flatbuffers::String> herp = 0) {
+    flatbuffers::Offset<flatbuffers::Vector<uint8_t>> limit = 0) {
   StateBuilder builder_(_fbb);
-  builder_.add_herp(herp);
+  builder_.add_limit(limit);
   builder_.add_target(target);
   builder_.add_pos(pos);
   return builder_.Finish();
@@ -89,15 +89,15 @@ inline flatbuffers::Offset<State> CreateStateDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     const std::vector<uint16_t> *pos = nullptr,
     const std::vector<uint16_t> *target = nullptr,
-    const char *herp = nullptr) {
+    const std::vector<uint8_t> *limit = nullptr) {
   auto pos__ = pos ? _fbb.CreateVector<uint16_t>(*pos) : 0;
   auto target__ = target ? _fbb.CreateVector<uint16_t>(*target) : 0;
-  auto herp__ = herp ? _fbb.CreateString(herp) : 0;
+  auto limit__ = limit ? _fbb.CreateVector<uint8_t>(*limit) : 0;
   return CreateState(
       _fbb,
       pos__,
       target__,
-      herp__);
+      limit__);
 }
 
 flatbuffers::Offset<State> CreateState(flatbuffers::FlatBufferBuilder &_fbb, const StateT *_o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
@@ -113,7 +113,7 @@ inline void State::UnPackTo(StateT *_o, const flatbuffers::resolver_function_t *
   (void)_resolver;
   { auto _e = pos(); if (_e) { _o->pos.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->pos[_i] = _e->Get(_i); } } };
   { auto _e = target(); if (_e) { _o->target.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->target[_i] = _e->Get(_i); } } };
-  { auto _e = herp(); if (_e) _o->herp = _e->str(); };
+  { auto _e = limit(); if (_e) { _o->limit.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->limit[_i] = _e->Get(_i) != 0; } } };
 }
 
 inline flatbuffers::Offset<State> State::Pack(flatbuffers::FlatBufferBuilder &_fbb, const StateT* _o, const flatbuffers::rehasher_function_t *_rehasher) {
@@ -126,12 +126,12 @@ inline flatbuffers::Offset<State> CreateState(flatbuffers::FlatBufferBuilder &_f
   struct _VectorArgs { flatbuffers::FlatBufferBuilder *__fbb; const StateT* __o; const flatbuffers::rehasher_function_t *__rehasher; } _va = { &_fbb, _o, _rehasher}; (void)_va;
   auto _pos = _o->pos.size() ? _fbb.CreateVector(_o->pos) : 0;
   auto _target = _o->target.size() ? _fbb.CreateVector(_o->target) : 0;
-  auto _herp = _o->herp.empty() ? 0 : _fbb.CreateString(_o->herp);
+  auto _limit = _o->limit.size() ? _fbb.CreateVector(_o->limit) : 0;
   return CreateState(
       _fbb,
       _pos,
       _target,
-      _herp);
+      _limit);
 }
 
 inline const State *GetState(const void *buf) {

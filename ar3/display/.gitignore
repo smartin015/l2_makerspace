@@ -4,4 +4,4 @@
 .clang_complete
 .gcc-flags.json
 
-secret.json
+secret.*
