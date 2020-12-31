@@ -1,11 +1,13 @@
-ARG L2PKG=l2_storage
-ARG L2NODES=node.py
+ARG L2PKG=l2_depth
+ARG L2NODES="rvl_cuda_send.py rvl_cuda_receive.py"
 FROM l2base-pre
 FROM l2base-post
 
-RUN wget https://developer.download.nvidia.com/compute/cuda/11.0.3/local_installers/cuda_11.0.3_450.51.06_linux.run && sh cuda_11.0.3_450.51.06_linux.run && \
+
+RUN apt-get update && apt-get install -y wget && wget https://developer.download.nvidia.com/compute/cuda/11.0.3/local_installers/cuda_11.0.3_450.51.06_linux.run && sh cuda_11.0.3_450.51.06_linux.run && \
     export PATH=/usr/local/cuda-11.0/bin${PATH:+:${PATH}} && \
-    export LD_LIBRARY_PATH=/usr/local/cuda-11.0/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+    export LD_LIBRARY_PATH=/usr/local/cuda-11.0/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}} && \
+    rm -rf /var/apt/lists/*
 
 
 # Dependencies for downloading & building librealsense2                               

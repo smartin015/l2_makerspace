@@ -1,6 +1,7 @@
 version: '3.5'
 
 services:
+  # WARNING: local changes only possible for HTML, *not* for ROS node (which requires rebuild)
   app_local:
     image: l2app:latest
     build: .
@@ -12,7 +13,7 @@ services:
       - "8000:8000"
       - "8001:8001"
     volumes: 
-      - ./infra/ros/app/src:/src
+      - ./src:/src
   app:
     build: .
     image: l2app:latest

@@ -5,6 +5,7 @@ import rclpy
 import random
 from rclpy.node import Node
 from std_msgs.msg import Bool, String
+from sensor_msgs.msg import JointState
 import http.server
 import socketserver
 import threading
@@ -12,8 +13,8 @@ import json
 import asyncio
 from random import choice
 from rclpy.qos import qos_profile_sensor_data
-from l2_msgs.msg import Projects, Project, ProjectItem, L2ActiveProjects
-from l2_msgs.srv import L2ActiveProject as L2ActiveProjectSrv
+from l2_msgs.msg import Projects, Project, ProjectItem
+from l2_msgs.srv import L2SearchProjects
 from l2_msgs_exec.dict import to_dict
 
 class App(Node):
@@ -36,15 +37,16 @@ class App(Node):
         self.wst.start()
         self.get_logger().info("serving at port %d" % self.PORT)
         self.httpd_thread = threading.Thread(target=self.httpd.serve_forever,
-                daemon=true).start()
+                daemon=True).start()
         #self.pub = self.create_publisher(ProjectsUpdate, 'project', 10)
-        self.timer = self.create_timer(self.PUBLISH_PD, self.timer_callback)
         self.estop_pub = self.create_publisher(Bool, "emergency_stop", 10)
-        self.active_project_cli = self.create_client(L2ActiveProjectSrv, "set_active_project")
+        # self.active_project_cli = self.create_client(L2ActiveProjectSrv, "set_active_project")
         self.create_subscription(Projects, "projects", self.handle_projects, qos_profile=qos_profile_sensor_data)  
+        self.create_subscription(JointState, "/joint_states", self.handle_joint_states, qos_profile=qos_profile_sensor_data)
         self.fake_project_id = 0
         self.fake_task_id = 0
         self.projects = Projects(projects=[self.gen_fake_project() for i in range(4)])
+        self.joint_state_consumers = []
 
     def gen_fake_project(self):
         self.fake_project_id = self.fake_project_id+1
@@ -64,6 +66,8 @@ class App(Node):
             if msg == "STOP":
                 self.estop_pub.publish(Bool(data=True))
                 await asyncio.gather([c.send("STOPPING") for c in self.ws_clients])
+            elif msg == "JOINT_STATE":
+                self.joint_state_consumers.append(ws)
             elif msg == "PROJECTS?":
                 pd = to_dict(self.projects)
                 pd["l2app"] = "project_list"
@@ -72,8 +76,10 @@ class App(Node):
                 try:
                     json.loads(msg)
                     if msg.l2app == "active_project":
-                        self.active_project_cli.call(L2ActiveProjectSrv(method="PUT", 
-                            active_projects=L2ActiveProjects(actor_id=[1], project_id=[msg.id])))
+                        #cmd = L2ActiveProjectSrv(method="PUT", 
+                        #    active_projects=L2ActiveProjects(actor_id=[1], project_id=[msg.id]))
+                        #self.active_project_cli.call(cmd)
+                        pass
                 except Exception as e:
                     self.get_logger().error(str(e))
 
@@ -92,6 +98,16 @@ class App(Node):
         # Send updates to all clients
         for ws in self.ws_clients:
             ws.send(to_dict(self.projects))
+
+    def handle_joint_states(self, msg):
+        if len(msg.name) == 0 or msg.name[0] != "joint_1":
+            return
+        for ws in self.joint_state_consumers:
+            ws.send(json.dumps({
+                "pos": [int(i * 180 / 3.14159) for i in msg.position], # TODO stop using degrees in ui
+                "target": [0]*len(msg.position),
+            		"limit": [0]*len(msg.position),
+            }))
 
 def main(args=None):
     rclpy.init(args=args)
