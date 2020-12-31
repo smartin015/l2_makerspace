@@ -1,0 +1,9 @@
+
+table Config {
+  ssid:string;
+  pass:string;
+  ws_ip:string;
+  ws_port:int;
+}
+
+root_type Config;

@@ -64,3 +64,5 @@ add new lessons learned.
 * Can generate space skyboxes with [link](http://wwwtyro.github.io/space-3d), but have to convert (see [link](https://www.reddit.com/r/godot/comments/baw27a/how_to_use_spacescape_skybox_in_godot/))
 * Using the Godot OVR toolkit, 2D panels (i.e. most tools in L2 VR) are rendered with the viewport size matching the device resolution. This means tools can have different sizes if they're rendered on different devices (or if you resize the window). Setting display resolution to 2880x1600 makes them match.
 * Along with executables, ros2 packages export "components" which can be composeable into nodes. this allows interprocess communciation and other goodies, but is hard to discover. `ros2 component types` (note: not `ros2 components list`) shows which components can be composed.
+* Set `"insecure-registries":["<hostname>:5000"]` in /etc/docker/daemon.json and `sudo service docker restart` to allow non-https use of local registry
+

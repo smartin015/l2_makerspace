@@ -1,0 +1,8 @@
+
+table State {
+  pos:[ushort];
+  target:[ushort];
+  limit:[bool];
+}
+
+root_type State;
