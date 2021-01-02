@@ -19,16 +19,19 @@ class Receiver():
         # Warp: 32        Multiprocessors: 1      Thread limit per mproc: 128
         self.KB, self.BLOCKS_PER_GRID, self.THREADS_PER_BLOCK, self.NUM_SECTOR = kernel_bounds(self.dim, warp=32, mproc=1, sm_cores=128)
         rvl_cuda.configure(self.KB, self.NUM_SECTOR)
-        self.sectors_per_packet = 1 # int(MAX_UDP_PACKET_BYTES / (rvl_cuda.SECTOR_LEN * np.dtype(np.uint64).itemsize))
+        self.sectors_per_packet = max(1, int(MAX_UDP_PACKET_BYTES / (rvl_cuda.SECTOR_LEN * np.dtype(np.uint64).itemsize)))
         print("Sector length:", rvl_cuda.SECTOR_LEN, "\tSectors per packet:", self.sectors_per_packet, "\tPackets/frame:",  int(self.NUM_SECTOR / self.sectors_per_packet))
 
         self.sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+        print("Resize receive buffer:", self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 10*MAX_UDP_PACKET_BYTES))
         self.sock.bind((args.host, args.port))
+        print("UDP server listening on host", args.host, "port", args.port)
 
-        self.stats = dict([(n,0) for n in ['avg_recv_latency', 'avg_decode_latency', 'avg_latency']])
+        self.stats = dict([(n,0) for n in ['avg_recv_latency', 'avg_decode_latency', 'avg_viz_latency', 'avg_latency', 'avg_buf_recv', 'avg_peek_recv']])
         self.print_pd = args.print_pd
         self.last_print_stats = time.perf_counter()
         self.num_frames = 0
+        self.invalid_packets = 0
         print("Printing stats every", self.print_pd, "seconds")
 
     def avg_ms(self, f, n_sec):
@@ -36,50 +39,71 @@ class Receiver():
 
     def print_stats(self):
         hz = self.num_frames / self.print_pd
-        print(("{0:4.1f}hz:" +
-               "{avg_recv_latency:10.2f}ms recv" +
+        invalid_hz = self.invalid_packets / self.print_pd
+        print(("{0:4.1f}hz ({1:4.1f} invalid packets/sec):" +
+               "{avg_recv_latency:10.2f}ms recv ({avg_peek_recv:10.2f} peek, {avg_buf_recv:10.2f} transfer ms)" +
                "{avg_decode_latency:10.2f}ms decode" +
-               "{avg_latency:10.2f}ms total").format(hz, **self.stats))
+               "{avg_viz_latency:10.2f}ms viz" +
+               "{avg_latency:10.2f}ms total").format(hz, invalid_hz, **self.stats))
         self.num_frames = 0
+        self.invalid_packets = 0
 
     def spin_forever(self):
         encoded = {}
         decoded = {}
-        print("UDP server listening")
+        print("Beginning main loop")
         while(True):
             start = time.perf_counter()
             nsec = 0
+            bufrcv = 0
+            peekrcv = 0
             while nsec < self.NUM_SECTOR:
-                (data, src) = self.sock.recvfrom(rvl_cuda.SECTOR_LEN * min(self.sectors_per_packet, self.NUM_SECTOR-nsec) * np.dtype(np.uint64).itemsize)
+                recv_num_sector = min(self.sectors_per_packet, self.NUM_SECTOR-nsec)
+                packet_len = recv_num_sector * rvl_cuda.SECTOR_LEN * np.dtype(np.uint64).itemsize
+
+                # Find out who's sending us the next packet
+                peekstart = time.perf_counter()
+                (_, src) = self.sock.recvfrom(1, socket.MSG_PEEK)
                 src=src[0]
-                l = len(data)
-                if l == 0:
+                if encoded.get(src) is None:
+                    print("Allocating mapped arrays for new client", src)
+                    encoded[src] = cuda.mapped_array((self.NUM_SECTOR, rvl_cuda.SECTOR_LEN), dtype=np.uint64)
+                    decoded[src] = cuda.mapped_array(self.dim, dtype=np.uint16)
+
+                brstart = time.perf_counter()
+                (nbytes) = self.sock.recv_into(encoded[src][nsec:nsec+recv_num_sector,:], packet_len)
+                brend = time.perf_counter()
+                bufrcv += brend - brstart
+                peekrcv += brstart - peekstart
+                if nbytes != packet_len:
+                    self.invalid_packets += 1
                     continue
 
-                if encoded.get(src) is None:
-                    print("New client", src)
-                    encoded[src] = np.zeros((self.NUM_SECTOR, rvl_cuda.SECTOR_LEN), dtype=np.uint64)
-                    decoded[src] = np.zeros(self.dim, dtype=np.uint16)
-        
-                # TODO handle calibration packets (intrinsics / extrinsics)
-                # TODO handle variable package width
-                # TODO handle delta frames
-                dsec = l // np.dtype(np.uint64).itemsize // rvl_cuda.SECTOR_LEN
-                encoded[src][nsec:nsec+dsec,:] = np.frombuffer(data, dtype=np.uint64).reshape(dsec, rvl_cuda.SECTOR_LEN)
-                print(encoded[src][nsec:nsec+dsec,0:5])
                 nsec += self.sectors_per_packet
-                # print(nsec)
     
             decode_start = time.perf_counter()
             rvl_cuda.decode[self.BLOCKS_PER_GRID, self.THREADS_PER_BLOCK](encoded[src], decoded[src], self.deproject)
+            # idxs = []
+            for i in range(self.NUM_SECTOR):
+                v = int(encoded[src][i,0])
+                x = v & 0xffff
+                y = (v >> 16) & 0xffff
+                if x < decoded[src].shape[0] and y < decoded[src].shape[1]:
+                    decoded[src][x,y] = 15208
+                # idxs.append((x,y))
+            # print(idxs)
             decode_end = time.perf_counter()
             cv2.imshow(src + "dec", decoded[src] / max(1, np.max(decoded[src])))
-            cv2.imshow(src + "enc", encoded[src] / max(1, np.max(encoded[src])))
+            # cv2.imshow(src + "enc", encoded[src] / max(1, np.max(encoded[src])))
+            # cv2.waitKey(10000)
             cv2.waitKey(1)
             end = time.perf_counter()
             self.avg_ms('avg_recv_latency', decode_start - start)
             self.avg_ms('avg_decode_latency', decode_end - decode_start)
+            self.avg_ms('avg_viz_latency', end - decode_end)
             self.avg_ms('avg_latency', end - start)
+            self.avg_ms('avg_buf_recv', bufrcv)
+            self.avg_ms('avg_peek_recv', peekrcv)
             self.num_frames += 1
             if end - self.last_print_stats > self.print_pd:
                 self.print_stats()
