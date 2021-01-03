@@ -27,11 +27,13 @@ static int ws_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user,
   const State *s;
   switch (reason) {
   case LWS_CALLBACK_CLIENT_ESTABLISHED:
+    printf("WS connection established\n");
     lws_callback_on_writable(wsi);
     break;
 
   case LWS_CALLBACK_CLIENT_RECEIVE:
     /* Handle incomming messages here. */
+    printf("RECV %s\n", (char*)in);
     if (!parser.Parse((char *)in)) {
       printf("Parser error: %s\n", parser.error_.c_str());
     } else {
@@ -49,8 +51,10 @@ static int ws_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user,
     lws_write(wsi, p, n, LWS_WRITE_TEXT);  
     break;
   }
-  case LWS_CALLBACK_CLOSED:
   case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
+    printf("WS error %s\n", in ? (char*)in : "");
+  case LWS_CALLBACK_CLOSED:
+    printf("WS connection closed\n");
     web_socket = NULL;
     break;
 

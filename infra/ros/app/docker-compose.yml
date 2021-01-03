@@ -5,10 +5,12 @@ services:
   app_local:
     image: l2app:latest
     build: .
+    pid: host
+    network_mode: host
     environment:
       PYTHONUNBUFFERED: 1
-    networks:
-      - l2
+    # networks:
+    #   - l2
     ports:
       - "8000:8000"
       - "8001:8001"

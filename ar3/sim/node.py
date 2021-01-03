@@ -16,6 +16,7 @@ import threading
 targets = [
     [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
     [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+    [0.2, 0.4, 0.6, 0.8, 1.0, 1.2],
 ]
 
 class AR3(Node):
@@ -37,28 +38,45 @@ class AR3(Node):
         self.timestep = int(self.robot.getBasicTimeStep())
         self.joint_names = ["joint_%d" % (i+1) for i in range(self.NUM_JOINTS)]
         self.motors = [self.robot.getMotor(n) for n in self.joint_names]
+        for m in self.motors:
+            # https://cyberbotics.com/doc/reference/motor?tab-language=python#motor
+            m.setControlPID(1.0, 0, 0)
         self.sensors = [m.getPositionSensor() for m in self.motors]
         for s in self.sensors:
             s.enable(self.timestep)
 
         # Setup topics & timers
+        self.executor = rclpy.executors.MultiThreadedExecutor()
+        self._default_callback_group = rclpy.callback_groups.ReentrantCallbackGroup()
         self.ti = 0
         self.stbc = StaticTransformBroadcaster(self)
         self.tbc = TransformBroadcaster
         self.pub = self.create_publisher(Float64, 'sense', 10)
         self.joint_state_pub = self.create_publisher(JointState, 'joint_states', 10)
-        # self.timer = self.create_timer(self.PUBLISH_PD, self.timer_callback)
         self.last_joint_state_ts = self.get_clock().now()
         self.last_joint_state = [0 for i in self.joint_names]
-        self.joint_state_timer = self.create_timer(self.JOINT_STATE_PD, self.joint_state_callback)
+
+        # For some reason (lots of clock publishes?) the ros timer implementation causes a bug
+        # where one timer is dependent on the execution speed of the other timer.
+        # We use a manual implementation in spin_sim() instead.
+        # self.joint_state_timer = self.create_timer(self.JOINT_STATE_PD, self.joint_state_callback)
         # self.dance_timer = self.create_timer(self.DANCE_PD, self.dance_callback)
-        self.command_sub = self.create_subscription(JointTrajectory, "joint_trajectory_command", self.handle_joint_trajectory, qos_profile=qos_profile_sensor_data)
+        self.command_sub = self.create_subscription(JointTrajectory, "joint_trajectory_command", self.handle_joint_trajectory, 
+                                                    qos_profile=qos_profile_sensor_data)
         self.get_logger().info("Init")
 
     def spin_sim(self):
+        next_joint_state_cb = 0
+        next_dance_cb = 0
         while self.robot.step(self.timestep) != -1:
             now = self.robot.getTime()
             self.clockpub.publish(Clock(clock=Time(sec=int(now), nanosec=int((now % 1) * 1000000000))))
+            if now > next_joint_state_cb:
+              self.joint_state_callback()
+              next_joint_state_cb = next_joint_state_cb + self.JOINT_STATE_PD
+            if now > next_dance_cb:
+              self.dance_callback()
+              next_dance_cb = next_dance_cb + self.DANCE_PD
 
     def handle_joint_trajectory(self, jt):
         # print(jt) # TODO handle setting joint trajectory
@@ -101,9 +119,6 @@ class AR3(Node):
         ))
         self.last_joint_state_ts = now
         self.last_joint_state = pos
-        
-        # self.stbc.sendTransform(self.mktf("world", "base_link", (0,0,0), (0,0,0,1)))
-
 
     def dance_callback(self):
         self.ti = (self.ti + 1) % len(targets)
@@ -115,8 +130,7 @@ def main(args=None):
     rclpy.init(args=args)
     server = AR3()
     threading.Thread(target=server.spin_sim, name='sim', daemon=True).start()
-    # server.spin_sim()
-    rclpy.spin(server)
+    rclpy.spin(server, executor=server.executor)
     rclpy.shutdown()
 
 if __name__ == '__main__':
