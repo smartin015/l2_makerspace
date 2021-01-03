@@ -30,8 +30,13 @@ class App(Node):
         #self.pub = self.create_publisher(ProjectsUpdate, 'project', 10)
         self.estop_pub = self.create_publisher(Bool, "emergency_stop", 10)
         # self.active_project_cli = self.create_client(L2ActiveProjectSrv, "set_active_project")
-        self.create_subscription(Projects, "projects", self.handle_projects, qos_profile=qos_profile_sensor_data)  
+        self.create_subscription(Projects, "projects", self.handle_projects, qos_profile=qos_profile_sensor_data) 
+
+        self.joint_state = None
         self.create_subscription(JointState, "/joint_states", self.handle_joint_states, qos_profile=qos_profile_sensor_data)
+
+        self.trajectory = None
+        self.create_subscription(JointTrajectory, "/joint_trajectory_command", self.handle_joint_trajectory, qos_profile=qos_profile_sensor_data)
         self.fake_project_id = 0
         self.fake_task_id = 0
         self.projects = Projects(projects=[self.gen_fake_project() for i in range(4)])
@@ -64,7 +69,15 @@ class App(Node):
         if len(msg.name) == 0 or msg.name[0] != "joint_1":
             print("Skipping joints " + str(msg.name))
             return
-        self.asyncs.append(self.wssrv.broadcast_joint_states(msg))
+        self.joint_state = msg
+        self.asyncs.append(self.wssrv.broadcast_joint_states(self.joint_state, self.trajectory))
+
+    def handle_joint_trajectory(self, msg):
+        if len(msg.joint_names) == 0 or msg.joint_names[0] != "joint_1":
+            print("Skipping trajectory " + str(msg.joint_names))
+            return
+        self.trajectory = msg
+        self.asyncs.append(self.wssrv.broadcast_joint_states(self.joint_state, self.trajectory))
 
 class WSServer:
     def __init__(self, node, loop, port):

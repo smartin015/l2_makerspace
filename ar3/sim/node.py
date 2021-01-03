@@ -13,16 +13,30 @@ from sensor_msgs.msg import JointState
 from geometry_msgs.msg import TransformStamped
 import threading
 
-targets = [
+MOTOR_LIMITS = [
+  (-2.4, 2.4),
+  (-2.4, 1.8),
+  (-4.5, 1.3),
+  (-2.4, 2.4),
+  (-2.4, 2.4),
+  (-3.14, 3.14),
+]
+
+# Normalized for minposition-maxposition -1.0 to 1.0
+TARGETS = [
     [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    [0.1, 0.0, 0.0, 0.0, 0.0, 0.0],
+    [0.0, 0.1, 0.0, 0.0, 0.0, 0.0],
+    [0.0, 0.0, 0.1, 0.0, 0.0, 0.0],
+    [-1.0, -1.0, -1.0, -1.0, -1.0, -1.0],
+    [0.2, 0.4, 0.6, 0.8, 1.0, 1.0],
     [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-    [0.2, 0.4, 0.6, 0.8, 1.0, 1.2],
 ]
 
 class AR3(Node):
     PUBLISH_PD = 5  # seconds
     JOINT_STATE_PD = 0.100
-    DANCE_PD = 1.0
+    DANCE_PD = 5.0
     NUM_JOINTS = 6
 
     def __init__(self):
@@ -38,9 +52,13 @@ class AR3(Node):
         self.timestep = int(self.robot.getBasicTimeStep())
         self.joint_names = ["joint_%d" % (i+1) for i in range(self.NUM_JOINTS)]
         self.motors = [self.robot.getMotor(n) for n in self.joint_names]
-        for m in self.motors:
+        for (i,m) in enumerate(self.motors):
             # https://cyberbotics.com/doc/reference/motor?tab-language=python#motor
-            m.setControlPID(1.0, 0, 0)
+            pid = (1.0, 0, 0)
+            m.setControlPID(*pid)
+            m.minPosition = MOTOR_LIMITS[i][0]
+            m.maxPosition = MOTOR_LIMITS[i][1]
+            print("Motor %d configured for PID %s, range (%f,%f)" % (i, pid, m.getMinPosition(), m.getMaxPosition()))
         self.sensors = [m.getPositionSensor() for m in self.motors]
         for s in self.sensors:
             s.enable(self.timestep)
@@ -85,22 +103,6 @@ class AR3(Node):
             mi = int(name[-1]) - 1 # Convert to index into motors
             self.motors[mi].setPosition(jt.points[0].positions[i])
 
-
-    def mktf(self, parent, child, xyz, quat):
-        tfs = TransformStamped()
-        tfs.header.stamp = self.get_clock().now().to_msg()
-        tfs.header.frame_id = parent
-        tfs.child_frame_id = child
-        tfs.transform.translation.x = float(xyz[0])
-        tfs.transform.translation.y = float(xyz[1])
-        tfs.transform.translation.z = float(xyz[2])
-        tfs.transform.rotation.x = float(quat[0])
-        tfs.transform.rotation.y = float(quat[1])
-        tfs.transform.rotation.z = float(quat[2])
-        tfs.transform.rotation.w = float(quat[3])
-        return tfs
-
-
     def joint_state_callback(self):
         pos = [s.getValue() for s in self.sensors]
         now = self.get_clock().now()
@@ -121,10 +123,10 @@ class AR3(Node):
         self.last_joint_state = pos
 
     def dance_callback(self):
-        self.ti = (self.ti + 1) % len(targets)
+        self.ti = (self.ti + 1) % len(TARGETS)
         for i, m in enumerate(self.motors):
-            m.setPosition(targets[self.ti][i])
-        self.get_logger().info("New target " + str(targets[self.ti]))
+            m.setPosition((TARGETS[self.ti][i] + 1.0)/2.0 * (MOTOR_LIMITS[i][1]-MOTOR_LIMITS[i][0]) + MOTOR_LIMITS[i][0])
+        self.get_logger().info("New target " + str(TARGETS[self.ti]))
 
 def main(args=None):
     rclpy.init(args=args)
