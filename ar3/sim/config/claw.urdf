@@ -1,44 +1,94 @@
 <robot name="2claw">
-  <link name="base" />
-  <link name="con1" />
-  <link name="congear1" />
-  <link name="con2" />
-  <link name="congear2" />
-  <link name="claw1" />
-  <link name="claw2" />
+  <link name="base">
+    <visual>
+     <origin xyz="0 0 0" rpy="0 0 0"/>
+     <geometry><mesh filename="file:///volume/meshes/Base_AR2.stl" scale="0.001 0.001 0.001" /></geometry>
+     <material name=""><color rgba="1 1 0 1" /></material>
+    </visual>
+  </link>
+  <link name="con1">
+    <visual>
+     <origin xyz="0 0 0" rpy="0 0 0"/>
+     <geometry><mesh filename="file:///volume/meshes/Connector.stl" scale="0.001 0.001 0.001" /></geometry>
+     <material name=""><color rgba="1 1 0 1" /></material>
+    </visual>
+  </link>
+  <link name="congear1">
+    <visual>
+     <origin xyz="0 0 0" rpy="0 0 0"/>
+     <geometry><mesh filename="file:///volume/meshes/Connector_Gear.stl"  scale="0.001 0.001 0.001"/></geometry>
+     <material name=""><color rgba="1 1 0 1" /></material>
+    </visual>
+  </link>
+  <link name="con2">
+    <visual>
+     <origin xyz="0 0 0" rpy="0 0 0"/>
+     <geometry><mesh filename="file:///volume/meshes/Connector.stl"  scale="0.001 0.001 0.001"/></geometry>
+     <material name=""><color rgba="1 1 0 1" /></material>
+    </visual>
+  </link>
+  <link name="congear2">
+    <visual>
+     <origin xyz="0 0 0" rpy="0 0 0"/>
+     <geometry><mesh filename="file:///volume/meshes/Servo_Connector_Gear.stl"  scale="0.001 0.001 0.001"/></geometry>
+     <material name=""><color rgba="1 1 0 1" /></material>
+    </visual>
+  </link>
+  <link name="claw1">
+    <visual>
+     <origin xyz="0 0 0" rpy="0 0 0"/>
+     <geometry><mesh filename="file:///volume/meshes/Claw.stl"  scale="0.001 0.001 0.001"/></geometry>
+     <material name=""><color rgba="1 1 0 1" /></material>
+    </visual>
+  </link>
+  <link name="claw2">
+    <visual>
+     <origin xyz="0 0 0" rpy="0 0 0"/>
+     <geometry><mesh filename="file:///volume/meshes/Claw.stl"  scale="0.001 0.001 0.001"/></geometry>
+     <material name=""><color rgba="1 1 0 1" /></material>
+    </visual>
+  </link>
 
   <joint name="joint1" type="revolute">
     <parent link="base"/>
     <child link="congear1"/>
+    <limit lower="-3.14" upper="3.14" velocity="1.0" effort="100"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
   </joint>
 
   <joint name="joint2" type="revolute">
     <parent link="base"/>
     <child link="congear2"/>
     <mimic joint="joint1" multiplier="-1" offset="0"/>
+    <limit lower="-3.14" upper="3.14" velocity="1.0" effort="100"/>
   </joint>
 
   <joint name="joint1mimic" type="revolute">
     <parent link="base"/>
     <child link="con1"/>
     <mimic joint="joint1" multiplier="1" offset="0" />
+    <limit lower="-3.14" upper="3.14" velocity="1.0" effort="100"/>
   </joint>
   <joint name="joint2mimic" type="revolute">
     <parent link="base"/>
     <child link="con2"/>
     <mimic joint="joint2" multiplier="1" offset="0" />
+    <limit lower="-3.14" upper="3.14" velocity="1.0" effort="100"/>
   </joint>
 
   <joint name="joint3" type="revolute">
     <parent link="congear1"/>
     <child link="claw1"/>
     <mimic joint="joint1" multiplier="-1" offset="0" />
+    <limit lower="-3.14" upper="3.14" velocity="1.0" effort="100"/>
   </joint>
 
   <joint name="joint4" type="revolute">
     <parent link="congear2"/>
     <child link="claw2"/>
     <mimic joint="joint2" multplier="-1" offset="0" />
+    <limit lower="-3.14" upper="3.14" velocity="1.0" effort="100"/>
   </joint>
 </robot>
 

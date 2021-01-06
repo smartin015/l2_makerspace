@@ -1410,10 +1410,10 @@
     )
   )
 
-  (gr_text 1 (at 25.4 -41.91) (layer F.SilkS) (tstamp 5FD237D9)
+  (gr_text 1 (at 3.81 -41.91) (layer F.SilkS) (tstamp 5FD237D9)
     (effects (font (size 2 2) (thickness 0.15)))
   )
-  (gr_text 2 (at 6.35 -41.91) (layer F.SilkS) (tstamp 5FD237D9)
+  (gr_text 2 (at 25.4 -41.91) (layer F.SilkS) (tstamp 5FD237D9)
     (effects (font (size 2 2) (thickness 0.15)))
   )
   (gr_text 3 (at -13.97 -41.91) (layer F.SilkS)
