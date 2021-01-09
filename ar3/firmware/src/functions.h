@@ -1,15 +1,16 @@
-#define FN_WAIT_TIME "WT"
-#define FN_GET_POS "GP"
-#define FN_CALIBRATE_ENC "LM"
-#define FN_DRIVE_TO_LIMITS "LL"
-#define FN_MOVE_J "MJ"
-#define FN_MOVE_L "ML"
-#define FN_MOVE_C "MC"
+#ifndef FUNCTIONS_H
+#define FUNCTIONS_H
 
-void fn_wait_time();
-void fn_get_pos();
-void fn_calibrate_enc();
-void fn_drive_to_limits();
-void fn_move_j();
-void fn_move_l();
-void fn_move_c();
+#include "command.h"
+
+#define NFUNC 7
+void fn_wait_time(const command_t& args);
+void fn_get_pos(const command_t& args);
+void fn_calibrate_enc(const command_t& args);
+void fn_drive_to_limits(const command_t& args);
+void fn_move_j(const command_t& args);
+void fn_move_l(const command_t& args);
+void fn_move_c(const command_t& args);
+bool do_fn(const command_t& args);
+
+#endif // FUNCTIONS_H

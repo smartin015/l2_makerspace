@@ -5,10 +5,10 @@
 // millisecond multiplier 
 // raise value to slow robot speeds 
 // DEFAULT = 220
-const int SPEED_MULT = 220;
+#define SPEED_MULT 220
 
 // Set to 7 for TR
-const int NUM_J = 6;
+#define NUM_J 6
 
 // MOTOR DIRECTION - motor directions can be changed on the caibration page in the software but can also
 // be changed here: example using DM542T driver(CW) set to 1 - if using ST6600 or DM320T driver(CCW) set to 0
@@ -22,9 +22,11 @@ const int START_POS[] = {7600, 2322, 0, 7600, 2287, 3312, 0};
 
 const int STEP_PIN[] = {0, 2, 4, 6, 8, 10};
 const int DIR_PIN[]  = {1, 3, 5, 7, 9, 11};
-const int OVERDRIVE_STEPS = 25;
+#define OVERDRIVE_STEPS 25
 
 //set encoder pins
+#ifndef NATIVE
+
 #include <Encoder.h>
 Encoder enc[] = {
 	Encoder(14, 15),
@@ -35,11 +37,13 @@ Encoder enc[] = {
 	Encoder(24, 25)
 };
 
+#endif
+
 //set calibration limit switch pins
 const int CAL_PIN[] = {26, 27, 28, 29, 30, 31};
 
 //set encoder multiplier
-const int ENC_MULT[] = {5.12, 5.12, 5.12, 5.12, 2.56, 5.12};
+const double ENC_MULT[] = {5.12, 5.12, 5.12, 5.12, 2.56, 5.12};
 const float ENC_DIV = 0.1;
 
 #endif // CONFIG_H

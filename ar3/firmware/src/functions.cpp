@@ -1,9 +1,30 @@
+#include "functions.h"
+#include "command.h"
+#include "log.h"
+
+typedef void (*fn)(const command_t& args);
+
+const char* COMMAND_ID[NFUNC] = {"WT", "GP", "LM", "LL", "MJ", "ML", "MC"};
+const fn FUNCS[NFUNC] = {fn_wait_time, fn_get_pos, fn_calibrate_enc, fn_drive_to_limits, fn_move_j, fn_move_l, fn_move_c};
+
+bool do_fn(const command_t& args) {
+  for (int i = 0; i < NFUNC; i++) {
+    if (args.function[0] == COMMAND_ID[i][0] && args.function[1] == COMMAND_ID[i][1]) {
+      FUNCS[i](args);
+      return true;
+    }
+  }
+  return false;
+}
+
+
 void fn_wait_time(const command_t& args) {
-  delay(int(args.extra[SPEED] * 1000));
-  Serial.print("Done");
+  // delay(int(args.extra[SPEED] * 1000));
+  LOG_DEBUG("Done");
 }
 
 void fn_get_pos(const command_t& args) {
+  /*
   char errors[NUM_J+1];
   errors[NUM_J] = '\0';
   String values = "";
@@ -21,16 +42,20 @@ void fn_get_pos(const command_t& args) {
     }
   }
   printf("%s%s%s", (hasError) ? "01" : "00", errors, values);
+  */
 }
 
 void fn_calibrate_enc(const command_t& args) {
+  /*
   for (int i = 0; i < NUM_J; i++) {
     enc.write(args.step[i] * ENC_MULT[i]);
   }
-  Serial.print("Done");
+  */
+  LOG_DEBUG("Done");
 }
 
 void fn_drive_to_limits(const command_t& args) {
+  /*
   int speed = int((SPEED_MULT * 2) / (args.speed / 100));
   for (int i = 0; i < NUM_J; i++) {
     // LOW when matching direction, HIGH when opposite direction
@@ -48,12 +73,12 @@ void fn_drive_to_limits(const command_t& args) {
       all_complete &= move_complete[i];
       digitalWrite(STEP_PIN[i], !move_complete);
     }
-    delayMicroseconds(5);
+    // delayMicroseconds(5);
     for (int i = 0; i < NUM_J, i++) {
       digitalWrite(STEP_PIN[i], LOW);   
     } 
     done[i]++;
-    delayMicroseconds(speed);
+    // delayMicroseconds(speed);
   }
   
   // Overdrive steppers to ensure good contact
@@ -63,16 +88,16 @@ void fn_drive_to_limits(const command_t& args) {
         digitalWrite(STEP_PIN[i], LOW);
       }
     }
-    delayMicroseconds(5);
+    // delayMicroseconds(5);
     for (int i = 0; i < NUM_J; i++) {
       if (step[i] > 0) {
         digitalWrite(STEP_PIN[i], HIGH);
       }
     }
-    delayMicroseconds(speed);
+    // delayMicroseconds(speed);
   }
 
-  delay(500);
+  // delay(500);
 
   // Fail if any switches not made
   for(int i = 0; i < NUM_J; i++) {
@@ -82,10 +107,12 @@ void fn_drive_to_limits(const command_t& args) {
     }
   }
   printf("P\r");
+  */
 }
 
 void fn_move_j(const command_t& args) {
   //find highest step & set direction bits
+  /*
   int high = 0;
   for (int i = 0; i < NUM_J; i++) {
     high = max(high, args.step[i]);
@@ -149,15 +176,16 @@ void fn_move_j(const command_t& args) {
       enc[i].write(tarStep[i] * ENC_MULT[i]);
     }
   }
-  Serial.println();
+  LOG_DEBUG();
+  */
 }
       
-void fn_move_l() {
+void fn_move_l(const command_t& args) {
   /*
   WayPtDel = 1;
   int NumPtsStart = inData.indexOf('L');
   int WayPts = inData.substring(NumPtsStart + 1).toInt();
-  Serial.println();
+  LOG_DEBUG();
   inData = ""; // Clear recieved buffer
   //STORE WAYPOINTS
   int i = 0;
@@ -167,13 +195,13 @@ void fn_move_l() {
       inData += recieved;
       if (recieved == '\n') {
         inData.toCharArray(WayPt[i], 70);
-        Serial.println();
+        LOG_DEBUG();
         ++i;
         inData = ""; // Clear recieved buffer
       }
     }
   }
-  Serial.println();
+  LOG_DEBUG();
   //EXECUTE WAYPOINTS
 
   i = 0;
@@ -184,15 +212,15 @@ void fn_move_l() {
   }
   // TODO motor stall check
   */
-  Serial.println("UNIMPLEMENTED");
+  LOG_DEBUG("UNIMPLEMENTED");
 }
 
-void fn_move_c() {
+void fn_move_c(const command_t& args) {
   /*
   WayPtDel = 1;
   int NumPtsStart = inData.indexOf('C');
   int WayPts = inData.substring(NumPtsStart + 1).toInt();
-  Serial.println();
+  LOG_DEBUG();
   inData = ""; // Clear recieved buffer
   //STORE WAYPOINTS
   int i = 0;
@@ -202,13 +230,13 @@ void fn_move_c() {
       inData += recieved;
       if (recieved == '\n') {
         inData.toCharArray(WayPt[i], 70);
-        Serial.println();
+        LOG_DEBUG();
         ++i;
         inData = ""; // Clear recieved buffer
       }
     }
   }
-  Serial.println();
+  LOG_DEBUG();
   i = 0;
   while (i < WayPts+1) {
     inData = WayPt[i];
@@ -218,7 +246,7 @@ void fn_move_c() {
 
   // TODO stall check
   WayPtDel = 0;
-  Serial.println();
+  LOG_DEBUG();
   */
-  Serial.println("UNIMPLEMENTED");
+  LOG_DEBUG("UNIMPLEMENTED");
 }
