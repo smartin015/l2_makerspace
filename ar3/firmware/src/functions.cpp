@@ -1,29 +1,37 @@
 #include "functions.h"
 #include "command.h"
 #include "log.h"
+#include "app_hal.h"
 
-typedef int (*fn)(const command_t& args);
+typedef int (*fn)(const command_t& args, char* out);
+
+const char* UNIMPL = "UNIMPLEMENTED";
+#define ULEN 13
+const char* OK = "OK";
+#define OKLEN 2
 
 const char* COMMAND_ID[NFUNC] = {"WT", "GP", "LM", "LL", "MJ", "ML", "MC"};
 const fn FUNCS[NFUNC] = {fn_wait_time, fn_get_pos, fn_calibrate_enc, fn_drive_to_limits, fn_move_j, fn_move_l, fn_move_c};
 
-bool do_fn(const command_t& args) {
+int do_fn(const command_t& args, char* out) {
   for (int i = 0; i < NFUNC; i++) {
     if (args.function[0] == COMMAND_ID[i][0] && args.function[1] == COMMAND_ID[i][1]) {
-      FUNCS[i](args);
-      return true;
+      return FUNCS[i](args, out);
     }
   }
-  return false;
+  return 0;
 }
 
 
-int fn_wait_time(const command_t& args) {
+int fn_wait_time(const command_t& args, char* out) {
   // delay(int(args.extra[SPEED] * 1000));
-  LOG_DEBUG("Done");
+  LOG_DEBUG("Sleeping %02f", args.extra[SPEED]);
+  hal_usleep(uint64_t(args.extra[SPEED]) * 1000000);
+  sprintf(out, OK);
+  return OKLEN;
 }
 
-int fn_get_pos(const command_t& args) {
+int fn_get_pos(const command_t& args, char* out) {
   /*
   char errors[NUM_J+1];
   errors[NUM_J] = '\0';
@@ -43,18 +51,22 @@ int fn_get_pos(const command_t& args) {
   }
   printf("%s%s%s", (hasError) ? "01" : "00", errors, values);
   */
+  sprintf(out, UNIMPL);
+  return ULEN;
 }
 
-int fn_calibrate_enc(const command_t& args) {
+int fn_calibrate_enc(const command_t& args, char* out) {
   /*
   for (int i = 0; i < NUM_J; i++) {
     enc.write(args.step[i] * ENC_MULT[i]);
   }
   */
   LOG_DEBUG("Done");
+  sprintf(out, UNIMPL);
+  return ULEN;
 }
 
-int fn_drive_to_limits(const command_t& args) {
+int fn_drive_to_limits(const command_t& args, char* out) {
   /*
   int speed = int((SPEED_MULT * 2) / (args.speed / 100));
   for (int i = 0; i < NUM_J; i++) {
@@ -108,9 +120,11 @@ int fn_drive_to_limits(const command_t& args) {
   }
   printf("P\r");
   */
+  sprintf(out, UNIMPL);
+  return ULEN;
 }
 
-int fn_move_j(const command_t& args) {
+int fn_move_j(const command_t& args, char* out) {
   //find highest step & set direction bits
   /*
   int high = 0;
@@ -178,9 +192,11 @@ int fn_move_j(const command_t& args) {
   }
   LOG_DEBUG();
   */
+  sprintf(out, UNIMPL);
+  return ULEN;
 }
       
-int fn_move_l(const command_t& args) {
+int fn_move_l(const command_t& args, char* out) {
   /*
   WayPtDel = 1;
   int NumPtsStart = inData.indexOf('L');
@@ -213,9 +229,11 @@ int fn_move_l(const command_t& args) {
   // TODO motor stall check
   */
   LOG_DEBUG("UNIMPLEMENTED");
+  sprintf(out, UNIMPL);
+  return ULEN;
 }
 
-int fn_move_c(const command_t& args) {
+int fn_move_c(const command_t& args, char* out) {
   /*
   WayPtDel = 1;
   int NumPtsStart = inData.indexOf('C');
@@ -249,4 +267,6 @@ int fn_move_c(const command_t& args) {
   LOG_DEBUG();
   */
   LOG_DEBUG("UNIMPLEMENTED");
+  sprintf(out, UNIMPL);
+  return ULEN;
 }

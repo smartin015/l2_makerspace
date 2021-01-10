@@ -12,3 +12,6 @@ socket.connect("tcp://localhost:5555")
 while True:
     cmd = input('>')
     socket.send_string(cmd)
+
+    resp = socket.recv()
+    print(resp)

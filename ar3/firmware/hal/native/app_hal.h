@@ -7,6 +7,10 @@
 # define HIGH true
 #define LOW false
 
+#include <unistd.h>
+
+#define hal_usleep(sec) usleep(sec)
+
 // Swallow pin mode declarations
 inline void pinMode(int pin, int mode) {};
 

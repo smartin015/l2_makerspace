@@ -19,15 +19,15 @@ command_t parse_command(String inData) {
       int val = atoi(buf+1);
       for (int j = 0; j < NUM_J; j++) {
         if (buf[0] == J_CHAR[j]) {
-	  result.step[j] = val;
-	  break;
-	} else if (buf[0] == ENC_CHAR[j]) {
-	  result.enc[j] = val;
-	  break;
-	} else if (buf[0] == EXTRA_CHAR[j]) {
-	  result.extra[j] = val;
-	  break;
-	}
+          result.step[j] = val;
+          break;
+        } else if (buf[0] == ENC_CHAR[j]) {
+          result.enc[j] = val;
+          break;
+        } else if (buf[0] == EXTRA_CHAR[j]) {
+          result.extra[j] = val;
+          break;
+        }
       }
       b = 0;
     }
