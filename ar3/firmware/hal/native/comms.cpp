@@ -24,3 +24,9 @@ bool tryFetchCommand(char* buf, int buflen) {
     return false;
   }
 }
+
+void sendResponse(char* buf, int buflen) {
+  zmq::message_t reply(buflen);
+  memcpy(reply.data(), buf, buflen);
+  socket.send(reply);
+}

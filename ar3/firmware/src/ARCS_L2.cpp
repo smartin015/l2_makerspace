@@ -28,8 +28,11 @@ void setup() {
 char buf[128];
 void loop() {
   if (tryFetchCommand(buf, 128)) {
-    command_t args = parse_command(inData);
-    if (!do_fn(args)) {
+    command_t args = parse_command(buf);
+    uint8_t n = do_fn(args, buf);
+    if (n) {
+      sendResponse(buf, n);
+    } else {
       LOG_ERROR("Unknown function: %s", args.function);
     }
   }

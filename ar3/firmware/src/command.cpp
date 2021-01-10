@@ -36,5 +36,6 @@ command_t parse_command(String inData) {
       buf[b++] = inData[i];
     }
   }
+  return result;
 }
 

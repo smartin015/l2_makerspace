@@ -2,7 +2,7 @@
 #include "command.h"
 #include "log.h"
 
-typedef void (*fn)(const command_t& args);
+typedef int (*fn)(const command_t& args);
 
 const char* COMMAND_ID[NFUNC] = {"WT", "GP", "LM", "LL", "MJ", "ML", "MC"};
 const fn FUNCS[NFUNC] = {fn_wait_time, fn_get_pos, fn_calibrate_enc, fn_drive_to_limits, fn_move_j, fn_move_l, fn_move_c};
@@ -18,12 +18,12 @@ bool do_fn(const command_t& args) {
 }
 
 
-void fn_wait_time(const command_t& args) {
+int fn_wait_time(const command_t& args) {
   // delay(int(args.extra[SPEED] * 1000));
   LOG_DEBUG("Done");
 }
 
-void fn_get_pos(const command_t& args) {
+int fn_get_pos(const command_t& args) {
   /*
   char errors[NUM_J+1];
   errors[NUM_J] = '\0';
@@ -45,7 +45,7 @@ void fn_get_pos(const command_t& args) {
   */
 }
 
-void fn_calibrate_enc(const command_t& args) {
+int fn_calibrate_enc(const command_t& args) {
   /*
   for (int i = 0; i < NUM_J; i++) {
     enc.write(args.step[i] * ENC_MULT[i]);
@@ -54,7 +54,7 @@ void fn_calibrate_enc(const command_t& args) {
   LOG_DEBUG("Done");
 }
 
-void fn_drive_to_limits(const command_t& args) {
+int fn_drive_to_limits(const command_t& args) {
   /*
   int speed = int((SPEED_MULT * 2) / (args.speed / 100));
   for (int i = 0; i < NUM_J; i++) {
@@ -110,7 +110,7 @@ void fn_drive_to_limits(const command_t& args) {
   */
 }
 
-void fn_move_j(const command_t& args) {
+int fn_move_j(const command_t& args) {
   //find highest step & set direction bits
   /*
   int high = 0;
@@ -180,7 +180,7 @@ void fn_move_j(const command_t& args) {
   */
 }
       
-void fn_move_l(const command_t& args) {
+int fn_move_l(const command_t& args) {
   /*
   WayPtDel = 1;
   int NumPtsStart = inData.indexOf('L');
@@ -215,7 +215,7 @@ void fn_move_l(const command_t& args) {
   LOG_DEBUG("UNIMPLEMENTED");
 }
 
-void fn_move_c(const command_t& args) {
+int fn_move_c(const command_t& args) {
   /*
   WayPtDel = 1;
   int NumPtsStart = inData.indexOf('C');
