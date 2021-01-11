@@ -3,72 +3,135 @@
 #include "log.h"
 #include "app_hal.h"
 
-typedef int (*fn)(const command_t& args, char* out);
+typedef void (*fn)(const command_t& args);
 
 const char* UNIMPL = "UNIMPLEMENTED";
-#define ULEN 13
 const char* OK = "OK";
-#define OKLEN 2
+
 
 const char* COMMAND_ID[NFUNC] = {"WT", "GP", "LM", "LL", "MJ", "ML", "MC"};
+void fn_wait_time(const command_t& args);
+void fn_get_pos(const command_t& args);
+void fn_calibrate_enc(const command_t& args);
+void fn_drive_to_limits(const command_t& args);
+void fn_move_j(const command_t& args);
+void fn_move_l(const command_t& args);
+void fn_move_c(const command_t& args);
 const fn FUNCS[NFUNC] = {fn_wait_time, fn_get_pos, fn_calibrate_enc, fn_drive_to_limits, fn_move_j, fn_move_l, fn_move_c};
 
-int do_fn(const command_t& args, char* out) {
+command_t cur_cmd;
+char* out_ptr = nullptr;
+int out_sz = 0;
+
+void do_fn(const command_t& args, char* out) {
   for (int i = 0; i < NFUNC; i++) {
     if (args.function[0] == COMMAND_ID[i][0] && args.function[1] == COMMAND_ID[i][1]) {
-      return FUNCS[i](args, out);
+      cur_cmd = args;
+      out_ptr = out;
+      out_sz = 0;
+      FUNCS[i](args);
     }
   }
-  return 0;
+}
+
+int do_fn_complete() {
+  return out_sz;
 }
 
 
-int fn_wait_time(const command_t& args, char* out) {
+float cur_speed[NUM_J];
+int next_pulse[NUM_J];
+#define PD_MICROS 12
+void loop_fn() {
+  if (out_sz) {
+    return; // Function completed 
+  }
+
+  if (cur_cmd.function[0] == 'M') {
+    // Continue moving to target
+    // Calculate ramp settings
+    for (int i = 0; i < NUM_J; i++) {
+      if (cur_cmd.step[i] <= 0) {
+        continue;
+      }
+      // Check if we should pulse this joint
+      next_pulse[i] -= PD_MICROS;
+      if (next_pulse[i] <= 0) {
+        // Speed is in pulses per second currently
+        // TODO: Linear ramp up and down
+        cur_cmd.step[i]--;
+        next_pulse[i] = 1000000 / cur_cmd.extra[SPEED]; 
+        digitalWrite(STEP_PIN[i], LOW);
+      }
+    }
+  
+    hal_usleep(5);
+
+    bool move_complete = true;
+    for (int i = 0; i < NUM_J; i++) {
+      digitalWrite(STEP_PIN[i], HIGH);
+      move_complete &= cur_cmd.step[i] <= 0;
+      // TODO check for stalls
+    }
+
+    if (move_complete) {
+      out_sz = sprintf(out_ptr, OK);
+      /*
+      // TODO write encoder positions
+      for (int i = 0; i < NUM_J; i++) {
+        writeEnc(i, T[i]);
+      }
+      */
+    }
+  }
+}
+
+
+void fn_wait_time(const command_t& args) {
   // delay(int(args.extra[SPEED] * 1000));
   LOG_DEBUG("Sleeping %02f", args.extra[SPEED]);
   hal_usleep(uint64_t(args.extra[SPEED]) * 1000000);
-  sprintf(out, OK);
-  return OKLEN;
+  out_sz = sprintf(out_ptr, OK);
 }
 
-int fn_get_pos(const command_t& args, char* out) {
-  /*
+void fn_get_pos(const command_t& args) {
   char errors[NUM_J+1];
   errors[NUM_J] = '\0';
-  String values = "";
+  int values[NUM_J];
   bool hasError = false;
   for (int i = 0; i < NUM_J; i++) {
-    int curStep = enc[i].read() / ENC_MULT[i];
-    if (abs(curStep[i] - args.step[i]) > ENC_MULT[i] / ENC_DIV) {
+    int curStep = readEnc(i) / ENC_MULT[i];
+    if (abs(curStep - args.step[i]) > ENC_MULT[i] / ENC_DIV) {
       errors[i] = '1';
+      values[i] = 0;
       hasError = true;
-      values += ENC_CHAR[i] + "0";
     } else {
       errors[i] = '0';
-      values += ENC_CHAR[i] + itoa(curStep[i]);
-      enc[i].write(args.step[i] * ENC_MULT[i]);
+      values[i] = curStep;
+      writeEnc(i, args.step[i] * ENC_MULT[i]);
     }
   }
-  printf("%s%s%s", (hasError) ? "01" : "00", errors, values);
-  */
-  sprintf(out, UNIMPL);
-  return ULEN;
+  out_sz = sprintf(out_ptr, "%s%s" "%c%d" "%c%d" "%c%d" "%c%d" "%c%d" "%c%d", 
+    (hasError) ? "01" : "00", errors, 
+    ENC_CHAR[0], values[0],
+    ENC_CHAR[1], values[1],
+    ENC_CHAR[2], values[2],
+    ENC_CHAR[3], values[3],
+    ENC_CHAR[4], values[4],
+    ENC_CHAR[5], values[5]
+  );
 }
 
-int fn_calibrate_enc(const command_t& args, char* out) {
-  /*
+void fn_calibrate_enc(const command_t& args) {
   for (int i = 0; i < NUM_J; i++) {
-    enc.write(args.step[i] * ENC_MULT[i]);
+    writeEnc(i, args.step[i] * ENC_MULT[i]);
   }
-  */
-  LOG_DEBUG("Done");
-  sprintf(out, UNIMPL);
-  return ULEN;
+  LOG_INFO("Encoders calibrated");
+  out_sz = sprintf(out_ptr, OK);
 }
 
-int fn_drive_to_limits(const command_t& args, char* out) {
-  /*
-  int speed = int((SPEED_MULT * 2) / (args.speed / 100));
+void fn_drive_to_limits(const command_t& args) {
+  int speed = int((SPEED_MULT * 2) / (args.extra[SPEED] / 100));
   for (int i = 0; i < NUM_J; i++) {
     // LOW when matching direction, HIGH when opposite direction
     digitalWrite(DIR_PIN[i], ROT_DIR[i] ^ args.enc[i]);
@@ -85,118 +148,55 @@ int fn_drive_to_limits(const command_t& args, char* out) {
       all_complete &= move_complete[i];
       digitalWrite(STEP_PIN[i], !move_complete);
     }
-    // delayMicroseconds(5);
-    for (int i = 0; i < NUM_J, i++) {
+    hal_usleep(5);
+    for (int i = 0; i < NUM_J; i++) {
       digitalWrite(STEP_PIN[i], LOW);   
+      done[i]++;
     } 
-    done[i]++;
-    // delayMicroseconds(speed);
+    hal_usleep(speed);
   }
   
   // Overdrive steppers to ensure good contact
-  for (int n = 0; n < OVERDRIVE_STEPS) {
+  for (int n = 0; n < OVERDRIVE_STEPS; n++) {
     for (int i = 0; i < NUM_J; i++) {
       if (args.step[i] > 0) {
         digitalWrite(STEP_PIN[i], LOW);
       }
     }
-    // delayMicroseconds(5);
+    hal_usleep(5);
     for (int i = 0; i < NUM_J; i++) {
-      if (step[i] > 0) {
+      if (args.step[i] > 0) {
         digitalWrite(STEP_PIN[i], HIGH);
       }
     }
-    // delayMicroseconds(speed);
+    hal_usleep(speed);
   }
 
-  // delay(500);
+  hal_usleep(500000);
 
   // Fail if any switches not made
   for(int i = 0; i < NUM_J; i++) {
     if (!digitalRead(CAL_PIN[i])) {
-      printf("F\r");
-      return;
+      out_sz = sprintf(out_ptr, "F");
     }
   }
-  printf("P\r");
-  */
-  sprintf(out, UNIMPL);
-  return ULEN;
+  out_sz = sprintf(out_ptr, "P");
 }
 
-int fn_move_j(const command_t& args, char* out) {
+void fn_move_j(const command_t& args) {
   //find highest step & set direction bits
   /*
   int high = 0;
   for (int i = 0; i < NUM_J; i++) {
-    high = max(high, args.step[i]);
+    if (args.step[i] > high) {
+      high = args.step[i];
+    }
     digitalWrite(DIR_PIN[i], dir[i] ^ rotDir[i]);
   }
-  
-  // Calculate ramp settings
-  float hold_start = high * args.extra[ACCEL_DURATION];
-  float hold_end = high - (high * args.extra[DECEL_DURATION]);
-  float hold_period = int(SPEED_MULT / args.extra[SPEED]);
-  float extra_period = int(SPEED_MULT / args.extra[SPEED]); // TODO parse this
-  float move_end = high;
-  float accel = hold_speed / hold_start;
-  float decel = hold_speed / (high - hold_end);
-
-  // ramp up, hold, and down
-  float cur_delay = 0;
-  float step_rate[NUM_J]; // Multiplier on longest distance
-  for (int i = 0; i < NUM_J; i++) {
-   step_rate[i] = args.step[i] / high;
-  }
-  int cur[NUM_J];
-  for (int t = 0; t < move_end; highCur++) {
-    cur_delay = hold_period;
-    if (highCur <= hold_start) {
-      cur_delay += extra_period - max(extra_period, accel * t);
-    } else if (highCur >= hold_end) {
-      cur_delay += max(extra_period, decel * (t - hold_end));
-    }
-    // Step each joint at their given rate
-    // TODO: Check encoders while stepping
-    for (int i = 0; i < NUM_J; i++) {
-      if (step_rate[i] * t > cur[i]) {
-        digitalWrite(STEP_PIN[i], LOW);
-        delayMicroseconds(1);
-        digitalWrite(STEP_PIN[i], HIGH);
-        cur[i]++;
-      }
-    }
-  }
-
-  // check for stalls
-  char error[NUM_J];
-  bool hasError = false;
-  String result;
-  for (int i = 0; i < NUM_J; i++) {
-    curStep[i] = enc[i].read() / ENC_MULT[i];
-    if (abs(curStep[i] - tarStep[i]) > ENC_MULT[i] / ENC_DIV[i]) {
-      error[i] = '1';
-      hasError = true;
-    } else {
-      error[i] = '0';
-    }     
-    result += ENC_CHAR[i] + itoa(curStep[i]);
-  }
-
-  if (hasError) {
-    printf("%s%s%s", (hasError) ? "01" : "00", error, result);
-  } else {
-    for (int i = 0; i < NUM_J; i++) {
-      enc[i].write(tarStep[i] * ENC_MULT[i]);
-    }
-  }
-  LOG_DEBUG();
   */
-  sprintf(out, UNIMPL);
-  return ULEN;
 }
       
-int fn_move_l(const command_t& args, char* out) {
+void fn_move_l(const command_t& args) {
   /*
   WayPtDel = 1;
   int NumPtsStart = inData.indexOf('L');
@@ -229,11 +229,10 @@ int fn_move_l(const command_t& args, char* out) {
   // TODO motor stall check
   */
   LOG_DEBUG("UNIMPLEMENTED");
-  sprintf(out, UNIMPL);
-  return ULEN;
+  out_sz = sprintf(out_ptr, UNIMPL);
 }
 
-int fn_move_c(const command_t& args, char* out) {
+void fn_move_c(const command_t& args) {
   /*
   WayPtDel = 1;
   int NumPtsStart = inData.indexOf('C');
@@ -267,6 +266,5 @@ int fn_move_c(const command_t& args, char* out) {
   LOG_DEBUG();
   */
   LOG_DEBUG("UNIMPLEMENTED");
-  sprintf(out, UNIMPL);
-  return ULEN;
+  out_sz = sprintf(out_ptr, UNIMPL);
 }

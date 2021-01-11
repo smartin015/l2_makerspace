@@ -1,9 +1,5 @@
 #include "command.h"
 
-const char ENC_CHAR[] = {'A', 'B', 'C', 'D', 'E', 'F', 'T'};
-const char EXTRA_CHAR[] = {'G', 'H', 'I', 'K', 'S', '\0', '\0'};
-const char J_CHAR[] = {'U', 'V', 'W', 'X', 'Y', 'Z', '\0'};
-
 command_t parse_command(String inData) {
   command_t result;
   result.function[0] = inData[0];

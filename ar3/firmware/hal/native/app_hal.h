@@ -13,10 +13,10 @@
 
 // Swallow pin mode declarations
 inline void pinMode(int pin, int mode) {};
-
 void digitalWrite(int pin, bool high);
-
-
+bool digitalRead(int pin);
 void initHAL();
+int readEnc(int idx);
+void writeEnc(int idx, int value);
 
 #endif // __ARDUINO_SHIM_H__

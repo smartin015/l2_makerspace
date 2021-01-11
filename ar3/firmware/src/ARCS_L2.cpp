@@ -12,7 +12,6 @@ String function;
 // int WayPtDel;
 
 void setup() {
-  initHAL();
   initComms();
   // Serial.begin(115200);
   for (int i = 0; i < NUM_J; i++) {
@@ -27,13 +26,13 @@ void setup() {
 
 char buf[128];
 void loop() {
-  if (tryFetchCommand(buf, 128)) {
-    command_t args = parse_command(buf);
-    uint8_t n = do_fn(args, buf);
-    if (n) {
-      sendResponse(buf, n);
-    } else {
-      LOG_ERROR("Unknown function: %s", args.function);
+  uint8_t n = do_fn_complete();
+  if (n) {
+    sendResponse(buf, n);
+    if (tryFetchCommand(buf, 128)) {
+      command_t args = parse_command(buf);
+      do_fn(args, buf);
     }
   }
+  loop_fn();
 }

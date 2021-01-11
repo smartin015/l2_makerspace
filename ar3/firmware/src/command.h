@@ -6,6 +6,10 @@
 
 #define String std::string
 
+const char ENC_CHAR[] = {'A', 'B', 'C', 'D', 'E', 'F', 'T'};
+const char EXTRA_CHAR[] = {'G', 'H', 'I', 'K', 'S', '\0', '\0'};
+const char J_CHAR[] = {'U', 'V', 'W', 'X', 'Y', 'Z', '\0'};
+
 enum {
   ACCEL_DURATION = 0,
   ACCEL_SPEED = 1,

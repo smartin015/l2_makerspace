@@ -13,7 +13,7 @@
 // MOTOR DIRECTION - motor directions can be changed on the caibration page in the software but can also
 // be changed here: example using DM542T driver(CW) set to 1 - if using ST6600 or DM320T driver(CCW) set to 0
 // DEFAULT = 1110110
-const int ROT_DIR[] = {1,1,1,0,1,1,0};
+const int ROT_DIR[] = {0,0,0,0,0,0,0};
 
 // start positions - these are the joint step values at power up
 // default is in the rest position using the following values: 
@@ -25,6 +25,7 @@ const int DIR_PIN[]  = {1, 3, 5, 7, 9, 11};
 #define OVERDRIVE_STEPS 25
 
 //set encoder pins
+// TODO move to app_hal
 #ifndef NATIVE
 
 #include <Encoder.h>
