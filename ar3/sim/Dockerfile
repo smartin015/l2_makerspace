@@ -14,6 +14,8 @@ COPY --from=1 /node/install /node/install
 # Install shared libraries needed by moveit (?) ROS nodes
 RUN apt-get update && apt-get install -y --no-install-recommends liboctomap-dev libboost-thread-dev librandom-numbers-dev libqhull-dev libfcl-dev \
   ros-foxy-joint-state-publisher-gui ros-foxy-joint-state-publisher \
-  && rm -rf /var/lib/apt/cache/*.list
+  python3-pip \
+  && rm -rf /var/lib/apt/cache/*.list \
+  && pip3 install pyzmq
 
 RUN echo 'source "/moveit/install/setup.bash"' >> /root/.bashrc

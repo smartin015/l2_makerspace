@@ -11,7 +11,11 @@ from rosgraph_msgs.msg import Clock
 from builtin_interfaces.msg import Time
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import TransformStamped
+import zmq
+import struct
 import threading
+
+NUM_J = 6
 
 MOTOR_LIMITS = [
   (-2.4, 2.4),
@@ -32,6 +36,9 @@ TARGETS = [
     [0.2, 0.4, 0.6, 0.8, 1.0, 1.0],
     [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
 ]
+
+# TODO make more real
+STEPS_PER_REV = [100] * NUM_J
 
 class AR3(Node):
     PUBLISH_PD = 5  # seconds
@@ -63,6 +70,11 @@ class AR3(Node):
         for s in self.sensors:
             s.enable(self.timestep)
 
+        # Setup firmware sim sockets
+        self.zmq_context = zmq.Context()
+        self.step_socket = self.zmq_context.socket(zmq.PULL)
+        self.step_socket.connect("tcp://localhost:5556")
+
         # Setup topics & timers
         self.executor = rclpy.executors.MultiThreadedExecutor()
         self._default_callback_group = rclpy.callback_groups.ReentrantCallbackGroup()
@@ -92,9 +104,23 @@ class AR3(Node):
             if now > next_joint_state_cb:
               self.joint_state_callback()
               next_joint_state_cb = next_joint_state_cb + self.JOINT_STATE_PD
-            if now > next_dance_cb:
-              self.dance_callback()
-              next_dance_cb = next_dance_cb + self.DANCE_PD
+            #if now > next_dance_cb:
+            #  self.dance_callback()
+            #  next_dance_cb = next_dance_cb + self.DANCE_PD
+
+            try:
+              steps = self.step_socket.recv(zmq.DONTWAIT)
+              if steps:
+                self.handle_raw_steps(steps)
+            except zmq.error.Again:
+              pass
+
+    def handle_raw_steps(self, steps):
+        # When simulating firmware, we get raw step counts over ZMQ - these are referenced
+        # relative from simulation start pos
+        for (i, s) in enumerate(struct.unpack('i'*NUM_J, steps)):
+            self.motors[i].setPosition(s * STEPS_PER_REV[i])
+      
 
     def handle_joint_trajectory(self, jt):
         # print(jt) # TODO handle setting joint trajectory

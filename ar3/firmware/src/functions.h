@@ -5,6 +5,7 @@
 
 #define NFUNC 7
 void do_fn(const command_t& args, char* out);
+bool do_fn_ready();
 int do_fn_complete();
 void loop_fn();
 

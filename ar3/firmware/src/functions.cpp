@@ -22,20 +22,33 @@ const fn FUNCS[NFUNC] = {fn_wait_time, fn_get_pos, fn_calibrate_enc, fn_drive_to
 command_t cur_cmd;
 char* out_ptr = nullptr;
 int out_sz = 0;
+bool ready = true;
 
 void do_fn(const command_t& args, char* out) {
+  LOG_DEBUG("do_fn %c%c", args.function[0], args.function[1]);
   for (int i = 0; i < NFUNC; i++) {
     if (args.function[0] == COMMAND_ID[i][0] && args.function[1] == COMMAND_ID[i][1]) {
       cur_cmd = args;
       out_ptr = out;
       out_sz = 0;
       FUNCS[i](args);
+      ready = false;
+      return;
     }
   }
 }
 
+bool do_fn_ready() {
+  return ready;
+}
+
 int do_fn_complete() {
-  return out_sz;
+  int sz = out_sz;
+  if (out_sz) {
+    out_sz = 0;
+    ready = true;
+  }
+  return sz;
 }
 
 
@@ -43,13 +56,14 @@ float cur_speed[NUM_J];
 int next_pulse[NUM_J];
 #define PD_MICROS 12
 void loop_fn() {
-  if (out_sz) {
-    return; // Function completed 
+  if (out_sz || ready) {
+    return; // Function complete or not started
   }
 
   if (cur_cmd.function[0] == 'M') {
     // Continue moving to target
     // Calculate ramp settings
+    LOG_DEBUG("%d %d %d", cur_cmd.step[0], cur_cmd.step[1], cur_cmd.step[2]);
     for (int i = 0; i < NUM_J; i++) {
       if (cur_cmd.step[i] <= 0) {
         continue;
@@ -59,6 +73,7 @@ void loop_fn() {
       if (next_pulse[i] <= 0) {
         // Speed is in pulses per second currently
         // TODO: Linear ramp up and down
+        // TODO handle negative stepping
         cur_cmd.step[i]--;
         next_pulse[i] = 1000000 / cur_cmd.extra[SPEED]; 
         digitalWrite(STEP_PIN[i], LOW);
@@ -74,8 +89,11 @@ void loop_fn() {
       // TODO check for stalls
     }
 
+    hal_usleep(5000);
+
     if (move_complete) {
       out_sz = sprintf(out_ptr, OK);
+      cur_cmd.function[0] = '\0';
       /*
       // TODO write encoder positions
       for (int i = 0; i < NUM_J; i++) {
@@ -185,15 +203,14 @@ void fn_drive_to_limits(const command_t& args) {
 
 void fn_move_j(const command_t& args) {
   //find highest step & set direction bits
-  /*
+  LOG_DEBUG("Setting targets for MOVE J");
   int high = 0;
   for (int i = 0; i < NUM_J; i++) {
     if (args.step[i] > high) {
       high = args.step[i];
     }
-    digitalWrite(DIR_PIN[i], dir[i] ^ rotDir[i]);
+    digitalWrite(DIR_PIN[i], (args.step[i] > 0) ^ ROT_DIR[i]);
   }
-  */
 }
       
 void fn_move_l(const command_t& args) {

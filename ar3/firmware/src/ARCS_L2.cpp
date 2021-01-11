@@ -28,7 +28,10 @@ char buf[128];
 void loop() {
   uint8_t n = do_fn_complete();
   if (n) {
+    LOG_DEBUG("Send response %s", buf);
     sendResponse(buf, n);
+  }
+  if (do_fn_ready()) {
     if (tryFetchCommand(buf, 128)) {
       command_t args = parse_command(buf);
       do_fn(args, buf);
