@@ -691,4 +691,6 @@ VIN
 Wire Wire Line
 	3550 7150 3700 7150
 Connection ~ 3550 7150
+Text Notes 2750 3550 0    394  ~ 0
+TODO\nConfigurable 5V / 24V logic shifter (stepper drivers)\nSeparatable power via jumper\n6x RS422 line receiver channels to read encoders w/ differential signal
 $EndSCHEMATC
