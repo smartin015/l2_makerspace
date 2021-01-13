@@ -6,6 +6,7 @@
 // raise value to slow robot speeds 
 // DEFAULT = 220
 #define SPEED_MULT 220
+#define DEFAULT_SPEED 10
 
 // Set to 7 for TR
 #define NUM_J 6

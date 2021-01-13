@@ -61,7 +61,7 @@ class AR3(Node):
         self.motors = [self.robot.getMotor(n) for n in self.joint_names]
         for (i,m) in enumerate(self.motors):
             # https://cyberbotics.com/doc/reference/motor?tab-language=python#motor
-            pid = (1.0, 0, 0)
+            pid = (10.0, 0, 0)
             m.setControlPID(*pid)
             m.minPosition = MOTOR_LIMITS[i][0]
             m.maxPosition = MOTOR_LIMITS[i][1]
@@ -71,9 +71,13 @@ class AR3(Node):
             s.enable(self.timestep)
 
         # Setup firmware sim sockets
+        # TODO configurable URLS
         self.zmq_context = zmq.Context()
         self.step_socket = self.zmq_context.socket(zmq.PULL)
         self.step_socket.connect("tcp://localhost:5556")
+        self.limits = [False]*NUM_J
+        self.lim_socket = self.zmq_context.socket(zmq.PUSH)
+        self.lim_socket.connect("tcp://localhost:5557")
 
         # Setup topics & timers
         self.executor = rclpy.executors.MultiThreadedExecutor()
@@ -118,9 +122,19 @@ class AR3(Node):
     def handle_raw_steps(self, steps):
         # When simulating firmware, we get raw step counts over ZMQ - these are referenced
         # relative from simulation start pos
+        
+        send_limits = False # only send limits on update
         for (i, s) in enumerate(struct.unpack('i'*NUM_J, steps)):
-            self.motors[i].setPosition(s * STEPS_PER_REV[i])
-      
+            angle = 6.28 * s / STEPS_PER_REV[i]
+            self.motors[i].setPosition(angle)
+            inside_limits = (MOTOR_LIMITS[i][0] < angle) and (angle < MOTOR_LIMITS[i][1])
+            if self.limits[i] != inside_limits:
+              send_limits = True
+            self.limits[i] = inside_limits
+
+        if send_limits:
+            self.lim_socket.send(struct.pack('b'*NUM_J, *self.limits))
+            print("Sent limit")
 
     def handle_joint_trajectory(self, jt):
         # print(jt) # TODO handle setting joint trajectory

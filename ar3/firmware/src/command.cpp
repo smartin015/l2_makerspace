@@ -1,7 +1,9 @@
+#include "config.h"
 #include "command.h"
 
 command_t parse_command(String inData) {
-  command_t result;
+  command_t result = {}; // Being sure to initialize the struct to zeros
+  result.extra[SPEED] = DEFAULT_SPEED;
   result.function[0] = inData[0];
   result.function[1] = inData[1];
 

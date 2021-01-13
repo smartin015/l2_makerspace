@@ -2,6 +2,10 @@
 #define _HW_H
 
 #include "config.h"
+#include <stdint.h>
+
+#define HIGH true
+#define LOW false
 
 namespace hw {
   bool get_cur_cal(int idx);
@@ -12,7 +16,8 @@ namespace hw {
   void sync(); 
   void init();
   void loop();
-} // namespace hw
 
+  uint64_t millis();
+} // namespace hw
 
 #endif

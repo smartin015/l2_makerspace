@@ -19,6 +19,8 @@ bool tryFetchCommand(char* buf, int buflen) {
   zmq::message_t request;
   if (socket.recv(&request, ZMQ_DONTWAIT)) {
     strncpy(buf, (char*)request.data(), buflen);
+    buf[request.size()] = '\0'; // Ensure null termination
+    LOG_INFO("Command: '%s'", buf);
     return true;
   } else {
     return false;

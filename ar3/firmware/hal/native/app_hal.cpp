@@ -3,11 +3,6 @@
 #include "hw.h"
 #include "log.h"
 
-# define OUTPUT 0
-# define INPUT 1
-# define HIGH true
-#define LOW false
-
 int cur_dir[NUM_J];
 bool prev_step_pin[NUM_J];
 int step_offs[NUM_J];

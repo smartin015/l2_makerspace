@@ -14,7 +14,12 @@ int target[NUM_J];
 
 bool get_cur_cal(int idx) { return cur_cal[idx]; }
 bool get_steps(int idx) { return steps[idx]; }
-bool move_target(int idx, int delta) { target[idx] += delta; }
+
+bool target_changed = false;
+bool move_target(int idx, int delta) { 
+  target_changed = true;
+  target[idx] += delta; 
+}
 
 #define PUSH_ADDR "tcp://*:5556"
 #define PULL_ADDR "tcp://*:5557"
@@ -47,11 +52,14 @@ void init() {
 uint64_t next_publish = 0;
 void loop() {
   if (millis() > next_publish) {
-    zmq::message_t msg(NUM_J * sizeof(int));
-    for (int i = 0; i < NUM_J; i++) {
-      ((int*)msg.data())[i] = steps[i];
+    if (target_changed) {
+      zmq::message_t msg(NUM_J * sizeof(int));
+      for (int i = 0; i < NUM_J; i++) {
+        ((int*)msg.data())[i] = target[i];
+      }
+      push_socket.send(msg, ZMQ_DONTWAIT);  
+      target_changed = false;
     }
-    push_socket.send(msg, ZMQ_DONTWAIT);
     next_publish += PUB_PD_MILLIS;
   }
   sync();
