@@ -26,11 +26,6 @@ services:
       - .:/volume
       - ./config:/root/.config/Cyberbotics/
       - /tmp/.X11-unix:/tmp/.X11-unix
-    networks:
-      - l2
+    network_mode: host
     entrypoint: bash
 
-networks:
-  l2:
-    driver: bridge
-    name: l2

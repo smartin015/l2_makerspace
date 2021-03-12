@@ -127,12 +127,15 @@ class AR3(Node):
 
         self.get_logger().info("Socket init...")
         # TODO configurable URLS
+        STEP_URL = "tcp://localhost:5556"
+        LIM_URL = "tcp://localhost:5557"
         self.zmq_context = zmq.Context()
         self.step_socket = self.zmq_context.socket(zmq.PULL)
-        self.step_socket.connect("tcp://localhost:5556")
+        self.step_socket.connect(STEP_URL)
         self.limits = [False]*NUM_J
         self.lim_socket = self.zmq_context.socket(zmq.PUSH)
-        self.lim_socket.connect("tcp://localhost:5557")
+        self.lim_socket.connect(LIM_URL)
+        self.get_logger().info("Pulling steps from %s; pushing limits state to %s" % (STEP_URL, LIM_URL)) 
 
         self.get_logger().info("Topic / timer init...")
         self.executor = rclpy.executors.MultiThreadedExecutor()
@@ -175,9 +178,9 @@ class AR3(Node):
               pass
 
     def handle_raw_steps(self, steps):
-        # When simulating firmware, we get raw step counts over ZMQ - these are referenced
-        # relative from simulation start pos
-        
+        # When simulating firmware, we get raw step counts over ZMQ - these are 
+        # referenced relative from simulation start pos
+        self.get_logger().info("Handling raw steps from firmware sim", throttle_duration_sec=1)
         send_limits = False # only send limits on update
         for (i, s) in enumerate(struct.unpack('i'*NUM_J, steps)):
             angle = 6.28 * s / STEPS_PER_REV[i]
