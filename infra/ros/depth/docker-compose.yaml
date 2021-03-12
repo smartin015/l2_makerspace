@@ -1,0 +1,11 @@
+version: "3.9"
+services:
+  sh:
+    image: l2depth
+    build: .
+    environment:
+      - "PATH=/usr/local/cuda-11.0/bin:${PATH}"
+      - "LD_LIBRARY_PATH=/usr/local/cuda-11.0/lib64:${LD_LIBRARY_PATH}"
+    stdin_open: true
+    tty: true
+    command: /bin/bash
