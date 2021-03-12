@@ -17,5 +17,4 @@ RUN apt-get update && apt-get install -y --no-install-recommends liboctomap-dev 
   python3-pip \
   && rm -rf /var/lib/apt/cache/*.list \
   && pip3 install pyzmq
-
-RUN echo 'source "/moveit/install/setup.bash"' >> /root/.bashrc
+ RUN echo 'source "/moveit/install/setup.bash"' >> /root/.bashrc

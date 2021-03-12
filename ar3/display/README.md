@@ -1,5 +1,10 @@
 Based on https://github.com/lvgl/lv_platformio
 
+Use `./run_docker.sh` to start the docker container before running any commands
+
+Note: web config (including IP address and port for websockets server) configured
+at ./data/secret.json. Wifi SSID & password aren't used in native-mode and can remain unset
+
 ```
 # In a terminal, start the websocket server to generate positions
 python3 test_ws.py

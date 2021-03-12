@@ -1,5 +1,6 @@
 # from l2_msgs.srv import GetProject
 import os
+import glob
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
@@ -40,6 +41,48 @@ TARGETS = [
 # TODO make more real
 STEPS_PER_REV = [100] * NUM_J
 
+class StubRobot:
+  def __init__(self):
+    self.t = 0
+    pass
+  def getBasicTimeStep(self):
+    return 0.01
+  def getMotor(self, name):
+    return StubMotor(name)
+  def step(self, timestep):
+    self.t += timestep
+    return 0
+  def getTime(self):
+    return self.t
+
+
+class StubPosSensor:
+  def __init__(self):
+    self.value = 0
+  def enable(self, timestep):
+    pass
+  def getValue(self):
+    return self.value
+
+class StubMotor:
+  def __init__(self, name):
+    self.name = name
+    self.minPosition = 0
+    self.maxPosition = 0
+    self.sensor = StubPosSensor()
+
+  def getMinPosition(self):
+    return self.minPosition
+  def getMaxPosition(self):
+    return self.maxPosition
+  def setPosition(self, target):
+    self.sensor.value = target
+  def setControlPID(self, p, i, d):
+    pass
+  def getPositionSensor(self):
+    return self.sensor
+    
+
 class AR3(Node):
     PUBLISH_PD = 5  # seconds
     JOINT_STATE_PD = 0.100
@@ -54,10 +97,21 @@ class AR3(Node):
         ])
         self.clockpub = self.create_publisher(Clock, '/clock', 10)
 
-        # Setup robot
-        self.robot = Robot()
-        self.timestep = int(self.robot.getBasicTimeStep())
         self.joint_names = ["joint_%d" % (i+1) for i in range(self.NUM_JOINTS)]
+        webots_initialized = len(glob.glob("/tmp/webots_*_*", recursive=False)) > 0
+        if not webots_initialized:
+          self.get_logger().info("Webots not running; using StubRobot")
+          self.robot = StubRobot()
+        else:
+          self.get_logger().info("Robot init...")
+          # Robot() blocks checking for connection to Webots - see "Webots doesn't seems to be ready yet" in
+          # https://github.com/cyberbotics/webots/blob/f9c017f55084b2d2ccf6cad7c94c97bb9c3ebd2c/src/controller/c/robot.c
+          self.robot = Robot()
+          if not self.robot:
+            print("Robot init failed")
+            os.exit(1)
+        
+        self.timestep = int(self.robot.getBasicTimeStep())
         self.motors = [self.robot.getMotor(n) for n in self.joint_names]
         for (i,m) in enumerate(self.motors):
             # https://cyberbotics.com/doc/reference/motor?tab-language=python#motor
@@ -66,11 +120,12 @@ class AR3(Node):
             m.minPosition = MOTOR_LIMITS[i][0]
             m.maxPosition = MOTOR_LIMITS[i][1]
             print("Motor %d configured for PID %s, range (%f,%f)" % (i, pid, m.getMinPosition(), m.getMaxPosition()))
+          
         self.sensors = [m.getPositionSensor() for m in self.motors]
         for s in self.sensors:
             s.enable(self.timestep)
 
-        # Setup firmware sim sockets
+        self.get_logger().info("Socket init...")
         # TODO configurable URLS
         self.zmq_context = zmq.Context()
         self.step_socket = self.zmq_context.socket(zmq.PULL)
@@ -79,7 +134,7 @@ class AR3(Node):
         self.lim_socket = self.zmq_context.socket(zmq.PUSH)
         self.lim_socket.connect("tcp://localhost:5557")
 
-        # Setup topics & timers
+        self.get_logger().info("Topic / timer init...")
         self.executor = rclpy.executors.MultiThreadedExecutor()
         self._default_callback_group = rclpy.callback_groups.ReentrantCallbackGroup()
         self.ti = 0
@@ -97,7 +152,7 @@ class AR3(Node):
         # self.dance_timer = self.create_timer(self.DANCE_PD, self.dance_callback)
         self.command_sub = self.create_subscription(JointTrajectory, "joint_trajectory_command", self.handle_joint_trajectory, 
                                                     qos_profile=qos_profile_sensor_data)
-        self.get_logger().info("Init")
+        self.get_logger().info("Init complete")
 
     def spin_sim(self):
         next_joint_state_cb = 0
@@ -134,7 +189,7 @@ class AR3(Node):
 
         if send_limits:
             self.lim_socket.send(struct.pack('b'*NUM_J, *self.limits))
-            print("Sent limit")
+            self.get_logger().info("Sent limit")
 
     def handle_joint_trajectory(self, jt):
         # print(jt) # TODO handle setting joint trajectory

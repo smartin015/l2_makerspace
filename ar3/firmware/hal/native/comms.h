@@ -1,10 +1,13 @@
 #ifndef COMMS_H
 #define COMMS_H
 
-void initComms();
 
-// Need to sendResponse() after every successful return from fetch
-bool tryFetchCommand(char* buf, int buflen);
-void sendResponse(char* buf, int buflen);
+namespace comms {
+
+void init();
+bool read(char* buf, int buflen);
+void write(char* buf, int buflen);
+
+} // namespace comms
 
 #endif // COMMS_H

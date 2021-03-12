@@ -1,12 +1,8 @@
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
 
-#include "command.h"
-
-#define NFUNC 7
-void do_fn(const command_t& args, char* out);
-bool do_fn_ready();
-int do_fn_complete();
-void loop_fn();
+void write_outputs();
+void read_inputs();
+void set_encoders();
 
 #endif // FUNCTIONS_H

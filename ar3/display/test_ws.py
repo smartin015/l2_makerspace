@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+
+# Websocket test data sender to display
+# This periodically changes joint targets and
+# linearly sweeps the position indicator to them. 
+# When the indicator reaches the target, the limit indicator turns on
+
 import asyncio
 import websockets
 import time
@@ -30,7 +36,7 @@ async def handler(websocket, path):
             "limit": [p[i] == t[i] for i in range(NUM_J)],
         }))
 
-start_server = websockets.serve(handler, "localhost", 8000)
+start_server = websockets.serve(handler, "0.0.0.0", 8001)
 asyncio.get_event_loop().run_until_complete(start_server)
 print("Started server, looping")
 asyncio.get_event_loop().run_forever()
