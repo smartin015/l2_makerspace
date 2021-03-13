@@ -1,0 +1,99 @@
+<html>
+<head>
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+<link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+<script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+</head>
+<body>
+<table class="mdl-data-table mdl-js-data-table">
+  <thead>
+    <tr>
+      <th class="mdl-data-table__cell--non-numeric">Position</th>
+      <th>Target</th>
+      <th>Value</th>
+      <th class="mdl-data-table__cell--non-numeric">Velocity</th>
+      <th>Target</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr id="repeatntimes">
+      <td style="width:300px">
+        <input class="mdl-slider mdl-js-slider posslider" type="range" id="s6" min="-180" max="180" value="0" step="2">
+      </td>
+      <td class="postgt">0</td>
+      <td class="posval">#</td>
+      <td style="width:300px">
+        <input class="mdl-slider mdl-js-slider velslider" type="range" id="s6" min="-180" max="180" value="0" step="2">
+      </td>
+      <td class="veltgt">0</td>
+      <td class="velval">#</td>
+    </tr>
+  </tbody>
+</table>
+<script>
+let ws = new WebSocket("ws://semartin:8001");
+const NUM_J = 6;
+let pos = [0,0,0,0,0,0];
+let vel = [0,0,0,0,0,0];
+let mask = [0,0,0,0,0,0];
+let tpos = [0,0,0,0,0,0];
+let tvel = [0,0,0,0,0,0];
+let tmask = [0,0,0,0,0,0];
+
+// Expand the row to njoints
+let tmpl = document.getElementById("repeatntimes");
+let tbody = document.querySelector("tbody");
+console.log(tbody);
+for (let i = 1; i < NUM_J; i++) {
+  tbody.appendChild(tmpl.cloneNode(true));
+}
+
+let ui = {
+  posslider: document.getElementsByClassName("posslider"),
+  postgt: document.getElementsByClassName("postgt"),
+  posval: document.getElementsByClassName("posval"),
+  
+  velslider: document.getElementsByClassName("velslider"),
+  veltgt: document.getElementsByClassName("veltgt"),
+  velval: document.getElementsByClassName("velval"),
+};
+
+
+for (let i = 0; i < NUM_J; i++) {
+  ui.posslider[i].oninput = (e) => {
+    tpos[i] = e.target.value;
+    ui.postgt[i].innerText = tpos[i];
+  }
+  ui.velslider[i].oninput = (e) => {
+    tvel[i] = e.target.value;
+    ui.veltgt[i].innerText = tvel[i];
+  }
+}
+
+function sendState() {
+  ws.send([tmask.join(","), tpos.join(","), tvel.join(",")].join("|"));
+}
+
+ws.onopen = (event) => {
+  console.log("socket opened");
+  sendState();
+};
+ws.onmessage = (event) => {
+  console.log(event.data);
+  mpv = event.data.split("|");
+  m = mpv[0].split(",");
+  p = mpv[1].split(",");
+  v = mpv[2].split(",");
+  for (let i = 0; i < NUM_J; i++) {
+    mask[i]=m[i];
+    pos[i]=p[i];
+    vel[i]=v[i];
+    ui.posval[i].innerText = pos[i];
+    ui.velval[i].innerText = vel[i];
+  }
+  sendState();
+}
+</script>
+</body>
+</html>

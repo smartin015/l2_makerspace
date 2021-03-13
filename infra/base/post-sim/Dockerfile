@@ -24,7 +24,7 @@ RUN apt-get update && apt-get -y install --no-install-recommends ros-foxy-webots
 
 # http://wiki.ros.org/docker/Tutorials/Hardware%20Acceleration
 # TODO accept ARGs to select particular GPU type
-# RUN \
+#RUN \
 #   apt-get update && \
 #   DEBIAN_FRONTEND=noninteractive apt-get -y install --no-install-recommends libgl1-mesa-glx libgl1-mesa-dri libnss3 libasound2 wget software-properties-common && \
 #   rm -rf /var/lib/apt/lists/*

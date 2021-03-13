@@ -10,25 +10,28 @@
 zmq::context_t context (1);
 zmq::socket_t socket (context, ZMQ_REP);
 
-void initComms() {
+namespace comms {
+
+void init() {
   socket.bind(ZMQ_ADDR);  
   LOG_DEBUG("Comms initialized: %s", ZMQ_ADDR); 
 }
 
-bool tryFetchCommand(char* buf, int buflen) {
+bool read(char* buf, int buflen) {
   zmq::message_t request;
   if (socket.recv(&request, ZMQ_DONTWAIT)) {
     strncpy(buf, (char*)request.data(), buflen);
-    buf[request.size()] = '\0'; // Ensure null termination
-    LOG_INFO("Command: '%s'", buf);
+    LOG_INFO("read '%s'", buf);
     return true;
   } else {
     return false;
   }
 }
 
-void sendResponse(char* buf, int buflen) {
+void write(char* buf, int buflen) {
   zmq::message_t reply(buflen);
   memcpy(reply.data(), buf, buflen);
   socket.send(reply);
 }
+
+} // namespace comms

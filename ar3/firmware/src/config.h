@@ -1,14 +1,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-// SPEED 
-// millisecond multiplier 
-// raise value to slow robot speeds 
-// DEFAULT = 220
-#define SPEED_MULT 220
-#define DEFAULT_SPEED 10
-
-// Set to 7 for TR
 #define NUM_J 6
 
 // MOTOR DIRECTION - motor directions can be changed on the caibration page in the software but can also
@@ -23,7 +15,6 @@ const int START_POS[] = {7600, 2322, 0, 7600, 2287, 3312, 0};
 
 const int STEP_PIN[] = {0, 2, 4, 6, 8, 10};
 const int DIR_PIN[]  = {1, 3, 5, 7, 9, 11};
-#define OVERDRIVE_STEPS 25
 
 //set encoder pins
 // TODO move to app_hal

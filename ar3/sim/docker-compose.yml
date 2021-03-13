@@ -1,4 +1,4 @@
-version: '3.5'
+version: '3.8'
 
 # Manual testing:
 # ```
@@ -15,18 +15,17 @@ services:
   main:
     build: .
     image: l2ar3sim:latest
+    stdin_open: true
+    tty: true
     runtime: nvidia
     environment:
       DISPLAY: $DISPLAY
+      QT_X11_NO_MITSHM: 1 # Prevent xcb_shm_attach() errors
+      MESA_GL_VERSION_OVERRIDE: 3.3 #https://askubuntu.com/questions/850900/why-is-my-opengl-version-stuck-at-3-0-despite-new-hardware-software 
     volumes:
-      - .:/project
+      - .:/volume
       - ./config:/root/.config/Cyberbotics/
       - /tmp/.X11-unix:/tmp/.X11-unix
-    networks:
-      - l2
-    command: "/bin/bash"
+    network_mode: host
+    entrypoint: bash
 
-networks:
-  l2:
-    driver: bridge
-    name: l2
