@@ -1,6 +1,7 @@
 #include "app_hal.h"
 #include "state.h"
 #include "functions.h"
+#include <cstdio>
 
 void write_outputs() {
 
@@ -10,6 +11,7 @@ void write_outputs() {
   for (int i = 0; i < NUM_J; i++) {
     // Don't move if we hit a limit
     if (!digitalRead(CAL_PIN[i])) {
+      printf("Limit %d hit; skipping move\n", i);
       continue;
     }
 
@@ -34,9 +36,9 @@ void read_inputs() {
   bool hasError = false;
   int ts = 1; // TODO
   for (int i = 0; i < NUM_J; i++) {
-    int p = readEnc(i) / ENC_MULT[i];
-    state::intent.vel[i] = (p - state::intent.pos[i]) / ts;
-    state::intent.pos[i] = p;
+    int p = readEnc(i);
+    state::actual.vel[i] = (p - state::actual.pos[i]) / ts;
+    state::actual.pos[i] = p;
   }
 }
 

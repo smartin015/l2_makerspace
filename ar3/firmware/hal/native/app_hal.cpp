@@ -14,7 +14,7 @@ void digitalWrite(int pin, bool high) {
       return;
     } else if (pin == STEP_PIN[i]) {
       if (prev_step_pin[i] && !high) {
-        hw::move_target(i, cur_dir[i]);
+        hw::move_steps(i, cur_dir[i]);
       }
       prev_step_pin[i] = high;
       return;
@@ -35,7 +35,7 @@ bool digitalRead(int pin) {
 }
 
 int readEnc(int idx) {
-  return hw::get_steps(idx) + step_offs[idx];
+  return hw::get_steps(idx); // TODO + step_offs[idx];
 }
 
 void writeEnc(int idx, int value) {

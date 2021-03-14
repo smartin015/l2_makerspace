@@ -10,15 +10,12 @@ namespace hw {
 
 bool cur_cal[NUM_J];
 int steps[NUM_J];
-int target[NUM_J];
 
 bool get_cur_cal(int idx) { return cur_cal[idx]; }
-bool get_steps(int idx) { return steps[idx]; }
+int get_steps(int idx) { return steps[idx]; }
 
-bool target_changed = false;
-bool move_target(int idx, int delta) { 
-  target_changed = true;
-  target[idx] += delta; 
+bool move_steps(int idx, int delta) { 
+  steps[idx] += delta; 
 }
 
 #define PUSH_ADDR "tcp://*:5556"
@@ -44,7 +41,6 @@ void init() {
             PUSH_ADDR, PUB_PD_MILLIS, PULL_ADDR); 
   for (int i = 0; i < NUM_J; i++) {
     steps[i] = 0;
-    target[i] = 0;
     cur_cal[i] = true;
   }
 }
@@ -52,14 +48,11 @@ void init() {
 uint64_t next_publish = 0;
 void loop() {
   if (millis() > next_publish) {
-    if (target_changed) {
-      zmq::message_t msg(NUM_J * sizeof(int));
-      for (int i = 0; i < NUM_J; i++) {
-        ((int*)msg.data())[i] = target[i];
-      }
-      push_socket.send(msg, ZMQ_DONTWAIT);  
-      target_changed = false;
+    zmq::message_t msg(NUM_J * sizeof(int));
+    for (int i = 0; i < NUM_J; i++) {
+      ((int*)msg.data())[i] = steps[i];
     }
+    push_socket.send(msg, ZMQ_DONTWAIT);  
     next_publish += PUB_PD_MILLIS;
   }
   sync();

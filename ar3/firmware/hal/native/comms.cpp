@@ -17,18 +17,21 @@ void init() {
   LOG_DEBUG("Comms initialized: %s", ZMQ_ADDR); 
 }
 
-bool read(char* buf, int buflen) {
+int read(uint8_t* buf, int buflen) {
   zmq::message_t request;
   if (socket.recv(&request, ZMQ_DONTWAIT)) {
-    strncpy(buf, (char*)request.data(), buflen);
-    LOG_INFO("read '%s'", buf);
-    return true;
+    memcpy(buf, request.data(), request.size());
+    //for (int i = 0; i < request.size(); i++) {
+    //  printf("%02x", buf[i]);
+    //}
+    //printf("\n");
+    return request.size();
   } else {
-    return false;
+    return 0;
   }
 }
 
-void write(char* buf, int buflen) {
+void write(uint8_t* buf, int buflen) {
   zmq::message_t reply(buflen);
   memcpy(reply.data(), buf, buflen);
   socket.send(reply);

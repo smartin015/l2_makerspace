@@ -155,7 +155,7 @@ class AR3(Node):
         # self.dance_timer = self.create_timer(self.DANCE_PD, self.dance_callback)
         self.command_sub = self.create_subscription(JointTrajectory, "joint_trajectory_command", self.handle_joint_trajectory, 
                                                     qos_profile=qos_profile_sensor_data)
-        self.get_logger().info("Init complete")
+        self.get_logger().info("Init complete!")
 
     def spin_sim(self):
         next_joint_state_cb = 0
@@ -180,6 +180,7 @@ class AR3(Node):
     def handle_raw_steps(self, steps):
         # When simulating firmware, we get raw step counts over ZMQ - these are 
         # referenced relative from simulation start pos
+        self.get_logger().info("test")
         self.get_logger().info("Handling raw steps from firmware sim", throttle_duration_sec=1)
         send_limits = False # only send limits on update
         for (i, s) in enumerate(struct.unpack('i'*NUM_J, steps)):
@@ -188,11 +189,12 @@ class AR3(Node):
             inside_limits = (MOTOR_LIMITS[i][0] < angle) and (angle < MOTOR_LIMITS[i][1])
             if self.limits[i] != inside_limits:
               send_limits = True
+              self.get_logger().info("Limit switch %d state change - %d <- %d -> %d" % (i, MOTOR_LIMITS[i][0], angle, MOTOR_LIMITS[i][1]))
             self.limits[i] = inside_limits
 
         if send_limits:
             self.lim_socket.send(struct.pack('b'*NUM_J, *self.limits))
-            self.get_logger().info("Sent limit")
+            self.get_logger().info("Sent limits %s" % self.limits)
 
     def handle_joint_trajectory(self, jt):
         # print(jt) # TODO handle setting joint trajectory
