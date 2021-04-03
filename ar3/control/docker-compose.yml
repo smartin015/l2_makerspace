@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  web_interface:
+    build: .
+    image: l2ar3control:latest
+    command: python3 -m http.server
+    working_dir: /www
+    environment:
+      - "PYTHONUNBUFFERED=1"
+    volumes:
+      - ".:/www"
+    ports:
+      - "8000:8000"

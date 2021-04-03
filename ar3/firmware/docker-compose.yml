@@ -1,6 +1,6 @@
 version: "3.8"
 services:
-  native:
+  fw_native:
     build: .
     image: l2pio
     stdin_open: true

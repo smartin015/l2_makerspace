@@ -34,6 +34,8 @@ Encoder enc[] = {
 
 //set calibration limit switch pins
 const int CAL_PIN[] = {26, 27, 28, 29, 30, 31};
+// false == negative rotation limit
+const bool CAL_DIR[] = {false, false, false, false, false, false};
 
 //set encoder multiplier
 //const double ENC_MULT[] = {5.12, 5.12, 5.12, 5.12, 2.56, 5.12};

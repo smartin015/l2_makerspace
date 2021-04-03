@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <zmq.hpp>
 
-#define ZMQ_ADDR "tcp://*:5555"
+#define ZMQ_ADDR "tcp://0.0.0.0:5555"
 
 zmq::context_t context (1);
 zmq::socket_t socket (context, ZMQ_REP);
@@ -14,7 +14,7 @@ namespace comms {
 
 void init() {
   socket.bind(ZMQ_ADDR);  
-  LOG_DEBUG("Comms initialized: %s", ZMQ_ADDR); 
+  LOG_DEBUG("Controller ZMQ REP socket initialized: %s", ZMQ_ADDR); 
 }
 
 int read(uint8_t* buf, int buflen) {

@@ -19,12 +19,12 @@
   <tbody>
     <tr id="repeatntimes">
       <td style="width:300px">
-        <input class="mdl-slider mdl-js-slider posslider" type="range" id="s6" min="-180" max="180" value="0" step="2">
+        <input class="mdl-slider mdl-js-slider posslider" type="range" id="s6" min="-3.14159" max="3.14159" value="0" step="0.1">
       </td>
       <td class="postgt">0</td>
       <td class="posval">#</td>
       <td style="width:300px">
-        <input class="mdl-slider mdl-js-slider velslider" type="range" id="s6" min="-180" max="180" value="0" step="2">
+        <input class="mdl-slider mdl-js-slider velslider" type="range" id="s6" min="-3.14159" max="3.14159" value="0" step="0.1">
       </td>
       <td class="veltgt">0</td>
       <td class="velval">#</td>
@@ -40,11 +40,11 @@ let mask = [0,0,0,0,0,0];
 let tpos = [0,0,0,0,0,0];
 let tvel = [0,0,0,0,0,0];
 let tmask = [0,0,0,0,0,0];
+const STEPS_PER_REV = [4096,4096,4096,4096,4096,4096];
 
 // Expand the row to njoints
 let tmpl = document.getElementById("repeatntimes");
 let tbody = document.querySelector("tbody");
-console.log(tbody);
 for (let i = 1; i < NUM_J; i++) {
   tbody.appendChild(tmpl.cloneNode(true));
 }
@@ -62,12 +62,12 @@ let ui = {
 
 for (let i = 0; i < NUM_J; i++) {
   ui.posslider[i].oninput = (e) => {
-    tpos[i] = e.target.value;
-    ui.postgt[i].innerText = tpos[i];
+    tpos[i] = Math.round(e.target.value / (2*3.14159) * STEPS_PER_REV[i]);
+    ui.postgt[i].innerText = parseFloat(e.target.value).toFixed(2);
   }
   ui.velslider[i].oninput = (e) => {
-    tvel[i] = e.target.value;
-    ui.veltgt[i].innerText = tvel[i];
+    tvel[i] = Math.round(e.target.value / (2*3.14159) * STEPS_PER_REV[i]);
+    ui.veltgt[i].innerText = parseFloat(e.target.value).toFixed(2);
   }
 }
 
@@ -79,8 +79,19 @@ ws.onopen = (event) => {
   console.log("socket opened");
   sendState();
 };
+
+function millis() {
+  return (new Date().getTime());
+}
+
+let last_event_log = millis();
+const EVENT_LOG_PD = 2000;
 ws.onmessage = (event) => {
-  console.log(event.data);
+  let now = millis();
+  if (now - last_event_log > EVENT_LOG_PD) {
+    console.log(event.data);
+    last_event_log = now;
+  }
   mpv = event.data.split("|");
   m = mpv[0].split(",");
   p = mpv[1].split(",");
@@ -89,8 +100,8 @@ ws.onmessage = (event) => {
     mask[i]=m[i];
     pos[i]=p[i];
     vel[i]=v[i];
-    ui.posval[i].innerText = pos[i];
-    ui.velval[i].innerText = vel[i];
+    ui.posval[i].innerText = (pos[i] * (2*3.14159)/STEPS_PER_REV[i]).toFixed(2);
+    ui.velval[i].innerText = (vel[i] * (2*3.14159)/STEPS_PER_REV[i]).toFixed(2);
   }
   sendState();
 }

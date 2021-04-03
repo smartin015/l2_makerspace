@@ -50,8 +50,10 @@ void loop() {
   }
   if (sz > 0) {
     deserialize(&state::intent, buf);
+    update_velocities();
   }
   read_inputs();
+  update_velocities();
   write_outputs();
   if (sz > 0) {
     // Comms follows ZMQ req/rep communication; exactly one reply per received request
@@ -59,5 +61,5 @@ void loop() {
     serialize(buf, &state::actual);
     comms::write(buf, 2*(NUM_J*sizeof(int16_t)) + (NUM_J*sizeof(uint8_t)));
   }
-  usleep(1 * 1000000);
+  hal_usleep(100000);
 }

@@ -12,6 +12,11 @@ version: '3.8'
 # `ros2 topic pub --once /servo_server/delta_twist_cmds geometry_msgs/TwistStamped "{'header': {'frame_id': 'joint_6'}, 'twist': {'linear': {'x': 0.3}, 'angular': {'z': 0.5}}}"`` to send a command
 
 services:
+  stub_robot: # Headless, basic simulation without webots
+    build: .
+    tty: true
+    image: l2ar3sim:latest
+    command: /bin/bash -i -c "ros2 run l2_ar3 node"
   main:
     build: .
     image: l2ar3sim:latest

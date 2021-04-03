@@ -2,6 +2,18 @@
 #include "config.h"
 #include "hw.h"
 #include "log.h"
+#include <signal.h>
+#include <unistd.h>
+#include <iostream>
+#include <cstdlib>
+
+// For some reason, Ctrl+C isn't detected when
+// running the native program via `pio` in Docker,
+// so we have to handle it custom here.
+void signal_callback_handler(int signum) {
+   printf("Stop request detected, exiting...\n");
+   exit(signum);
+}
 
 int cur_dir[NUM_J];
 bool prev_step_pin[NUM_J];
@@ -47,6 +59,8 @@ void setup();
 void loop();
 int main() {
   hw::init();
+  signal(SIGINT, signal_callback_handler);
+  signal(SIGTERM, signal_callback_handler);
   for (int i = 0; i < NUM_J; i++) {
     cur_dir[i] = 1;
     step_offs[i] = 0;

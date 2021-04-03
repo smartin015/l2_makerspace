@@ -13,8 +13,15 @@ from builtin_interfaces.msg import Time
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import TransformStamped
 import zmq
+import sys
+import signal
 import struct
 import threading
+
+def sigterm_handler(_signo, _stack_frame):
+    print("SIGTERM received, exiting")
+    sys.exit(0)
+signal.signal(signal.SIGTERM, sigterm_handler)
 
 NUM_J = 6
 
@@ -39,7 +46,7 @@ TARGETS = [
 ]
 
 # TODO make more real
-STEPS_PER_REV = [100] * NUM_J
+STEPS_PER_REV = [4096] * NUM_J
 
 class StubRobot:
   def __init__(self):
@@ -91,6 +98,9 @@ class AR3(Node):
 
     def __init__(self):
         super().__init__('l2_ar3')
+        self.declare_parameter("step_url", "tcp://localhost:5556")
+        self.declare_parameter("limit_url", "tcp://localhost:5557")
+
         # Setup simulation using webots clock (and publishing for other ros2 nodes)
         self.set_parameters([
             rclpy.parameter.Parameter('use_sim_time', value=True)
@@ -126,9 +136,8 @@ class AR3(Node):
             s.enable(self.timestep)
 
         self.get_logger().info("Socket init...")
-        # TODO configurable URLS
-        STEP_URL = "tcp://localhost:5556"
-        LIM_URL = "tcp://localhost:5557"
+        STEP_URL = self.get_parameter('step_url').get_parameter_value().string_value
+        LIM_URL = self.get_parameter('limit_url').get_parameter_value().string_value
         self.zmq_context = zmq.Context()
         self.step_socket = self.zmq_context.socket(zmq.PULL)
         self.step_socket.connect(STEP_URL)
@@ -180,13 +189,15 @@ class AR3(Node):
     def handle_raw_steps(self, steps):
         # When simulating firmware, we get raw step counts over ZMQ - these are 
         # referenced relative from simulation start pos
-        self.get_logger().info("test")
-        self.get_logger().info("Handling raw steps from firmware sim", throttle_duration_sec=1)
+        self.get_logger().info("Firmware sim conn active", throttle_duration_sec=5)
         send_limits = False # only send limits on update
         for (i, s) in enumerate(struct.unpack('i'*NUM_J, steps)):
-            angle = 6.28 * s / STEPS_PER_REV[i]
+            angle = (2*3.14159) * s / STEPS_PER_REV[i]
             self.motors[i].setPosition(angle)
-            inside_limits = (MOTOR_LIMITS[i][0] < angle) and (angle < MOTOR_LIMITS[i][1])
+            # Only one side has actual limit switches; the other is a "breaking point"
+            inside_limits = (MOTOR_LIMITS[i][0] < angle)
+            if angle > MOTOR_LIMITS[i][1]:
+              self.get_logger().info("Non-switch limit %f exceeded for joint %d: angle is %f" % (MOTOR_LIMITS[i][1], i, angle), throttle_duration_sec=1)
             if self.limits[i] != inside_limits:
               send_limits = True
               self.get_logger().info("Limit switch %d state change - %d <- %d -> %d" % (i, MOTOR_LIMITS[i][0], angle, MOTOR_LIMITS[i][1]))
@@ -194,7 +205,7 @@ class AR3(Node):
 
         if send_limits:
             self.lim_socket.send(struct.pack('b'*NUM_J, *self.limits))
-            self.get_logger().info("Sent limits %s" % self.limits)
+            self.get_logger().info("Sent limit update to firmware sim %s" % self.limits)
 
     def handle_joint_trajectory(self, jt):
         # print(jt) # TODO handle setting joint trajectory
