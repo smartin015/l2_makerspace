@@ -6,14 +6,17 @@
 // Set this wide enough that the step pin interrupt
 // can be triggered on the stepper driver - see driver 
 // manual for acceptable limits.
-#define STEPPER_DELAY_USEC 5
+// Default: 5 us
+#define STEPPER_DELAY_USEC (10 * 1000)
 
 bool lim_hit_msg[NUM_J] = {false, false, false, false, false, false};
 int step_pd[NUM_J] = {0, 0, 0, 0, 0, 0};
 int step_counter[NUM_J] = {0, 0, 0, 0, 0, 0};
 
 #define VELOCITY_UPDATE_PD_MILLIS 100
+#define VELOCITY_MAX_DT 200
 #define MAX_STEP_PD_CHANGE 1
+#define INITIAL_STEP_PD_MILLIS (50 * 1000 / STEPPER_DELAY_USEC)
 uint64_t last_velocity_update = 0;
 int prev_vel_pos[NUM_J];
 bool step_calc_err[NUM_J];
@@ -28,6 +31,10 @@ void update_velocities() {
     return;
   }
   last_velocity_update = now;
+  if (dt > VELOCITY_MAX_DT) {
+    printf("WARNING: too long between calls to update_velocities(); skipping update\n");
+    return; // Avoid edge case in delta processing causing jumps in calculated pos/vel
+  }
 
   for (int i = 0; i < NUM_J; i++) {
     state::actual.vel[i] = (state::actual.pos[i] - prev_vel_pos[i]) / dt;
@@ -43,6 +50,12 @@ void update_velocities() {
       continue;
     } 
     
+    // Shortcut on zero velocity - initial nudge to start moving
+    if (state::actual.vel[i] == 0) {
+      step_pd[i] = INITIAL_STEP_PD_MILLIS; 
+      continue;
+    }
+
     // Calculate step period based on state::actual.vel rather than current step_pd
     // To account for potential real life variation in stepping speed (e.g. motor slippage)
     int intent_step_pd = (1000000 / state::intent.vel[i]) / STEPPER_DELAY_USEC;

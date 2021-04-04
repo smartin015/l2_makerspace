@@ -61,5 +61,4 @@ void loop() {
     serialize(buf, &state::actual);
     comms::write(buf, 2*(NUM_J*sizeof(int16_t)) + (NUM_J*sizeof(uint8_t)));
   }
-  hal_usleep(100000);
 }

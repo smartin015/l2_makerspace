@@ -3,9 +3,19 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
 <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+<style>
+  body {
+    background-color: grey;
+  }
+  
+  body.connected {
+    background-color: white;
+  }
+</style>
 </head>
 <body>
-<table class="mdl-data-table mdl-js-data-table">
+<div id="status"></div>
+<table class="mdl-data-table mdl-js-data-table" style="background-color: transparent !important;">
   <thead>
     <tr>
       <th class="mdl-data-table__cell--non-numeric">Position</th>
@@ -24,7 +34,7 @@
       <td class="postgt">0</td>
       <td class="posval">#</td>
       <td style="width:300px">
-        <input class="mdl-slider mdl-js-slider velslider" type="range" id="s6" min="-3.14159" max="3.14159" value="0" step="0.1">
+        <input class="mdl-slider mdl-js-slider velslider" type="range" id="s6" min="0.1" max="1.0" value="0.1" step="0.1">
       </td>
       <td class="veltgt">0</td>
       <td class="velval">#</td>
@@ -32,7 +42,7 @@
   </tbody>
 </table>
 <script>
-let ws = new WebSocket("ws://semartin:8001");
+var ws = null; //See reconnect()
 const NUM_J = 6;
 let pos = [0,0,0,0,0,0];
 let vel = [0,0,0,0,0,0];
@@ -71,22 +81,21 @@ for (let i = 0; i < NUM_J; i++) {
   }
 }
 
-function sendState() {
-  ws.send([tmask.join(","), tpos.join(","), tvel.join(",")].join("|"));
+function setStatus(status) {
+  document.getElementById("status").innerText = status;
 }
-
-ws.onopen = (event) => {
-  console.log("socket opened");
-  sendState();
-};
 
 function millis() {
   return (new Date().getTime());
 }
 
+function sendState() {
+  ws.send([tmask.join(","), tpos.join(","), tvel.join(",")].join("|"));
+}
+
 let last_event_log = millis();
 const EVENT_LOG_PD = 2000;
-ws.onmessage = (event) => {
+function handleMessage(event) {
   let now = millis();
   if (now - last_event_log > EVENT_LOG_PD) {
     console.log(event.data);
@@ -105,6 +114,26 @@ ws.onmessage = (event) => {
   }
   sendState();
 }
+
+function startWebsocket() {
+  ws = new WebSocket(`ws://${document.location.hostname}:8001`);
+
+  ws.onopen = (event) => {
+    console.log("socket opened");
+    setStatus(`Connected to ${ws.url}`);
+    document.getElementsByTagName("body")[0].className = "connected";
+    sendState();
+  };
+
+  ws.onclose = (event) => {
+    console.log("socket closed, attempting reconnect in 5s");
+    setStatus("Disconnected (reconnecting in 5s)");
+    document.getElementsByTagName("body")[0].className = "";
+    setTimeout(startWebsocket, 5000);
+  };
+  ws.onmessage = handleMessage;
+}
+startWebsocket();
 </script>
 </body>
 </html>
