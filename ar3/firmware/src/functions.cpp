@@ -2,12 +2,14 @@
 #include "state.h"
 #include "functions.h"
 #include <cstdio>
+#include <cmath> // std::abs
+#include <algorithm> // std::min
 
 // Set this wide enough that the step pin interrupt
 // can be triggered on the stepper driver - see driver 
 // manual for acceptable limits.
 // Default: 5 us
-#define STEPPER_DELAY_USEC (10 * 1000)
+#define STEPPER_DELAY_USEC 5
 
 bool lim_hit_msg[NUM_J] = {false, false, false, false, false, false};
 int step_pd[NUM_J] = {0, 0, 0, 0, 0, 0};
@@ -15,8 +17,10 @@ int step_counter[NUM_J] = {0, 0, 0, 0, 0, 0};
 
 #define VELOCITY_UPDATE_PD_MILLIS 100
 #define VELOCITY_MAX_DT 200
+#define VELMULT 100
 #define MAX_STEP_PD_CHANGE 1
-#define INITIAL_STEP_PD_MILLIS (50 * 1000 / STEPPER_DELAY_USEC)
+#define MAX_STEP_PD (100 * 1000 / STEPPER_DELAY_USEC)
+#define MIN_STEP_PD (10 / STEPPER_DELAY_USEC)
 uint64_t last_velocity_update = 0;
 int prev_vel_pos[NUM_J];
 bool step_calc_err[NUM_J];
@@ -24,6 +28,7 @@ bool step_calc_err[NUM_J];
 // Velocities are implemented by slowly adjusting 
 // the stepping period for each joint based on the target
 // velocity and (currently hardcoded) acceleration profile given for each motor
+char dbg[2*NUM_J] = "";
 void update_velocities() {
   uint64_t now = millis();
   int dt = now - last_velocity_update;
@@ -37,7 +42,7 @@ void update_velocities() {
   }
 
   for (int i = 0; i < NUM_J; i++) {
-    state::actual.vel[i] = (state::actual.pos[i] - prev_vel_pos[i]) / dt;
+    state::actual.vel[i] = std::abs(state::actual.pos[i] - prev_vel_pos[i]) * 100 / dt;
     
     // Don't calculate stepping if we're already at intent
     if (state::intent.pos[i] - state::actual.pos[i] == 0) {
@@ -52,7 +57,7 @@ void update_velocities() {
     
     // Shortcut on zero velocity - initial nudge to start moving
     if (state::actual.vel[i] == 0) {
-      step_pd[i] = INITIAL_STEP_PD_MILLIS; 
+      step_pd[i] = MAX_STEP_PD; 
       continue;
     }
 
@@ -60,24 +65,29 @@ void update_velocities() {
     // To account for potential real life variation in stepping speed (e.g. motor slippage)
     int intent_step_pd = (1000000 / state::intent.vel[i]) / STEPPER_DELAY_USEC;
     int actual_step_pd = (1000000 / state::actual.vel[i]) / STEPPER_DELAY_USEC;
-    int dpd = (intent_step_pd - actual_step_pd);
-        
+    
     // TODO PID loop tuning
-    if (((dpd < 0) ? -dpd : dpd) > MAX_STEP_PD_CHANGE) {
+    int dpd = intent_step_pd - actual_step_pd;
+    if (std::abs(dpd) > MAX_STEP_PD_CHANGE) {
       dpd = MAX_STEP_PD_CHANGE * ((dpd > 0) ? 1 : -1);
     }
-    step_pd[i] += dpd;
+    step_pd[i] = std::min(MAX_STEP_PD, std::max(MIN_STEP_PD, step_pd[i] + dpd));
+    
     if (i == 0) {
-      printf("Step_pd %d update, +%d --> %d", i, dpd, step_pd[i]);
+      printf("%d %s", int(now), dbg);
+      printf("\tstep_pd %d: ip %d ap %d iv %d av %d istep %d astep %d dpd %d --> %d\n", i, 
+          state::intent.pos[0], state::actual.pos[0],
+          state::intent.vel[0], state::actual.vel[0],
+          intent_step_pd, actual_step_pd, dpd, step_pd[i]);
     }
+
+    prev_vel_pos[i] = state::actual.pos[i];
   }
 }
 
 void write_outputs() {
   // Continue moving to target
   // Calculate ramp settings
-  uint64_t now = millis();  // todo rm
-  char dbg[2*NUM_J];
 
   for (int i = 0; i < NUM_J; i++) {
     int delta = state::intent.pos[i] - state::actual.pos[i];
@@ -124,7 +134,6 @@ void write_outputs() {
   for (int i = 0; i < NUM_J; i++) {
     digitalWrite(STEP_PIN[i], HIGH);
   }
-  printf("%d %s\n", now, dbg);
 }
 
 void read_inputs() {

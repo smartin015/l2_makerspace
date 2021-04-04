@@ -3,11 +3,12 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
 <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+<script src="/RGraph.common.core.js"></script>
+<script src="/RGraph.line.js"></script>
 <style>
   body {
     background-color: grey;
   }
-  
   body.connected {
     background-color: white;
   }
@@ -34,12 +35,13 @@
       <td class="postgt">0</td>
       <td class="posval">#</td>
       <td style="width:300px">
-        <input class="mdl-slider mdl-js-slider velslider" type="range" id="s6" min="0.1" max="1.0" value="0.1" step="0.1">
+        <input class="mdl-slider mdl-js-slider velslider" type="range" id="s6" min="0.01" max="0.1" value="0.01" step="0.01">
       </td>
       <td class="veltgt">0</td>
       <td class="velval">#</td>
     </tr>
   </tbody>
+  <canvas id="cvs" width="800" height="150" style="width: 100%">[No canvas support]</canvas>
 </table>
 <script>
 var ws = null; //See reconnect()
@@ -51,6 +53,26 @@ let tpos = [0,0,0,0,0,0];
 let tvel = [0,0,0,0,0,0];
 let tmask = [0,0,0,0,0,0];
 const STEPS_PER_REV = [4096,4096,4096,4096,4096,4096];
+const GRAPH_DOMAIN_SEC = 20;
+const SEND_STATE_PD_MILLIS = 100;
+
+// https://www.rgraph.net/canvas/howto-scrolling.html
+var graph = new RGraph.Line({
+    id: 'cvs',
+    data: [...Array(NUM_J)].map(e => Array(GRAPH_DOMAIN_SEC * 1000 / SEND_STATE_PD_MILLIS)),
+    options: {
+        yaxisScaleMax: 4,
+        tickmarksStyle: null,
+        linewidth: 1,
+        shadow: null,
+        backgroundGridVlines: false,
+        backgroundGridBorder: false,
+        backgroundGridColor: '#eee',
+        xaxisLabels: ['20s','15s','10s','5s','0s'],
+        xaxis: false,
+        textSize: 7,
+    }
+}).draw();
 
 // Expand the row to njoints
 let tmpl = document.getElementById("repeatntimes");
@@ -89,9 +111,25 @@ function millis() {
   return (new Date().getTime());
 }
 
+let lastSendState = 0;
 function sendState() {
-  ws.send([tmask.join(","), tpos.join(","), tvel.join(",")].join("|"));
+  if (ws.readyState === ws.OPEN) {
+    ws.send([tmask.join(","), tpos.join(","), tvel.join(",")].join("|"));
+    lastSendState = millis();
+  }
 }
+
+function tick() {
+  setStatus(lastSendState.toString());
+  if (millis() > lastSendState + SEND_STATE_PD_MILLIS) {
+    sendState();
+  }
+
+  // Clear (NOT reset) the canvas
+  RGraph.clear(graph.canvas);
+  graph.draw();
+}
+setInterval(tick, 100);
 
 let last_event_log = millis();
 const EVENT_LOG_PD = 2000;
@@ -109,10 +147,14 @@ function handleMessage(event) {
     mask[i]=m[i];
     pos[i]=p[i];
     vel[i]=v[i];
-    ui.posval[i].innerText = (pos[i] * (2*3.14159)/STEPS_PER_REV[i]).toFixed(2);
+    let pos_norm = pos[i] * (2*3.14159)/STEPS_PER_REV[i];
+    graph.original_data[i].shift();
+    graph.original_data[i].push(pos_norm);
+    ui.posval[i].innerText = (pos_norm).toFixed(2);
     ui.velval[i].innerText = (vel[i] * (2*3.14159)/STEPS_PER_REV[i]).toFixed(2);
   }
-  sendState();
+  
+  tick();
 }
 
 function startWebsocket() {

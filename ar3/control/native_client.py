@@ -7,7 +7,7 @@ import argparse
 import websockets
 import asyncio
 from collections import defaultdict
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 NUM_J = 6
 mask = [0]*NUM_J
@@ -19,13 +19,8 @@ def sigterm_handler(_signo, _stack_frame):
     sys.exit(0)
 signal.signal(signal.SIGTERM, sigterm_handler)
 
-class WebServer(BaseHTTPRequestHandler):
-  def do_GET(self):
-    with open('./index.html', 'r') as f:
-      self.send_response(200)
-      self.send_header("Content-type", "text/html")
-      self.end_headers()
-      self.wfile.write(bytes(f.read(), 'utf8'))
+class WebServer(SimpleHTTPRequestHandler):
+    pass
 
 async def handle_socket(ws, path):
   global mask, pos, vel, args
