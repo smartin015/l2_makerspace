@@ -12,37 +12,52 @@
   body.connected {
     background-color: white;
   }
+  .content {
+    width: 1200px;
+    margin: 2vh;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  table {
+    width: 100%;
+  }
 </style>
 </head>
 <body>
-<div id="status"></div>
-<table class="mdl-data-table mdl-js-data-table" style="background-color: transparent !important;">
-  <thead>
-    <tr>
-      <th class="mdl-data-table__cell--non-numeric">Position</th>
-      <th>Target</th>
-      <th>Value</th>
-      <th class="mdl-data-table__cell--non-numeric">Velocity</th>
-      <th>Target</th>
-      <th>Value</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr id="repeatntimes">
-      <td style="width:300px">
-        <input class="mdl-slider mdl-js-slider posslider" type="range" id="s6" min="-3.14159" max="3.14159" value="0" step="0.1">
-      </td>
-      <td class="postgt">0</td>
-      <td class="posval">#</td>
-      <td style="width:300px">
-        <input class="mdl-slider mdl-js-slider velslider" type="range" id="s6" min="0.01" max="0.1" value="0.01" step="0.01">
-      </td>
-      <td class="veltgt">0</td>
-      <td class="velval">#</td>
-    </tr>
-  </tbody>
-  <canvas id="cvs" width="800" height="150" style="width: 100%">[No canvas support]</canvas>
-</table>
+<div class="mdl-card mdl-shadow--2dp content">
+  <div class="mdl-card__title" style="border-bottom: 1px gray solid;"><h2 class="mdl-card__title-text" id="status"></h2></div>
+  <div class="mdl-card__supporting-text">
+    <table class="mdl-data-table mdl-js-data-table" style="background-color: transparent !important;">
+      <thead>
+        <tr>
+          <th class="mdl-data-table__cell--non-numeric">Position</th>
+          <th>Target</th>
+          <th>Value</th>
+          <th class="mdl-data-table__cell--non-numeric">Velocity</th>
+          <th>Target</th>
+          <th>Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr id="repeatntimes">
+          <td style="width:300px">
+            <input class="mdl-slider mdl-js-slider posslider" type="range" id="s6" min="-3.14159" max="3.14159" value="0" step="0.1">
+          </td>
+          <td class="postgt">0</td>
+          <td class="posval">#</td>
+          <td style="width:300px">
+            <input class="mdl-slider mdl-js-slider velslider" type="range" id="s6" min="0.25" max="4.0" value="0.25" step="0.25">
+          </td>
+          <td class="veltgt">0</td>
+          <td class="velval">#</td>
+        </tr>
+      </tbody>
+      <canvas id="posCanvas" width="500" height="150" style="width: 100%">[No canvas support]</canvas>
+      <canvas id="velCanvas" width="500" height="150" style="width: 100%">[No canvas support]</canvas>
+    </table>
+    <div id="lastUpdate"></div>
+  </div>
+</div>
 <script>
 var ws = null; //See reconnect()
 const NUM_J = 6;
@@ -56,25 +71,32 @@ const STEPS_PER_REV = [4096,4096,4096,4096,4096,4096];
 const GRAPH_DOMAIN_SEC = 20;
 const SEND_STATE_PD_MILLIS = 100;
 
-// https://www.rgraph.net/canvas/howto-scrolling.html
-var graph = new RGraph.Line({
-    id: 'cvs',
-    data: [...Array(NUM_J)].map(e => Array(GRAPH_DOMAIN_SEC * 1000 / SEND_STATE_PD_MILLIS)),
-    options: {
-        yaxisScaleMax: 4,
-        tickmarksStyle: null,
-        linewidth: 1,
-        shadow: null,
-        backgroundGridVlines: false,
-        backgroundGridBorder: false,
-        backgroundGridColor: '#eee',
-        xaxisLabels: ['20s','15s','10s','5s','0s'],
-        xaxis: false,
-        textSize: 7,
-    }
-}).draw();
+// https://medium.com/cafe-pixo/inclusive-color-palettes-for-the-web-bbfe8cf2410e
+const INCLUSIVE_COLORS = ['#E1DAAE', '#FF934F', '#CC2D35', '#058ED9', '#848FA2', '#2D3142'];
 
-// Expand the row to njoints
+function initGraph(id, yMin, yMax) {
+  // https://www.rgraph.net/canvas/howto-scrolling.html
+  return new RGraph.Line({
+      id,
+      data: [...Array(NUM_J)].map(e => Array(GRAPH_DOMAIN_SEC * 1000 / SEND_STATE_PD_MILLIS)),
+      options: {
+          yaxisScaleMax: yMax,
+          yaxisScaleMin: yMin,
+          tickmarksStyle: null,
+          linewidth: 1,
+          shadow: null,
+          colors: INCLUSIVE_COLORS,
+          backgroundGridVlines: false,
+          backgroundGridBorder: false,
+          backgroundGridColor: '#eee',
+          xaxisLabels: ['20s','15s','10s','5s','0s'],
+          xaxis: false,
+          textSize: 7,
+      }
+  }).draw();
+}
+
+// Expand the table row to njoints
 let tmpl = document.getElementById("repeatntimes");
 let tbody = document.querySelector("tbody");
 for (let i = 1; i < NUM_J; i++) {
@@ -85,14 +107,21 @@ let ui = {
   posslider: document.getElementsByClassName("posslider"),
   postgt: document.getElementsByClassName("postgt"),
   posval: document.getElementsByClassName("posval"),
+  posgraph: initGraph("posCanvas", -4, 4),
   
   velslider: document.getElementsByClassName("velslider"),
   veltgt: document.getElementsByClassName("veltgt"),
   velval: document.getElementsByClassName("velval"),
+  velgraph: initGraph("velCanvas", 0, 4),
 };
 
 
 for (let i = 0; i < NUM_J; i++) {
+  // Apply colors matching the graphs
+  for (let inp of tbody.children[i].querySelectorAll("input")) {
+    inp.style = `background-color: ${INCLUSIVE_COLORS[i]}`;
+  }
+
   ui.posslider[i].oninput = (e) => {
     tpos[i] = Math.round(e.target.value / (2*3.14159) * STEPS_PER_REV[i]);
     ui.postgt[i].innerText = parseFloat(e.target.value).toFixed(2);
@@ -105,6 +134,10 @@ for (let i = 0; i < NUM_J; i++) {
 
 function setStatus(status) {
   document.getElementById("status").innerText = status;
+}
+
+function setLastUpdate() {
+  document.getElementById("lastUpdate").innerText = `last update ${millis() - lastSendState}ms`;
 }
 
 function millis() {
@@ -120,14 +153,16 @@ function sendState() {
 }
 
 function tick() {
-  setStatus(lastSendState.toString());
+  setLastUpdate();
   if (millis() > lastSendState + SEND_STATE_PD_MILLIS) {
     sendState();
   }
 
   // Clear (NOT reset) the canvas
-  RGraph.clear(graph.canvas);
-  graph.draw();
+  RGraph.clear(ui.posgraph.canvas);
+  RGraph.clear(ui.velgraph.canvas);
+  ui.posgraph.draw();
+  ui.velgraph.draw();
 }
 setInterval(tick, 100);
 
@@ -148,10 +183,17 @@ function handleMessage(event) {
     pos[i]=p[i];
     vel[i]=v[i];
     let pos_norm = pos[i] * (2*3.14159)/STEPS_PER_REV[i];
-    graph.original_data[i].shift();
-    graph.original_data[i].push(pos_norm);
-    ui.posval[i].innerText = (pos_norm).toFixed(2);
-    ui.velval[i].innerText = (vel[i] * (2*3.14159)/STEPS_PER_REV[i]).toFixed(2);
+    ui.posgraph.original_data[i].shift();
+    ui.posgraph.original_data[i].push(pos_norm);
+    ui.posval[i].innerText = pos_norm.toFixed(2);
+
+    let vel_norm = vel[i] * (2*3.14159)/STEPS_PER_REV[i];
+    if (i === 0) {
+      console.log(vel_norm);
+    }
+    ui.velgraph.original_data[i].shift();
+    ui.velgraph.original_data[i].push(vel_norm);
+    ui.velval[i].innerText = vel_norm.toFixed(2);
   }
   
   tick();

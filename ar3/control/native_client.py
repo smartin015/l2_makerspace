@@ -26,6 +26,7 @@ async def handle_socket(ws, path):
   global mask, pos, vel, args
   print("WS conn", str(ws))
   while True:
+    # NOTE: Expected units are in "steps", "steps/second" etc.
     data = await ws.recv()
     mpv = data.split("|")
     mask = [int(v) for v in mpv[0].split(",")]
