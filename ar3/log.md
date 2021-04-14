@@ -6,6 +6,16 @@ Substantial noise from J4 (smaller stepper driver) causing skips in encoder puls
 
 *   Root cause: noise from stepper lines causing interference in encoder wires. Routed stepper lines farther away from encoders and shielded them with metal fiber sleeving to reduce noise - works fine now!
 
+## 2021-04-14
+
+To start the viewer:
+
+```
+docker exec -it ar3sim /bin/bash -c 'cd $WEBOTS_HOME/resources/web/streaming_viewer && python3 -m http.server'
+```
+
+Running the example via `ar3/webots_sim_launch.sh`, then opening `localhost:8000` for the web controls - can move the arm joints! This totally ignores the simulation server stuff, which would still be neat to have as a capability. But this gets us even closer to a real test.
+
 
 ## 2021-04-13
 
