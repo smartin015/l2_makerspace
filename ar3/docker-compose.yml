@@ -32,17 +32,45 @@ services:
     #ports:
     #  - "8000:8000" # Web server
     #  - "8001:8001" # Websocket server
-  stub_robot: # Headless, basic simulation without webots
+  stub_robot: # webots_sim not started - does basic, headless simulation
     build: ./sim/
     tty: true
     image: l2ar3sim:latest
-    # networks: 
-    #   - ar3
     network_mode: host  
+    command: /bin/bash -i -c "ros2 run l2_ar3 node --ros-args -p stub:=true"
+    stop_grace_period: 1s
+  sim_robot:
+    build: ./sim/
+    tty: true
+    image: l2ar3sim:latest
+    depends_on:
+      - "webots_sim"
+    network_mode: host  
+    volumes:
+      - /tmp:/tmp # Used to sense when webots started
     #ports:
     #  - "5557:5557" # Push limit values
     command: /bin/bash -i -c "ros2 run l2_ar3 node"
     stop_grace_period: 1s
+  webots_sim:
+    build: .
+    image: l2ar3sim:latest
+    stdin_open: true
+    tty: true
+    runtime: nvidia
+    environment:
+      DISPLAY: $DISPLAY
+      QT_X11_NO_MITSHM: 1 # Prevent xcb_shm_attach() errors
+      MESA_GL_VERSION_OVERRIDE: 3.3 #https://askubuntu.com/questions/850900/why-is-my-opengl-version-stuck-at-3-0-despite-new-hardware-software 
+    volumes:
+      - ./sim:/volume
+      - ./sim/config:/root/.config/Cyberbotics/
+      - /tmp:/tmp
+    network_mode: host
+    # entrypoint: bash
+    # --stream="port=2000"
+    command: /usr/local/webots/webots --batch --mode=realtime /volume/webots/worlds/world.wbt
+
 
 networks:
   ar3:

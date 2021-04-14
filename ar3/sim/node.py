@@ -17,6 +17,7 @@ import sys
 import signal
 import struct
 import threading
+import time
 
 def sigterm_handler(_signo, _stack_frame):
     print("SIGTERM received, exiting")
@@ -98,6 +99,7 @@ class AR3(Node):
 
     def __init__(self):
         super().__init__('l2_ar3')
+        self.declare_parameter("stub", "false")
         self.declare_parameter("step_url", "tcp://localhost:5556")
         self.declare_parameter("limit_url", "tcp://localhost:5557")
 
@@ -108,12 +110,19 @@ class AR3(Node):
         self.clockpub = self.create_publisher(Clock, '/clock', 10)
 
         self.joint_names = ["joint_%d" % (i+1) for i in range(self.NUM_JOINTS)]
-        webots_initialized = len(glob.glob("/tmp/webots_*_*", recursive=False)) > 0
-        if not webots_initialized:
-          self.get_logger().info("Webots not running; using StubRobot")
+
+        if self.get_parameter('stub').get_parameter_value().bool_value:
+          self.get_logger().info("Using StubRobot")
           self.robot = StubRobot()
         else:
-          self.get_logger().info("Robot init...")
+          self.get_logger().info("Waiting for webots to initialize")
+          webots_initialized = False
+          while not webots_initialized:
+            webots_initialized = len(glob.glob("/tmp/webots_*_*", recursive=False)) > 0
+            time.sleep(1)
+            self.get_logger().info(".")
+
+          self.get_logger().info("Initializing robot")
           # Robot() blocks checking for connection to Webots - see "Webots doesn't seems to be ready yet" in
           # https://github.com/cyberbotics/webots/blob/f9c017f55084b2d2ccf6cad7c94c97bb9c3ebd2c/src/controller/c/robot.c
           self.robot = Robot()

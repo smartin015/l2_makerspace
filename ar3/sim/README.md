@@ -5,7 +5,8 @@ Dev environment:
 xhost +
 
 # Start container for webots simulator
- docker run --gpus=all --name l2ar3 -it --rm -e DISPLAY -v $(pwd)/webots:/usr/local/webots/resources/projects/ -v $(pwd)/config:/root/.config/Cyberbotics/ -v /tmp/.X11-unix:/tmp/.X11-unix:rw -v $(pwd):/volume l2ar3sim /bin/bash
+# Note: Not passing ~/.Xauthority causes permissions errors
+docker run --gpus=all --name l2ar3 -it --rm -e DISPLAY --net=host -v $(pwd)/webots:/usr/local/webots/resources/projects/ -v $(pwd)/config:/root/.config/Cyberbotics/ -v /tmp/.X11-unix:/tmp/.X11-unix:rw -v ~/.Xauthority:/root/.Xauthority -v $(pwd):/volume l2ar3sim /bin/bash
 
 # Start webots with default environment
 webots

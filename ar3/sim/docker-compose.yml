@@ -17,7 +17,7 @@ services:
     tty: true
     image: l2ar3sim:latest
     command: /bin/bash -i -c "ros2 run l2_ar3 node"
-  main:
+  webots_sim:
     build: .
     image: l2ar3sim:latest
     stdin_open: true
@@ -32,5 +32,6 @@ services:
       - ./config:/root/.config/Cyberbotics/
       - /tmp/.X11-unix:/tmp/.X11-unix
     network_mode: host
-    entrypoint: bash
-
+    # entrypoint: bash
+    # --stream="port=2000"
+    command: /usr/local/webots/webots --batch --mode=realtime /volume/webots/worlds/world.wbt
