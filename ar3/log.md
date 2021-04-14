@@ -17,7 +17,9 @@ Trying out webots simulation servers
 
 [http://l2:1999/session](http://l2:1999/session) - the address of the least loaded sim server
 
-Could edit the config/setup at `$WEBOTS_HOME/resources/web/server/config/session/default.json`
+Have to edit and replace the `localhost` with `l2` in config/setup at `$WEBOTS_HOME/resources/web/server/config/session/default.json`
+
+Unfortunately the use of `ros-foxy-webots-ros2` apt package in post-sim image hasn't been built since early 2020... and there's lots of neat stuff since then. Need to update this image to specifically pull the latest webots image  [R2021a](https://github.com/cyberbotics/webots/releases) then [builda nd install webots_ros2](https://github.com/cyberbotics/webots_ros2/wiki/Build-and-Install)
 
 
 ## 2021-04-08
