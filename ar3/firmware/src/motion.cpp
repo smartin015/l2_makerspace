@@ -24,7 +24,7 @@
 #define STEP_PIN_WRITE_USEC 5
 
 // char dbg[2*NUM_J] = "";
-bool lim_hit_msg[NUM_J];
+bool limit_triggered[NUM_J];
 float step_vel[NUM_J];
 uint32_t ticks_per_step[NUM_J];
 uint32_t ticks[NUM_J];
@@ -46,7 +46,7 @@ bool active[NUM_J];
 
 void motion::init() {
   for (int i = 0; i < NUM_J; i++) {
-    lim_hit_msg[i] = false;
+    limit_triggered[i] = false;
     step_vel[i] = 0;
     ticks_per_step[i] = 0;
     ticks[i] = 0;
@@ -119,12 +119,27 @@ void motion::update() {
   ticks_since_last_update = 0;
 }
 
+bool limits_intended = false;
+void recalc_limit_intent() {
+  // Limits are not at intent if any joint is triggered that does not have
+  // the intent mask also set. Otherwise, they are at intent.
+  limits_intended = true;
+  for (int i = 0; i < NUM_J; i++) {
+    if ((state::actual.mask[i] & MASK_LIMIT_TRIGGERED)  && !(state::intent.mask[i] & MASK_LIMIT_TRIGGERED)) {
+      limits_intended = false;
+    }
+  }
+}
+
+void motion::intent_changed() {
+  recalc_limit_intent();
+}
+
 void motion::write() {
   // Continue moving to target
   // Calculate ramp settings
-
   for (int i = 0; i < NUM_J; i++) {
-    if (!active[i]) {
+    if (!active[i] || !limits_intended) {
       //dbg[2*i+1] = 'x';
       continue;
     }
@@ -134,13 +149,15 @@ void motion::write() {
     uint8_t dir = (delta > 0) ^ ROT_DIR[i];
     //dbg[2*i] = (dir) ? '+' : '-';
     if (!digitalRead(CAL_PIN[i]) && (dir == CAL_DIR[i])) {
-      if (!lim_hit_msg[i]) {
+      if (!(state::actual.mask[i] & MASK_LIMIT_TRIGGERED)) {
         LOG_DEBUG("Driving into limit %d; skipping move\n", i);
-        lim_hit_msg[i] = true;
+        state::actual.mask[i] |= MASK_LIMIT_TRIGGERED;
       }
       continue;
     } else {
-      lim_hit_msg[i] = false;
+      // Update actual limit state and per-joint limit state
+      state::actual.mask[i] &= ~MASK_LIMIT_TRIGGERED;
+      recalc_limit_intent();
     }
 
     // at least USEC_PER_TICK passes between every counter tick

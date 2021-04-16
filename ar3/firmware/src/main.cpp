@@ -21,25 +21,6 @@ void setup() {
   LOG_INFO("Setup complete");
 }
 
-void serialize(uint8_t* buf, state::state_t* state) {
-  for (int i = 0; i < NUM_J; i++) {
-    buf[i] = state->mask[i];
-    buf[NUM_J + 2*i] = state->pos[i] & 0xff;
-    buf[NUM_J + 2*i + 1] = (state->pos[i] >> 8) & 0xff;
-    buf[3*NUM_J + 2*i] = int16_t(state->vel[i]) & 0xff;
-    buf[3*NUM_J + 2*i + 1] = (int16_t(state->vel[i]) >> 8) & 0xff;
-  }
-}
-
-void deserialize(state::state_t* state, uint8_t* buf) {
-  for (int i = 0; i < NUM_J; i++) {
-    state->mask[i] = buf[i];
-    state->pos[i] = buf[NUM_J + 2*i] + (buf[NUM_J + 2*i + 1] << 8);
-    state->vel[i] = float(buf[3*NUM_J + 2*i] + (buf[3*NUM_J + 2*i + 1] << 8));
-    // printf("J%d %d %x %d %x -> %d\n", i, NUM_J + 2*i, buf[NUM_J + 2*i], NUM_J + 2*i+1, buf[NUM_J + 2*i+1], state->pos[i]);
-  }
-}
-
 uint8_t buf[128];
 void loop() {
   // NOTE: Casting directly to struct requires both the same endianness and same interpetation of floating point
@@ -50,7 +31,8 @@ void loop() {
     return;
   }
   if (sz > 0) {
-    deserialize(&state::intent, buf);
+    state::deserialize(&state::intent, buf);
+    motion::intent_changed();
   }
   motion::read();
   motion::update();
@@ -58,7 +40,7 @@ void loop() {
   if (sz > 0) {
     // Comms follows ZMQ req/rep communication; exactly one reply per received request
     // LOG_INFO("SI0 %x %d %d SA0 %x %d %d", state::intent.mask[0], state::intent.pos[0], state::intent.vel[0], state::actual.mask[0], state::actual.pos[0], state::actual.vel[0]);
-    serialize(buf, &state::actual);
+    state::serialize(buf, &state::actual);
     comms::write(buf, 2*(NUM_J*sizeof(int16_t)) + (NUM_J*sizeof(uint8_t)));
   }
 }

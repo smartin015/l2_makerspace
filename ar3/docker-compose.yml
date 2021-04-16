@@ -48,8 +48,6 @@ services:
     network_mode: host  
     volumes:
       - /tmp:/tmp # Used to sense when webots started
-    #ports:
-    #  - "5557:5557" # Push limit values
     command: /bin/bash -i -c "ros2 run l2_ar3 node"
     stop_grace_period: 1s
   webots_sim:
@@ -58,6 +56,8 @@ services:
     stdin_open: true
     tty: true
     runtime: nvidia
+    #ports:
+    #  - "5557:5557" # Push limit values
     environment:
       DISPLAY: $DISPLAY
       QT_X11_NO_MITSHM: 1 # Prevent xcb_shm_attach() errors

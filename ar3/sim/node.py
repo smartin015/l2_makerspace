@@ -199,20 +199,22 @@ class AR3(Node):
         # When simulating firmware, we get raw step counts over ZMQ - these are 
         # referenced relative from simulation start pos
         self.get_logger().info("Firmware sim conn active", throttle_duration_sec=5)
-        send_limits = False # only send limits on update
+        limits_updated = False
         for (i, s) in enumerate(struct.unpack('i'*NUM_J, steps)):
             angle = (2*3.14159) * s / STEPS_PER_REV[i]
             self.motors[i].setPosition(angle)
             # Only one side has actual limit switches; the other is a "breaking point"
             inside_limits = (MOTOR_LIMITS[i][0] < angle)
             if angle > MOTOR_LIMITS[i][1]:
-              self.get_logger().info("Non-switch limit %f exceeded for joint %d: angle is %f" % (MOTOR_LIMITS[i][1], i, angle), throttle_duration_sec=1)
+              # Regardless of if we're on a side with a limit switch, we should throw warnings if we exceed
+              # the non-switched side of the machine
+              self.get_logger().warn("non-switch limit %f exceeded for joint %d: angle is %f (not reported to fw)" % (MOTOR_LIMITS[i][1], i, angle), throttle_duration_sec=1)
             if self.limits[i] != inside_limits:
-              send_limits = True
+              limits_updated = True
               self.get_logger().info("Limit switch %d state change - %d <- %d -> %d" % (i, MOTOR_LIMITS[i][0], angle, MOTOR_LIMITS[i][1]))
             self.limits[i] = inside_limits
 
-        if send_limits:
+        if limits_updated:
             self.lim_socket.send(struct.pack('b'*NUM_J, *self.limits))
             self.get_logger().info("Sent limit update to firmware sim %s" % self.limits)
 
