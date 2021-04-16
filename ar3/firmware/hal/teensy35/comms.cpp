@@ -3,24 +3,45 @@
 
 #define BUFLEN 128
 char serbuf[BUFLEN];
-size_t idx = 0;
+size_t idx = -1;
+size_t readlen = 0;
 
-void initComms() {
+void comms::init() {
   Serial.begin(115200);
 }
 
-bool tryFetchCommand(char* buf, size_t buflen) {
+int comms::read(uint8_t* buf, int buflen) {
   char c;
   while (Serial.available()) {
     c = Serial.read();
+    if (idx == -1) {
+      continue;
+    }
+    if (c == 0x79) {
+      // Magic byte, next byte is length
+      idx=0;
+      readlen=0;
+    }
+    if (readlen == 0) {
+      // NOTE: Max length is 255 characters
+      readlen = c;
+      continue;
+    }
     serbuf[idx++] = c;
-    if (c == '\n') {
-      strncpy(buf, buflen, serbuf);
-      return true;
+    if (idx == readlen) {
+      strncpy(buf, readlen, serbuf);
+      idx = -1;
+      return readlen;
     } else if (idx >= BUFLEN) {
-      idx = 0;
+      idx = -1;
       // TODO overrun warning indicator
     }
   }
   return false;
+}
+
+void comms::write(uint8_t* buf, int buflen) {
+  Serial.write(0x79);
+  Serial.write(buflen);
+  Serial.write(buf, buflen);
 }

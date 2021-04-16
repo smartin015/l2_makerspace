@@ -9,6 +9,7 @@
  * motion::update() frequently updates `ticks_per_step` to meet
  * the trajectory.
  */
+#include "log.h"
 #include "app_hal.h"
 #include "state.h"
 #include "motion.h"
@@ -26,7 +27,7 @@
 bool lim_hit_msg[NUM_J];
 float step_vel[NUM_J];
 uint32_t ticks_per_step[NUM_J];
-int ticks[NUM_J];
+uint32_t ticks[NUM_J];
 int ticks_since_last_update = 0;
 
 #define VELOCITY_UPDATE_PD_MILLIS 100
@@ -56,8 +57,8 @@ void motion::init() {
 }
 
 inline void print_state() {
-  // printf("%d %s", int(now), dbg);
-  printf("\tdtick %d\tactive: %d\tpos: want %d got %d\tvel: want %02f got %02f\tdvel %02f --> %d ticks/step\n", 
+  // LOG_DEBUG("%d %s", int(now), dbg);
+  LOG_DEBUG("\tdtick %d\tactive: %d\tpos: want %d got %d\tvel: want %02f got %02f\tdvel %02f --> %lu ticks/step\n", 
       ticks_since_last_update,
       active[0],
       state::intent.pos[0], state::actual.pos[0],
@@ -76,7 +77,7 @@ void motion::update() {
   }
   last_velocity_update = now;
   if (dt > VELOCITY_MAX_UPDATE_PD_MILLIS) {
-    printf("WARNING: too long between calls to update_velocities(); skipping update\n");
+    LOG_DEBUG("WARNING: too long between calls to update_velocities(); skipping update\n");
     return; // Avoid edge case in delta processing causing jumps in calculated pos/vel
   }
 
@@ -87,7 +88,7 @@ void motion::update() {
     
     // Don't calculate stepping if we're already at intent or cannot move
     active[i] = (state::intent.pos[i] - state::actual.pos[i] != 0) && (state::intent.vel[i] != 0);
-    if (!active) {
+    if (!active[i]) {
       continue;
     }
     
@@ -134,7 +135,7 @@ void motion::write() {
     //dbg[2*i] = (dir) ? '+' : '-';
     if (!digitalRead(CAL_PIN[i]) && (dir == CAL_DIR[i])) {
       if (!lim_hit_msg[i]) {
-        printf("Driving into limit %d; skipping move\n", i);
+        LOG_DEBUG("Driving into limit %d; skipping move\n", i);
         lim_hit_msg[i] = true;
       }
       continue;
@@ -165,8 +166,6 @@ void motion::write() {
 }
 
 void motion::read() {
-  int values[NUM_J];
-  bool hasError = false;
   for (int i = 0; i < NUM_J; i++) {
     int p = readEnc(i);
     state::actual.pos[i] = p;

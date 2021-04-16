@@ -1,8 +1,14 @@
 #ifndef COMMS_H
 #define COMMS_H
+#include <stdint.h>
 
-void initComms();
 
-bool tryFetchCommand(char* buf, size_t buflen);
+namespace comms {
+
+void init();
+int read(uint8_t* buf, int buflen);
+void write(uint8_t* buf, int buflen);
+
+} // namespace comms
 
 #endif // COMMS_H
