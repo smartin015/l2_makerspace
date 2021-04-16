@@ -1,5 +1,7 @@
 <html>
 <head>
+<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+<meta content="utf-8" http-equiv="encoding">
 <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
 <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
@@ -21,12 +23,30 @@
   table {
     width: 100%;
   }
+
+  label.is-checked > span.mdl-checkbox__label {
+    color: red;
+    font-weight: bold;
+    animation: blinker 1s linear infinite;
+  }
+
+  @keyframes blinker {
+    50% {
+      opacity: 0.25;
+    }
+  }
 </style>
 </head>
 <body>
 <div class="mdl-card mdl-shadow--2dp content">
   <div class="mdl-card__title" style="border-bottom: 1px gray solid;"><h2 class="mdl-card__title-text" id="status"></h2></div>
   <div class="mdl-card__supporting-text">
+     <label class = "mdl-checkbox mdl-js-checkbox" for = "limit_override">
+        <input type = "checkbox" id = "limit_override" 
+           class = "mdl-checkbox__input">
+        <span class = "mdl-checkbox__label">limit_override</span>
+     </label>
+
     <table class="mdl-data-table mdl-js-data-table" style="background-color: transparent !important;">
       <thead>
         <tr>
@@ -133,6 +153,17 @@ for (let i = 0; i < NUM_J; i++) {
   ui.velslider[i].oninput = (e) => {
     tvel[i] = Math.round(e.target.value / (2*3.14159) * STEPS_PER_REV[i]);
     ui.veltgt[i].innerText = parseFloat(e.target.value).toFixed(2);
+  }
+
+  document.getElementById("limit_override").onchange = setLimitOverride;
+}
+
+let limit_override = false;
+function setLimitOverride(event) {
+  limit_override = event.target.checked;
+  console.log(`Limit override: ${(limit_override) ? "ENABLED" : "disabled"}`);
+  for (let i = 0; i < NUM_J; i++) {
+    tmask[i] = (tmask[i] & ~0x01) | ((limit_override) ? 1 : 0);
   }
 }
 
