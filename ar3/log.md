@@ -6,6 +6,23 @@ Substantial noise from J4 (smaller stepper driver) causing skips in encoder puls
 
 *   Root cause: noise from stepper lines causing interference in encoder wires. Routed stepper lines farther away from encoders and shielded them with metal fiber sleeving to reduce noise - works fine now!
 
+## 2021-04-15
+
+Installed an e-stop, after the AC-DC converter to minimize time where the motors are energized. Plus I don't have to cut the PSU cable to inline a switch.
+
+Tried running the jetson for the main host, but it's been having issues where plugging in the USB causes the SD card to unmount. `/bin/ls` not found... not fun.
+
+So I installed raspbian on a pi3 B+ laying around....
+
+* changed the hostname to `ar3`
+* installed the [teensy udev rules](https://www.pjrc.com/teensy/00-teensy.rules)
+* cloned the l2_makerspace repo
+* [installed platformio](https://docs.platformio.org/en/latest/core/installation.html#installation-methods)
+
+and finally, ran `pio run -e teensy35` to build the firmware.
+
+Needed to update the firmware to compile for teensy35 - but now it builds on the pi!
+
 ## 2021-04-14
 
 To start the viewer:
