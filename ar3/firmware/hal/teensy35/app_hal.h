@@ -3,9 +3,18 @@
 
 #include <Arduino.h>
 
-#define hal_usleep(sec) delayMicroseconds(sec)
+// NOTE: millis() and delayMicroseconds() already defined
 
+namespace hal {
+
+void initJoint(int i);
+void stepDir(int i, bool dir);
+void stepDn(int i);
+void stepUp(int i);
+bool readLimit(int i);
 int readEnc(int idx);
 void writeEnc(int idx, int value);
+
+} // namespace hal
 
 #endif // __ARDUINO_SHIM_H__

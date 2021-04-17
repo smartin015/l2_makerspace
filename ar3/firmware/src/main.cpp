@@ -12,11 +12,7 @@ void setup() {
   comms::init();
   motion::init();
   for (int i = 0; i < NUM_J; i++) {
-    // enc[i].write(START_POS[i] * ENC_MULT[i])
-    pinMode(STEP_PIN[i], OUTPUT);
-    pinMode(DIR_PIN[i], OUTPUT);
-    pinMode(CAL_PIN[i], INPUT_PULLUP);
-    digitalWrite(STEP_PIN[i], HIGH);
+    hal::initJoint(i);
   }
   LOG_INFO("Setup complete");
 }

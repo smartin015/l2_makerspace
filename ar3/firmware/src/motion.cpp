@@ -148,7 +148,7 @@ void motion::write() {
     int delta = state::intent.pos[i] - state::actual.pos[i];
     uint8_t dir = (delta > 0) ^ ROT_DIR[i];
     //dbg[2*i] = (dir) ? '+' : '-';
-    if (!digitalRead(CAL_PIN[i]) && (dir == CAL_DIR[i])) {
+    if (!hal::readLimit(i) && (dir == CAL_DIR[i])) {
       if (!(state::actual.mask[i] & MASK_LIMIT_TRIGGERED)) {
         LOG_DEBUG("Driving into limit %d; skipping move\n", i);
         state::actual.mask[i] |= MASK_LIMIT_TRIGGERED;
@@ -167,24 +167,24 @@ void motion::write() {
     }
 
     ticks[i] = 0;
-    digitalWrite(DIR_PIN[i], dir);
-    digitalWrite(STEP_PIN[i], LOW);
+    hal::stepDir(i, dir);    
+    hal::stepDn(i);
     //dbg[2*i+1] = '.';
   }
   ticks_since_last_update++;
 
   // Sleep for all steps rather than stepping in sequence 
   // in order to save cycles.
-  hal_usleep(STEP_PIN_WRITE_USEC);
+  delayMicroseconds(STEP_PIN_WRITE_USEC);
 
   for (int i = 0; i < NUM_J; i++) {
-    digitalWrite(STEP_PIN[i], HIGH);
+    hal::stepUp(i);
   }
 }
 
 void motion::read() {
   for (int i = 0; i < NUM_J; i++) {
-    int p = readEnc(i);
+    int p = hal::readEnc(i);
     state::actual.pos[i] = p;
   }
 }
@@ -192,7 +192,7 @@ void motion::read() {
 /*
 void set_encoders(const int values[NUM_J]) {
   for (int i = 0; i < NUM_J; i++) {
-    writeEnc(i, values[i]);
+    hal::writeEnc(i, values[i]);
   }
 }
 */

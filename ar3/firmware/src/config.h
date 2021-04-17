@@ -13,11 +13,6 @@ const int ROT_DIR[] = {0,0,0,0,0,0,0};
 // J1=7600, J2=2322, J3=0, J4=7600, J5=2287, J6=3312
 const int START_POS[] = {7600, 2322, 0, 7600, 2287, 3312, 0};
 
-const int STEP_PIN[] = {0, 2, 4, 6, 8, 10};
-const int DIR_PIN[]  = {1, 3, 5, 7, 9, 11};
-
-//set calibration limit switch pins
-const int CAL_PIN[] = {26, 27, 28, 29, 30, 31};
 // false == negative rotation limit
 const bool CAL_DIR[] = {false, false, false, false, false, false};
 

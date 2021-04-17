@@ -7,6 +7,11 @@
 #include <iostream>
 #include <cstdlib>
 
+int cur_dir[NUM_J];
+bool prev_step_pin[NUM_J];
+int step_offs[NUM_J];
+
+
 // For some reason, Ctrl+C isn't detected when
 // running the native program via `pio` in Docker,
 // so we have to handle it custom here.
@@ -15,35 +20,28 @@ void signal_callback_handler(int signum) {
    exit(signum);
 }
 
-int cur_dir[NUM_J];
-bool prev_step_pin[NUM_J];
-int step_offs[NUM_J];
+namespace hal {
 
-void digitalWrite(int pin, bool high) {
-  for (int i = 0; i < NUM_J; i++) {
-    if (pin == DIR_PIN[i]) {
-      cur_dir[i] = (high) ? 1 : -1;
-      return;
-    } else if (pin == STEP_PIN[i]) {
-      if (prev_step_pin[i] && !high) {
-        hw::move_steps(i, cur_dir[i]);
-      }
-      prev_step_pin[i] = high;
-      return;
-    }
-  }
-  LOG_ERROR("Failed write to unknown pin %d (%d)", pin, high);
+void initJoint(int i) {
+  // Nothing to do here; no hardware to initialize
 }
 
-bool digitalRead(int pin) {
-  hw::sync();
-  for (int i = 0; i < NUM_J; i++) {
-    if (pin == CAL_PIN[i]) {
-      return hw::get_cur_cal(i);
-    }
+void stepDir(int i, bool dir) {
+  cur_dir[i] = (dir) ? 1 : -1;
+}
+void stepDn(int i) {
+  if (prev_step_pin[i]) {
+    hw::move_steps(i, cur_dir[i]);
   }
-  LOG_ERROR("Failed read of unknown pin %d", pin);
-  return false;
+  prev_step_pin[i] = false;
+}
+void stepUp(int i) {
+  prev_step_pin[i] = true;
+}
+
+bool readLimit(int i) {
+  hw::sync();
+  return hw::get_cur_cal(i);
 }
 
 int readEnc(int idx) {
@@ -54,6 +52,9 @@ void writeEnc(int idx, int value) {
   step_offs[idx] = value - hw::get_steps(idx);
   LOG_DEBUG("Wrote %d to encoder %d", value, idx);
 }
+
+} // namespace hal
+
 
 void setup();
 void loop();

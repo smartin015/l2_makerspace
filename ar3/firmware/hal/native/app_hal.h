@@ -1,23 +1,25 @@
 #ifndef __ARDUINO_SHIM_H__
 #define __ARDUINO_SHIM_H__
 
-# define OUTPUT 0
-# define INPUT 1
-# define INPUT_PULLUP 2
-
 #include <unistd.h>
 #include "hw.h"
 
-#define hal_usleep(sec) usleep(sec)
+#define delayMicroseconds(sec) usleep(sec)
 
 inline uint32_t millis() {
   return hw::millis();
 }
 
-inline void pinMode(int pin, int mode) {};
-void digitalWrite(int pin, bool high);
-bool digitalRead(int pin);
-int readEnc(int idx);
-void writeEnc(int idx, int value);
+namespace hal {
+
+void initJoint(int i);
+void stepDir(int i, bool dir);
+void stepDn(int i);
+void stepUp(int i);
+bool readLimit(int i);
+int readEnc(int i);
+void writeEnc(int i, int value);
+
+} //namespace hal
 
 #endif // __ARDUINO_SHIM_H__
