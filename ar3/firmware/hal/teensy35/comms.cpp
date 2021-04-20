@@ -2,9 +2,9 @@
 #include <Arduino.h>
 
 #define BUFLEN 128
-char serbuf[BUFLEN];
-size_t idx = -1;
-size_t readlen = 0;
+uint8_t serbuf[BUFLEN];
+int16_t idx = -1;
+int16_t readlen = 0;
 
 void comms::init() {
   Serial.begin(115200);
@@ -29,7 +29,7 @@ int comms::read(uint8_t* buf, int buflen) {
     }
     serbuf[idx++] = c;
     if (idx == readlen) {
-      strncpy(buf, readlen, serbuf);
+      memcpy(buf, serbuf, readlen);
       idx = -1;
       return readlen;
     } else if (idx >= BUFLEN) {

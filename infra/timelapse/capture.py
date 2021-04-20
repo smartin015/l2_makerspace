@@ -4,6 +4,7 @@ from datetime import datetime
 import sys
 
 def do_capture(args):
+    print("Capturing", args.url)
     capture=cv2.VideoCapture(args.url)
     i = 0
     while True:

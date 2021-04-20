@@ -4,7 +4,6 @@
 #define VEL_REAL(x) (x >> 8)
 #define VEL_FIXED(x) (x << 8)
 
-#include "config.h"
 #include <stdint.h>
 
 // For intent, this describes whether or not to ignore

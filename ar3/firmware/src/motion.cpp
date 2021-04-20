@@ -146,9 +146,9 @@ void motion::write() {
 
     // Don't move if we're driving further into a limit
     int delta = state::intent.pos[i] - state::actual.pos[i];
-    uint8_t dir = (delta > 0) ^ ROT_DIR[i];
+    uint8_t dir = (delta > 0);
     //dbg[2*i] = (dir) ? '+' : '-';
-    if (!hal::readLimit(i) && (dir == CAL_DIR[i])) {
+    if (!hal::readLimit(i) && !dir) {
       if (!(state::actual.mask[i] & MASK_LIMIT_TRIGGERED)) {
         LOG_DEBUG("Driving into limit %d; skipping move\n", i);
         state::actual.mask[i] |= MASK_LIMIT_TRIGGERED;

@@ -1,5 +1,4 @@
 #include "app_hal.h"
-#include "config.h"
 #include "hw.h"
 #include "log.h"
 #include <signal.h>
