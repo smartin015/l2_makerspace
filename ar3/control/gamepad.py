@@ -10,7 +10,7 @@ FEED = 400
 PI=3.14159
 
 sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-dest = ("192.168.1.200", 20000)
+dest = ("192.168.1.250", 20000)
 
 def on_button_pressed(button):
     print('Button {0} was pressed'.format(button.name))
@@ -40,7 +40,7 @@ def wheel_gcode(vx, vy, rx, ry):
     spds = [s + rx for s in spds]
 
     # Multiply by feed rate
-    return ("G1 X%04f Y%04f Z%04f" % tuple([s * FEED/100 for s in spds])) + (" F%d" % FEED)
+    return ("G91 G1 X%04f Y%04f Z%04f" % tuple([s * FEED/1000 for s in spds])) + (" F%d" % FEED)
 
 def test_directions():
     # Simple check that the wheel magnitudes are reasonable
