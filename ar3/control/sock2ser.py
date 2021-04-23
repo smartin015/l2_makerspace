@@ -10,7 +10,7 @@ def port_echo(ser):
   while True:
     print(ser.readline().decode())
 
-threading.Thread(target=port_echo, args=(serial_port,), daemon=True).start()
+threading.Thread(target=port_echo, args=(ser,), daemon=True).start()
 while True:
   gcode = sock.recv(512)
-  ser.write(gcode + "\n")
+  ser.write(gcode + bytes("\n", "utf-8"))
