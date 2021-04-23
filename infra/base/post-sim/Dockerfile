@@ -24,14 +24,10 @@ RUN apt-get update && apt-get -y install --no-install-recommends ros-foxy-webots
 
 # http://wiki.ros.org/docker/Tutorials/Hardware%20Acceleration
 # TODO accept ARGs to select particular GPU type
-#RUN \
-#   apt-get update && \
-#   DEBIAN_FRONTEND=noninteractive apt-get -y install --no-install-recommends libgl1-mesa-glx libgl1-mesa-dri libnss3 libasound2 wget software-properties-common && \
-#   rm -rf /var/lib/apt/lists/*
-
-# RUN wget -qO- https://cyberbotics.com/Cyberbotics.asc | sudo apt-key add - && \
-#     apt-add-repository 'deb https://cyberbotics.com/debian/ binary-amd64/' && \
-#     apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -y install --no-install-recommends webots
+RUN \
+   apt-get update && \
+   DEBIAN_FRONTEND=noninteractive apt-get -y install --no-install-recommends libgl1-mesa-glx libgl1-mesa-dri libnss3 libasound2 wget software-properties-common && \
+   rm -rf /var/lib/apt/lists/*
 
 COPY Webots-R2020a.conf /root/.config/Cyberbotics/
 

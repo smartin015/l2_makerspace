@@ -9,30 +9,44 @@ import asyncio
 from collections import defaultdict
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
-NUM_J = 6
-mask = [0]*NUM_J
-pos = [0]*NUM_J
-vel = [0]*NUM_J
-STRUCT_FMT = 'B'*NUM_J + 'h'*NUM_J + 'h'*NUM_J
+NUM_J = None # Overridden by args
+
+class State():
+    def __init__(self):
+        global NUM_J
+        self.struct_fmt = 'B'*NUM_J + 'h'*NUM_J + 'h'*NUM_J
+        self.mask = [0]*NUM_J
+        self.pos = [0]*NUM_J
+        self.vel = [0]*NUM_J
+
+state = None
 
 def sigterm_handler(_signo, _stack_frame):
     sys.exit(0)
 signal.signal(signal.SIGTERM, sigterm_handler)
 
 class WebServer(SimpleHTTPRequestHandler):
-    pass
+    def do_GET(self):
+        global NUM_J
+        if self.path == "/config":
+            self.send_response(200)
+            self.send_header("Content-type", "text/plain")
+            self.end_headers()
+            self.wfile.write(bytes(str(NUM_J), "utf-8"))
+        else:
+            return SimpleHTTPRequestHandler.do_GET(self)
 
 async def handle_socket(ws, path):
-  global mask, pos, vel, args
+  global state, NUM_J
   print("WS conn", str(ws))
   while True:
     # NOTE: Expected units are in "steps", "steps/second" etc.
     data = await ws.recv()
     mpv = data.split("|")
-    mask = [int(v) for v in mpv[0].split(",")]
-    pos = [int(v) for v in mpv[1].split(",")]
-    vel = [int(v) for v in mpv[2].split(",")]
-    req = struct.pack(STRUCT_FMT, *(mask + pos + vel))
+    state.mask = [int(v) for v in mpv[0].split(",")]
+    state.pos = [int(v) for v in mpv[1].split(",")]
+    state.vel = [int(v) for v in mpv[2].split(",")]
+    req = struct.pack(state.struct_fmt, *(state.mask + state.pos + state.vel))
     # print(req.hex(),"--->",end='')
     if args.loopback:
       await asyncio.sleep(0.1)
@@ -40,18 +54,21 @@ async def handle_socket(ws, path):
     else: 
       socket.send(req)
       resp = socket.recv()
-    # print(resp.hex()) # print(mask,pos,vel,"-->",end='')
-    mpv = struct.unpack(STRUCT_FMT, resp)
-    mask = mpv[0:NUM_J]
-    pos = mpv[NUM_J:2*NUM_J]
-    vel = mpv[2*NUM_J:]
-    #print(mask,pos,vel)
-    await ws.send("|".join([",".join([str(s) for s in v]) for v in [mask, pos, vel]]))
+    # print(resp.hex()) # print(state.mask,state.pos,state.vel,"-->",end='')
+    mpv = struct.unpack(state.struct_fmt, resp)
+    state.mask = mpv[0:NUM_J]
+    state.pos = mpv[NUM_J:2*NUM_J]
+    state.vel = mpv[2*NUM_J:]
+    #print(state.mask,state.pos,state.vel)
+    await ws.send("|".join([",".join([str(s) for s in v]) for v in [state.mask, state.pos, state.vel]]))
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument('--loopback', action='store_true', default=False, help="Transmit to self, for testing")
+  parser.add_argument('-j', default=6, type=int, help="Number of joints in robot (affects packet size & controls display")
   args = parser.parse_args(sys.argv[1:])
+  NUM_J = args.j
+  state = State()
 
   #  Socket to talk to server
   ZMQ_SOCK_ADDR = "tcp://0.0.0.0:5555"

@@ -1,7 +1,6 @@
 #ifndef _HW_H
 #define _HW_H
 
-#include "config.h"
 #include <stdint.h>
 
 #define HIGH true
