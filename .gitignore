@@ -14,5 +14,6 @@ infra/app/node_modules
 .android
 .bash_history
 .cache
+infra/timelapse/out*.png
 __pycache__
 todoist.json

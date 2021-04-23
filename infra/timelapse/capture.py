@@ -19,6 +19,10 @@ def do_capture(args):
         else:
             if args.display:
                 cv2.imshow("Display", frame[1])
+
+            if args.skip is not None:
+              if i % (args.skip+1) != 0:
+                continue
             path = "%s_%s.%s" % (args.prefix, "{:%Y_%m_%d_%H_%M_%S_%f}".format(datetime.now()), args.fmt)
             print(path)
             cv2.imwrite(path, frame[1])
@@ -31,8 +35,9 @@ def do_capture(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="""Fetches MJPEG from web and saves to images""")
-    parser.add_argument('--url', default="http://192.168.1.106:8081/", help="URL to grab")
+    parser.add_argument('--url', default="http://192.168.1.3:8081/", help="URL to grab")
     parser.add_argument('--nframes', default=None, help="Number of frames to grab")
+    parser.add_argument('--skip', default=None, type=int, help="Number of frames to skip")
     parser.add_argument('--prefix', default='out', help="Starting name of file")
     parser.add_argument('--fmt', default='png', help="File format")
     parser.add_argument('--display', default=False, type=bool, help="Display output in a window")
