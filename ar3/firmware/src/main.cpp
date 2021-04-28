@@ -9,6 +9,7 @@
 #include <stdlib.h>
 
 void setup() {
+  LOG_INFO("Setup begin for %d joint robot", NUM_J);
   comms::init();
   motion::init();
   for (int i = 0; i < NUM_J; i++) {
@@ -22,10 +23,6 @@ void loop() {
   // NOTE: Casting directly to struct requires both the same endianness and same interpetation of floating point
   // nubmers. https://stackoverflow.com/questions/13775893/converting-struct-to-byte-and-back-to-struct
   int sz = comms::read(buf, sizeof(buf));
-  if (sz != 0 && sz != 30) {
-    LOG_INFO("BAD SIZE %d", sz);
-    return;
-  }
   if (sz > 0) {
     state::deserialize(&state::intent, buf);
     motion::intent_changed();

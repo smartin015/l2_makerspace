@@ -82,16 +82,13 @@
 </div>
 <script>
 var ws = null; //See reconnect()
-const NUM_J = 6;
-let pos = [0,0,0,0,0,0];
-let vel = [0,0,0,0,0,0];
-let mask = [0,0,0,0,0,0];
-let tpos = [0,0,0,0,0,0];
-let tvel = [0,0,0,0,0,0];
-let tmask = [0,0,0,0,0,0];
+var state = null; //See init()
+var ui = null; //See init()
+
 const STEPS_PER_REV = [4096,4096,4096,4096,4096,4096];
 const GRAPH_DOMAIN_SEC = 20;
 const SEND_STATE_PD_MILLIS = 100;
+const EVENT_LOG_PD = 2000;
 
 // https://medium.com/cafe-pixo/inclusive-color-palettes-for-the-web-bbfe8cf2410e
 const INCLUSIVE_COLORS = ['#E1DAAE', '#FF934F', '#CC2D35', '#058ED9', '#848FA2', '#2D3142'];
@@ -100,7 +97,7 @@ function initGraph(id, yMin, yMax) {
   // https://www.rgraph.net/canvas/howto-scrolling.html
   return new RGraph.Line({
       id,
-      data: [...Array(NUM_J)].map(e => Array(GRAPH_DOMAIN_SEC * 1000 / SEND_STATE_PD_MILLIS)),
+      data: [...Array(state.num_j)].map(e => Array(GRAPH_DOMAIN_SEC * 1000 / SEND_STATE_PD_MILLIS)),
       options: {
           //yaxisScaleMax: yMax,
           //yaxisScaleMin: yMin,
@@ -118,52 +115,11 @@ function initGraph(id, yMin, yMax) {
   }).draw();
 }
 
-// Expand the table row to njoints
-let tmpl = document.getElementById("repeatntimes");
-let tbody = document.querySelector("tbody");
-for (let i = 1; i < NUM_J; i++) {
-  tbody.appendChild(tmpl.cloneNode(true));
-}
-
-let ui = {
-  mask: document.getElementsByClassName("mask"),
-
-  posslider: document.getElementsByClassName("posslider"),
-  postgt: document.getElementsByClassName("postgt"),
-  posval: document.getElementsByClassName("posval"),
-  posgraph: initGraph("posCanvas", -4, 4),
-  
-  velslider: document.getElementsByClassName("velslider"),
-  veltgt: document.getElementsByClassName("veltgt"),
-  velval: document.getElementsByClassName("velval"),
-  velgraph: initGraph("velCanvas", 0, 4),
-};
-
-
-for (let i = 0; i < NUM_J; i++) {
-  // Apply colors matching the graphs
-  for (let inp of tbody.children[i].querySelectorAll("input")) {
-    inp.style = `background-color: ${INCLUSIVE_COLORS[i]}`;
-  }
-
-  ui.posslider[i].oninput = (e) => {
-    tpos[i] = Math.round(e.target.value / (2*3.14159) * STEPS_PER_REV[i]);
-    ui.postgt[i].innerText = parseFloat(e.target.value).toFixed(2);
-  }
-  ui.velslider[i].oninput = (e) => {
-    tvel[i] = Math.round(e.target.value / (2*3.14159) * STEPS_PER_REV[i]);
-    ui.veltgt[i].innerText = parseFloat(e.target.value).toFixed(2);
-  }
-
-  document.getElementById("limit_override").onchange = setLimitOverride;
-}
-
-let limit_override = false;
 function setLimitOverride(event) {
-  limit_override = event.target.checked;
-  console.log(`Limit override: ${(limit_override) ? "ENABLED" : "disabled"}`);
-  for (let i = 0; i < NUM_J; i++) {
-    tmask[i] = (tmask[i] & ~0x01) | ((limit_override) ? 1 : 0);
+  state.limit_override = event.target.checked;
+  console.log(`Limit override: ${(state.limit_override) ? "ENABLED" : "disabled"}`);
+  for (let i = 0; i < state.num_j; i++) {
+    state.tmask[i] = (state.tmask[i] & ~0x01) | ((state.limit_override) ? 1 : 0);
   }
 }
 
@@ -182,7 +138,7 @@ function millis() {
 let lastSendState = 0;
 function sendState() {
   if (ws.readyState === ws.OPEN) {
-    ws.send([tmask.join(","), tpos.join(","), tvel.join(",")].join("|"));
+    ws.send([state.tmask.join(","), state.tpos.join(","), state.tvel.join(",")].join("|"));
     lastSendState = millis();
   }
 }
@@ -199,35 +155,29 @@ function tick() {
   ui.posgraph.draw();
   ui.velgraph.draw();
 }
-setInterval(tick, 100);
 
-let last_event_log = millis();
-const EVENT_LOG_PD = 2000;
 function handleMessage(event) {
   let now = millis();
-  if (now - last_event_log > EVENT_LOG_PD) {
+  if (now - state.last_event_log > EVENT_LOG_PD) {
     console.log(event.data);
-    last_event_log = now;
+    state.last_event_log = now;
   }
   mpv = event.data.split("|");
   m = mpv[0].split(",");
   p = mpv[1].split(",");
   v = mpv[2].split(",");
-  for (let i = 0; i < NUM_J; i++) {
-    mask[i]=m[i];
-    ui.mask[i].innerText = mask[i];
+  for (let i = 0; i < state.num_j; i++) {
+    state.mask[i]=m[i];
+    ui.mask[i].innerText = state.mask[i];
 
-    pos[i]=p[i];
-    vel[i]=v[i];
-    let pos_norm = pos[i] * (2*3.14159)/STEPS_PER_REV[i];
+    state.pos[i]=p[i];
+    state.vel[i]=v[i];
+    let pos_norm = state.pos[i] * (2*3.14159)/STEPS_PER_REV[i];
     ui.posgraph.original_data[i].shift();
     ui.posgraph.original_data[i].push(pos_norm);
     ui.posval[i].innerText = pos_norm.toFixed(2);
 
-    let vel_norm = vel[i] * (2*3.14159)/STEPS_PER_REV[i];
-    if (i === 0) {
-      console.log(vel_norm);
-    }
+    let vel_norm = state.vel[i] * (2*3.14159)/STEPS_PER_REV[i];
     ui.velgraph.original_data[i].shift();
     ui.velgraph.original_data[i].push(vel_norm);
     ui.velval[i].innerText = vel_norm.toFixed(2);
@@ -254,7 +204,68 @@ function startWebsocket() {
   };
   ws.onmessage = handleMessage;
 }
-startWebsocket();
+
+function init(num_j) {
+  console.log(`${num_j} joints`);
+
+  state = {
+    num_j,
+    pos: Array(num_j).fill(0),
+    vel: Array(num_j).fill(0),
+    mask: Array(num_j).fill(0),
+    tpos: Array(num_j).fill(0),
+    tvel: Array(num_j).fill(0),
+    tmask: Array(num_j).fill(0),
+    limit_override: false,
+    last_event_log: millis(),
+  };
+
+  let tmpl = document.getElementById("repeatntimes");
+  let tbody = document.querySelector("tbody");
+  for (let i = 1; i < state.num_j; i++) {
+    tbody.appendChild(tmpl.cloneNode(true));
+  }
+
+  ui = {
+    mask: document.getElementsByClassName("mask"),
+
+    posslider: document.getElementsByClassName("posslider"),
+    postgt: document.getElementsByClassName("postgt"),
+    posval: document.getElementsByClassName("posval"),
+    posgraph: initGraph("posCanvas", -4, 4),
+    
+    velslider: document.getElementsByClassName("velslider"),
+    veltgt: document.getElementsByClassName("veltgt"),
+    velval: document.getElementsByClassName("velval"),
+    velgraph: initGraph("velCanvas", 0, 4),
+  };
+
+
+  for (let i = 0; i < state.num_j; i++) {
+    // Apply colors matching the graphs
+    for (let inp of tbody.children[i].querySelectorAll("input")) {
+      inp.style = `background-color: ${INCLUSIVE_COLORS[i]}`;
+    }
+
+    ui.posslider[i].oninput = (e) => {
+      state.tpos[i] = Math.round(e.target.value / (2*3.14159) * STEPS_PER_REV[i]);
+      ui.postgt[i].innerText = parseFloat(e.target.value).toFixed(2);
+    }
+    ui.velslider[i].oninput = (e) => {
+      state.tvel[i] = Math.round(e.target.value / (2*3.14159) * STEPS_PER_REV[i]);
+      ui.veltgt[i].innerText = parseFloat(e.target.value).toFixed(2);
+    }
+
+    document.getElementById("limit_override").onchange = setLimitOverride;
+  }
+  
+  startWebsocket();
+  setInterval(tick, 100);
+}
+window.onload = function() {
+  return fetch('/config').then(r => r.text()).then(data => init(parseInt(data)));
+}
+
 </script>
 </body>
 </html>

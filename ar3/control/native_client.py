@@ -14,7 +14,9 @@ NUM_J = None # Overridden by args
 class State():
     def __init__(self):
         global NUM_J
-        self.struct_fmt = 'B'*NUM_J + 'h'*NUM_J + 'h'*NUM_J
+        # = indicates native order, standard size (native size may add padding)
+        self.struct_fmt = '=' + 'B'*NUM_J + 'h'*NUM_J + 'h'*NUM_J
+        print("Expected packet format:", self.struct_fmt)
         self.mask = [0]*NUM_J
         self.pos = [0]*NUM_J
         self.vel = [0]*NUM_J
@@ -55,7 +57,10 @@ async def handle_socket(ws, path):
       socket.send(req)
       resp = socket.recv()
     # print(resp.hex()) # print(state.mask,state.pos,state.vel,"-->",end='')
-    mpv = struct.unpack(state.struct_fmt, resp)
+    try:
+        mpv = struct.unpack(state.struct_fmt, resp)
+    except Exception as e:
+        print("Error unpacking response of size %d:" % len(resp), e)
     state.mask = mpv[0:NUM_J]
     state.pos = mpv[NUM_J:2*NUM_J]
     state.vel = mpv[2*NUM_J:]
