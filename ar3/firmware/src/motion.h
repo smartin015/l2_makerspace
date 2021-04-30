@@ -9,6 +9,7 @@ void read();
 void zero();
 void update();
 void intent_changed();
+void print_state();
 
 } // namespace motion
 

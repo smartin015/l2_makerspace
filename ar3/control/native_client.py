@@ -1,4 +1,3 @@
-import zmq
 import signal
 import sys
 import struct
@@ -10,6 +9,50 @@ from collections import defaultdict
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 NUM_J = None # Overridden by args
+
+class Comms():
+    def __init__(self, dest):
+        self.ser = dest.startswith('/dev')
+        if self.ser:
+            print("Opening serial connection:", dest)
+            import serial
+            self.sock = serial.Serial(port=dest, baudrate=115200, timeout=0.1)
+        else: # Network
+            #  Socket to talk to server
+            print("Opening ZMQ REQ socket:", dest)
+            import zmq
+            self.context = zmq.Context()
+            self.sock = context.socket(zmq.REQ)
+            self.sock.connect(ZMQ_SOCK_ADDR)
+
+    def recv_ser(self):
+        while True:
+            self.sock.read_until(bytes([0x79])) #magic sync byte
+            sz = self.sock.read(1)
+            if len(sz) != 1:
+                print("ERR serial could not read size")
+                return None
+            sz = int(sz[0])
+            if sz == 0x79: # Print status messages to console
+                print('[FW]', self.sock.read_until(bytes([0])).decode('utf-8').rstrip('\x00\n\r'))
+                continue
+
+            if sz != 5*NUM_J: # 2 shorts, 1 bool per joint
+                print("ERR serial data read size: want %d got %d", 5*NUM_J, int(sz))
+                return None
+            return self.sock.read(sz)
+
+    def send(self, req):
+        if self.ser:
+            self.sock.write(bytes([0x79, len(req)]))
+            self.sock.write(req)
+            self.sock.flush()
+            return self.recv_ser()
+        else:
+            socket.send(req)
+            return socket.recv()
+
+conn = None
 
 class State():
     def __init__(self):
@@ -53,34 +96,32 @@ async def handle_socket(ws, path):
     if args.loopback:
       await asyncio.sleep(0.1)
       resp = req
-    else: 
-      socket.send(req)
-      resp = socket.recv()
+    else:
+      resp = conn.send(req)
     # print(resp.hex()) # print(state.mask,state.pos,state.vel,"-->",end='')
-    try:
-        mpv = struct.unpack(state.struct_fmt, resp)
-    except Exception as e:
-        print("Error unpacking response of size %d:" % len(resp), e)
-    state.mask = mpv[0:NUM_J]
-    state.pos = mpv[NUM_J:2*NUM_J]
-    state.vel = mpv[2*NUM_J:]
-    #print(state.mask,state.pos,state.vel)
+
+    if resp is None:
+        print("WARN: empty response")
+    else:
+        try:
+            mpv = struct.unpack(state.struct_fmt, resp)
+        except Exception as e:
+            print("Error unpacking response of size %d:" % len(resp), e)
+        state.mask = mpv[0:NUM_J]
+        state.pos = mpv[NUM_J:2*NUM_J]
+        state.vel = mpv[2*NUM_J:]
+        #print(state.mask,state.pos,state.vel)
     await ws.send("|".join([",".join([str(s) for s in v]) for v in [state.mask, state.pos, state.vel]]))
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument('--loopback', action='store_true', default=False, help="Transmit to self, for testing")
   parser.add_argument('-j', default=6, type=int, help="Number of joints in robot (affects packet size & controls display")
+  parser.add_argument('--dest', default="tcp://0.0.0.0:5555", help="Destination (ZMQ socket or serial dev path)")
   args = parser.parse_args(sys.argv[1:])
   NUM_J = args.j
   state = State()
-
-  #  Socket to talk to server
-  ZMQ_SOCK_ADDR = "tcp://0.0.0.0:5555"
-  context = zmq.Context()
-  print("Opening ZMQ REQ socket on", ZMQ_SOCK_ADDR)
-  socket = context.socket(zmq.REQ)
-  socket.connect(ZMQ_SOCK_ADDR)
+  conn = Comms(args.dest)
 
   # Webserver for html page
   WEB_SERVER_ADDR = ("0.0.0.0", 8000)

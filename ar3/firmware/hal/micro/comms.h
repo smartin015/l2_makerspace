@@ -8,6 +8,7 @@ namespace comms {
 void init();
 int read(uint8_t* buf, int buflen);
 void write(uint8_t* buf, int buflen);
+void printf(char* format, ...);
 
 } // namespace comms
 

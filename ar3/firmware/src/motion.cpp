@@ -13,9 +13,11 @@
 #include "app_hal.h"
 #include "state.h"
 #include "motion.h"
-#include <cstdio>
-#include <cmath> // std::abs
-#include <algorithm> // std::min
+
+#define ABS(v) ((v > 0) ? v : -v)
+#define MIN(a,b) ((a<b) ? a : b)
+#define MAX(a,b) ((a<b) ? b : a)
+#define SIGN(x) ((x > 0) ? 1 : -1)
 
 // Set this wide enough that the step pin interrupt
 // can be triggered on the stepper driver - see driver 
@@ -37,7 +39,6 @@ int ticks_since_last_update = 0;
 #define MAX_VEL float(10000)
 #define MIN_VEL float(10)
 
-#define SIGN(x) ((x > 0) ? 1 : -1)
 
 uint64_t last_velocity_update = 0;
 int prev_vel_pos[NUM_J];
@@ -56,14 +57,15 @@ void motion::init() {
   }
 }
 
-inline void print_state() {
+void motion::print_state() {
   // LOG_DEBUG("%d %s", int(now), dbg);
-  LOG_DEBUG("\tdtick %d\tactive: %d\tpos: want %d got %d\tvel: want %02f got %02f\tdvel %02f --> %lu ticks/step\n", 
+  // NOTE: arduino doesn't include floating point printf by default; scale & cast floats
+  LOG_DEBUG("J0 dtick: %d\ton: %d\twant p%d v%d\tgot p%d v%d --> %d stepvel %lu ticks/step\n", 
       ticks_since_last_update,
       active[0],
-      state::intent.pos[0], state::actual.pos[0],
-      state::intent.vel[0], state::actual.vel[0],
-      delta_vel[0], ticks_per_step[0]);
+      state::intent.pos[0], int(state::intent.vel[0]*100),
+      state::actual.pos[0], int(state::actual.vel[0]*100),
+      int(step_vel[0]*100), ticks_per_step[0]);
 }
 
 // Velocities are implemented by slowly adjusting 
@@ -77,13 +79,14 @@ void motion::update() {
   }
   last_velocity_update = now;
   if (dt > VELOCITY_MAX_UPDATE_PD_MILLIS) {
-    LOG_DEBUG("WARNING: too long between calls to update_velocities(); skipping update\n");
+    LOG_ERROR("too long between calls to update(); skipping");
+    ticks_since_last_update = 0;
     return; // Avoid edge case in delta processing causing jumps in calculated pos/vel
   }
 
   for (int i = 0; i < NUM_J; i++) {
     // WARNING: Teensy3.5 has an FPU with hardware support for 32-bit only.
-    state::actual.vel[i] = 1000 * float(std::abs(state::actual.pos[i] - prev_vel_pos[i])) / dt;
+    state::actual.vel[i] = 1000 * float(ABS(state::actual.pos[i] - prev_vel_pos[i])) / dt;
     prev_vel_pos[i] = state::actual.pos[i];
     
     // Don't calculate stepping if we're already at intent or cannot move
@@ -100,12 +103,12 @@ void motion::update() {
       delta_vel[i] = (state::intent.vel[i] - state::actual.vel[i]);
 
       // Apply acceleration limit
-      //if (std::abs(delta_vel[i] * 1000 / dt) > MAX_ACCEL) {
+      //if (ABS(delta_vel[i] * 1000 / dt) > MAX_ACCEL) {
       //  delta_vel[i] = 1000 * MAX_ACCEL * SIGN(delta_vel[i]);
       //}
 
       // Update velocity, applying firmware velocity limits
-      step_vel[i] = std::min(MAX_VEL, std::max(MIN_VEL, step_vel[i] + delta_vel[i]));
+      step_vel[i] = MIN(MAX_VEL, MAX(MIN_VEL, step_vel[i] + delta_vel[i]));
     }
   
     // ticks/step = (ticks/sec) * (sec / step)
@@ -113,8 +116,6 @@ void motion::update() {
     //            = (ticks_since_last_update) * (1000 / dt) * (1 / step_vel)
     ticks_per_step[i] = (1000 * ticks_since_last_update) / (step_vel[i] * dt);
   }
-
-  // print_state();
 
   ticks_since_last_update = 0;
 }
