@@ -6,6 +6,17 @@ Substantial noise from J4 (smaller stepper driver) causing skips in encoder puls
 
 *   Root cause: noise from stepper lines causing interference in encoder wires. Routed stepper lines farther away from encoders and shielded them with metal fiber sleeving to reduce noise - works fine now!
 
+## 2021-04-28
+
+Brief foray into building the CanBot: a tri-omniwheel autonomous table that can support 80+ lbs of payload. I've been modifying the firmware, controller, and stub sim to operate on only 3 joints, so that it can be reused between arm and wheeled applications. Since coordinated motion also comes with less constraints on a wheeled robot, I can test trajectory matching on the canbot before "graduating" to the AR3.
+
+Had a code review with Garret. Here are some takeaways:
+
+* For PID control of position and velocity, consider that centering on velocity gives P=velocity, I=position, D=acceleration. Using P factors for each of these values produces a similar result to PID tuning with velocity+position as a target.
+* I should build a visualizer of a single axis' rotation and fit to verify that my PID tuning is working without any problems. This will likely be an extension of the current web interface.
+
+Once I've managed to get the firmware running on the canbot, the next steps will be adding bump sensor "limit switches" around it and looking into a simple line-following control scheme. Hmm, maybe I should call it the tribot instead...
+
 ## 2021-04-15
 
 Installed an e-stop, after the AC-DC converter to minimize time where the motors are energized. Plus I don't have to cut the PSU cable to inline a switch.

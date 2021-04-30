@@ -8,19 +8,21 @@ int16_t readlen = 0;
 
 void comms::init() {
   Serial.begin(115200);
+  Serial.setTimeout(500);
 }
 
 int comms::read(uint8_t* buf, int buflen) {
   char c;
   while (Serial.available()) {
     c = Serial.read();
-    if (idx == -1) {
-      continue;
-    }
     if (c == 0x79) {
       // Magic byte, next byte is length
       idx=0;
       readlen=0;
+      continue;
+    }
+    if (idx == -1) {
+      continue;
     }
     if (readlen == 0) {
       // NOTE: Max length is 255 characters
@@ -37,7 +39,7 @@ int comms::read(uint8_t* buf, int buflen) {
       // TODO overrun warning indicator
     }
   }
-  return false;
+  return 0;
 }
 
 void comms::write(uint8_t* buf, int buflen) {
@@ -45,3 +47,15 @@ void comms::write(uint8_t* buf, int buflen) {
   Serial.write(buflen);
   Serial.write(buf, buflen);
 }
+
+static char pfbuf[128];
+void comms::printf(char* format, ...) {
+  va_list argptr;
+  va_start(argptr, format);
+  vsnprintf(pfbuf, sizeof(pfbuf), format, argptr);
+  va_end(argptr);
+  Serial.write(0x79);
+  Serial.write(0x79);
+  Serial.write(pfbuf, sizeof(pfbuf));
+}
+

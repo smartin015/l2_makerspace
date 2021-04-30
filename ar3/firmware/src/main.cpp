@@ -9,23 +9,26 @@
 #include <stdlib.h>
 
 void setup() {
-  comms::init();
+  comms::init(); // Init comms first; may be needed to safely log outputs
+
+  LOG_INFO("Setup begin for %d joint robot", NUM_J);
   motion::init();
-  for (int i = 0; i < NUM_J; i++) {
-    hal::initJoint(i);
-  }
+  hal::init();
   LOG_INFO("Setup complete");
 }
 
+uint64_t last_report = 0;
 uint8_t buf[128];
 void loop() {
+  uint64_t now = millis();
+  if (now > last_report + 5000) {
+    last_report = now;
+    motion::print_state();
+  }
+
   // NOTE: Casting directly to struct requires both the same endianness and same interpetation of floating point
   // nubmers. https://stackoverflow.com/questions/13775893/converting-struct-to-byte-and-back-to-struct
   int sz = comms::read(buf, sizeof(buf));
-  if (sz != 0 && sz != 30) {
-    LOG_INFO("BAD SIZE %d", sz);
-    return;
-  }
   if (sz > 0) {
     state::deserialize(&state::intent, buf);
     motion::intent_changed();

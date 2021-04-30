@@ -61,12 +61,12 @@ void loop() {
 void sync() {
   zmq::message_t resp;
   if (pull_socket.recv(&resp, ZMQ_DONTWAIT)) {
+    char buf[NUM_J];
     for (int i = 0; i < NUM_J; i++) {
       cur_cal[i] = (bool) ((char*)resp.data())[i];
+      buf[i] = (cur_cal[i]) ? '1' : '0';
     }
-    LOG_INFO("New limit state received: %d %d %d %d %d %d", 
-        cur_cal[0], cur_cal[1], cur_cal[2], 
-        cur_cal[3], cur_cal[4], cur_cal[5]);
+    LOG_INFO("New limit state received: %s", buf); 
   } 
 }
 

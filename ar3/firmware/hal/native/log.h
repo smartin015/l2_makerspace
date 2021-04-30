@@ -16,19 +16,19 @@
 #define NEWLINE     "\n"
 
 #if LOG_LEVEL >= DEBUG_LEVEL
-#define LOG_DEBUG(message, args...)     PRINTFUNCTION("DEBUG:" message NEWLINE, ## args)
+#define LOG_DEBUG(message, args...)     PRINTFUNCTION("D:" message NEWLINE, ## args)
 #else
 #define LOG_DEBUG(message, args...)
 #endif
 
 #if LOG_LEVEL >= INFO_LEVEL
-#define LOG_INFO(message, args...)      PRINTFUNCTION("INFO:" message NEWLINE, ## args)
+#define LOG_INFO(message, args...)      PRINTFUNCTION("I:" message NEWLINE, ## args)
 #else
 #define LOG_INFO(message, args...)
 #endif
 
 #if LOG_LEVEL >= ERROR_LEVEL
-#define LOG_ERROR(message, args...)     PRINTFUNCTION("ERROR:" message NEWLINE, ## args)
+#define LOG_ERROR(message, args...)     PRINTFUNCTION("E:" message NEWLINE, ## args)
 #else
 #define LOG_ERROR(message, args...)
 #endif

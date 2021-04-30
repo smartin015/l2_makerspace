@@ -7,7 +7,7 @@
 
 namespace hal {
 
-void initJoint(int i);
+void init();
 void stepDir(int i, bool dir);
 void stepDn(int i);
 void stepUp(int i);
