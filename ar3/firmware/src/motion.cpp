@@ -60,11 +60,11 @@ void motion::init() {
 void motion::print_state() {
   // LOG_DEBUG("%d %s", int(now), dbg);
   // NOTE: arduino doesn't include floating point printf by default; scale & cast floats
-  LOG_DEBUG("J0 dtick: %d\ton: %d\twant p%d v%d\tgot p%d v%d --> %d stepvel %lu ticks/step\n", 
+  LOG_DEBUG("J0 dtick %d on %d\twant m%02x p%d v%d\tgot m%02x p%d v%d --> %d stepvel %lu ticks/step\n", 
       ticks_since_last_update,
       active[0],
-      state::intent.pos[0], int(state::intent.vel[0]*100),
-      state::actual.pos[0], int(state::actual.vel[0]*100),
+      state::intent.mask[0], state::intent.pos[0], int(state::intent.vel[0]*100),
+      state::actual.mask[0], state::actual.pos[0], int(state::actual.vel[0]*100),
       int(step_vel[0]*100), ticks_per_step[0]);
 }
 
@@ -134,6 +134,12 @@ void recalc_limit_intent() {
 
 void motion::intent_changed() {
   recalc_limit_intent();
+
+  for (int i = 0; i < NUM_J; i++) {
+    bool en = state::intent.mask[i] & MASK_ENABLED;
+    hal::stepEnabled(i, en);
+    state::actual.mask[i] = (state::actual.mask[i] & ~MASK_ENABLED) | (en ? MASK_ENABLED : 0);
+  }
 }
 
 void motion::write() {
@@ -170,6 +176,9 @@ void motion::write() {
     ticks[i] = 0;
     hal::stepDir(i, dir);    
     hal::stepDn(i);
+    if (state::intent.mask[i] & MASK_OPEN_LOOP_CONTROL) {
+      state::actual.pos[i] += (dir) ? 1 : -1;
+    }
     //dbg[2*i+1] = '.';
   }
   ticks_since_last_update++;
@@ -185,8 +194,9 @@ void motion::write() {
 
 void motion::read() {
   for (int i = 0; i < NUM_J; i++) {
-    int p = hal::readEnc(i);
-    state::actual.pos[i] = p;
+    if (!(state::intent.mask[i] & MASK_OPEN_LOOP_CONTROL)) {
+      state::actual.pos[i] = hal::readEnc(i);
+    }
   }
 }
 

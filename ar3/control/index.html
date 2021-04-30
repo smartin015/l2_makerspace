@@ -1,5 +1,6 @@
 <html>
 <head>
+<title>Control</title>
 <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
 <meta content="utf-8" http-equiv="encoding">
 <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
@@ -41,10 +42,20 @@
 <div class="mdl-card mdl-shadow--2dp content">
   <div class="mdl-card__title" style="border-bottom: 1px gray solid;"><h2 class="mdl-card__title-text" id="status"></h2></div>
   <div class="mdl-card__supporting-text">
+     <label class = "mdl-checkbox mdl-js-checkbox" for = "joint_enable">
+        <input type = "checkbox" id = "joint_enable" 
+           class = "mdl-checkbox__input">
+	<span class = "mdl-checkbox__label">enable joints</span>
+     </label>
+     <label class = "mdl-checkbox mdl-js-checkbox" for = "open_loop">
+        <input type = "checkbox" id = "open_loop" 
+           class = "mdl-checkbox__input">
+        <span class = "mdl-checkbox__label">open loop</span>
+     </label>
      <label class = "mdl-checkbox mdl-js-checkbox" for = "limit_override">
         <input type = "checkbox" id = "limit_override" 
            class = "mdl-checkbox__input">
-        <span class = "mdl-checkbox__label">limit_override</span>
+        <span class = "mdl-checkbox__label">limit override</span>
      </label>
 
     <table class="mdl-data-table mdl-js-data-table" style="background-color: transparent !important;">
@@ -85,6 +96,10 @@ var ws = null; //See reconnect()
 var state = null; //See init()
 var ui = null; //See init()
 
+const MASK_ENABLED = 0b1;
+const MASK_LIMIT_TRIGGERED = 0b10;
+const MASK_OPEN_LOOP_CONTROL = 0b100;
+
 const STEPS_PER_REV = [4096,4096,4096,4096,4096,4096];
 const GRAPH_DOMAIN_SEC = 20;
 const SEND_STATE_PD_MILLIS = 100;
@@ -115,12 +130,12 @@ function initGraph(id, yMin, yMax) {
   }).draw();
 }
 
-function setLimitOverride(event) {
-  state.limit_override = event.target.checked;
-  console.log(`Limit override: ${(state.limit_override) ? "ENABLED" : "disabled"}`);
+function setMaskAllJoints(mask, enabled) {
+  console.log(`All joints: mask change ${mask}: ${enabled}`);
   for (let i = 0; i < state.num_j; i++) {
-    state.tmask[i] = (state.tmask[i] & ~0x01) | ((state.limit_override) ? 1 : 0);
+    state.tmask[i] = (state.tmask[i] & ~mask) | ((enabled) ? mask : 0);
   }
+
 }
 
 function setStatus(status) {
@@ -216,7 +231,6 @@ function init(num_j) {
     tpos: Array(num_j).fill(0),
     tvel: Array(num_j).fill(0),
     tmask: Array(num_j).fill(0),
-    limit_override: false,
     last_event_log: millis(),
   };
 
@@ -255,9 +269,11 @@ function init(num_j) {
       state.tvel[i] = Math.round(e.target.value / (2*3.14159) * STEPS_PER_REV[i]);
       ui.veltgt[i].innerText = parseFloat(e.target.value).toFixed(2);
     }
-
-    document.getElementById("limit_override").onchange = setLimitOverride;
   }
+   
+  document.getElementById("limit_override").onchange = (event) => setMaskAllJoints(MASK_LIMIT_TRIGGERED, event.target.checked);
+  document.getElementById("joint_enable").onchange = (event) => setMaskAllJoints(MASK_ENABLED, event.target.checked);
+  document.getElementById("open_loop").onchange = (event) => setMaskAllJoints(MASK_OPEN_LOOP_CONTROL, event.target.checked);
   
   startWebsocket();
   setInterval(tick, 100);
