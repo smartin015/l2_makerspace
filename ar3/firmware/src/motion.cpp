@@ -17,7 +17,6 @@
 #define ABS(v) ((v > 0) ? v : -v)
 #define MIN(a,b) ((a<b) ? a : b)
 #define MAX(a,b) ((a<b) ? b : a)
-#define SIGN(x) ((x > 0) ? 1 : -1)
 
 // Set this wide enough that the step pin interrupt
 // can be triggered on the stepper driver - see driver 
@@ -35,7 +34,7 @@ int ticks_since_last_update = 0;
 #define VELOCITY_UPDATE_PD_MILLIS 100
 #define VELOCITY_MAX_UPDATE_PD_MILLIS 200
 
-#define MAX_ACCEL float(100)
+#define MAX_ACCEL float(1)
 #define MAX_VEL float(10000)
 #define MIN_VEL float(10)
 
@@ -103,9 +102,7 @@ void motion::update() {
       delta_vel[i] = (state::intent.vel[i] - state::actual.vel[i]);
 
       // Apply acceleration limit
-      //if (ABS(delta_vel[i] * 1000 / dt) > MAX_ACCEL) {
-      //  delta_vel[i] = 1000 * MAX_ACCEL * SIGN(delta_vel[i]);
-      //}
+      delta_vel[i] = MIN(MAX_ACCEL, MIN(-MAX_ACCEL, delta_vel[i]));
 
       // Update velocity, applying firmware velocity limits
       step_vel[i] = MIN(MAX_VEL, MAX(MIN_VEL, step_vel[i] + delta_vel[i]));
