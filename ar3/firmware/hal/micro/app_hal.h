@@ -11,9 +11,11 @@ void init();
 void stepDir(int i, bool dir);
 void stepDn(int i);
 void stepUp(int i);
+void stepEnabled(int i, bool en);
 bool readLimit(int i);
 int readEnc(int idx);
 void writeEnc(int idx, int value);
+void startMainTimer(int hz, void(*cb)());
 
 } // namespace hal
 

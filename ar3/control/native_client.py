@@ -92,7 +92,7 @@ async def handle_socket(ws, path):
     state.pos = [int(v) for v in mpv[1].split(",")]
     state.vel = [int(v) for v in mpv[2].split(",")]
     req = struct.pack(state.struct_fmt, *(state.mask + state.pos + state.vel))
-    # print(req.hex(),"--->",end='')
+    # print(req.hex(),"--->")
     if args.loopback:
       await asyncio.sleep(0.1)
       resp = req
