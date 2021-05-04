@@ -79,7 +79,7 @@
           <td class="postgt">0</td>
           <td class="posval">#</td>
           <td style="width:300px">
-            <input class="mdl-slider mdl-js-slider velslider" type="range" id="s6" min="0.0" max="1.0" value="0.25" step="0.025">
+            <input class="mdl-slider mdl-js-slider velslider" type="range" id="s6" min="-1.0" max="1.0" value="0.25" step="0.025">
           </td>
           <td class="veltgt">0</td>
           <td class="velval">#</td>
@@ -100,7 +100,8 @@ const MASK_ENABLED = 0b1;
 const MASK_LIMIT_TRIGGERED = 0b10;
 const MASK_OPEN_LOOP_CONTROL = 0b100;
 
-const STEPS_PER_REV = [4096,4096,4096,4096,4096,4096];
+const STEP = 32768;
+const STEPS_PER_REV = [STEP,STEP,STEP,STEP,STEP,STEP];
 const GRAPH_DOMAIN_SEC = 20;
 const SEND_STATE_PD_MILLIS = 100;
 const EVENT_LOG_PD = 2000;
@@ -114,8 +115,8 @@ function initGraph(id, yMin, yMax) {
       id,
       data: [...Array(state.num_j)].map(e => Array(GRAPH_DOMAIN_SEC * 1000 / SEND_STATE_PD_MILLIS)),
       options: {
-          //yaxisScaleMax: yMax,
-          //yaxisScaleMin: yMin,
+          yaxisScaleMax: yMax,
+          yaxisScaleMin: yMin,
           tickmarksStyle: null,
           linewidth: 1,
           shadow: null,
@@ -251,7 +252,7 @@ function init(num_j) {
     velslider: document.getElementsByClassName("velslider"),
     veltgt: document.getElementsByClassName("veltgt"),
     velval: document.getElementsByClassName("velval"),
-    velgraph: initGraph("velCanvas", 0, 4),
+    velgraph: initGraph("velCanvas", -1.5, 1.5),
   };
 
 

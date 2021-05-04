@@ -22,6 +22,7 @@ Encoder enc[] = {
 #endif
 
 #ifdef GSHIELD
+#define PRESCALE 1 // TODO requires manual changes to timer setup code when changed
 const int STEP_PIN[] = {2, 3, 4};
 const int DIR_PIN[] = {5, 6, 7};
 const int CAL_PIN[] = {9, 10, 12};
@@ -71,17 +72,34 @@ void writeEnc(int i, int value) {
   // TODO
 }
 
+void (*isr_cb)();
+ISR(TIMER1_COMPA_vect) {
+  isr_cb();
+}
+
 void startMainTimer(int hz, void (*cb)()) {
   // TODO version for teensy35
-
   noInterrupts();
+  isr_cb = cb;
+
+  // Reset timer flags
   TCCR1A = 0;
   TCCR1B = 0;
   TCNT1  = 0;
-  OCR1A = 31250;            // compare match register 16MHz/256/2Hz
-  TCCR1B |= (1 << WGM12);   // CTC mode
-  TCCR1B |= (1 << CS12);    // 256 prescaler 
+
+  // freq = clock / (prescaler * (OCR1A + 1)) -> OCR1A = clock / (freq * prescaler) - 1
+  OCR1A = F_CPU / (hz * PRESCALE) - 1;
+  TCCR1B |= (1 << WGM12);   // CTC (clear timer on compare) mode, compare OCR1A
+  TCCR1B |= (1 << CS10);    // No prescale, but enable
   TIMSK1 |= (1 << OCIE1A);  // enable timer compare interrupt
+
+  interrupts();
+}
+
+void disableInterrupts() {
+  noInterrupts();
+}
+void enableInterrupts() {
   interrupts();
 }
 
