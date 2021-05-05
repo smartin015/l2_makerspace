@@ -16,6 +16,8 @@ bool readLimit(int i);
 int readEnc(int idx);
 void writeEnc(int idx, int value);
 void startMainTimer(int hz, void(*cb)());
+void disableInterrupts();
+void enableInterrupts();
 
 } // namespace hal
 
