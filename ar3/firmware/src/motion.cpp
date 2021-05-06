@@ -39,7 +39,7 @@ uint32_t steps_since_last_print = 0; // Cumulative, all joints
 #define MAX_SPD float(10000)
 #define MIN_SPD float(10)
 
-const float PID[3] = {0.6, 0.2, 0.2};
+const float PID[3] = {0.1, 0.1, 0.1};
 
 uint64_t last_velocity_update = 0;
 float prev_vel[NUM_J];
@@ -116,10 +116,10 @@ bool motion::update() {
     // This is PID adjustment targeting velocity - in this case, P=velocity, I=position, D=acceleration
     // Note that we have targets both for position and velocity, but not for acceleration - that's where
     // we use a real value.
-    float new_vel = (PID[0] * err_vel[i]) + (PID[1] * err_pos[i]) + (PID[2] * (err_vel[i] - prev_err_vel[i]));
+    float vel_adjust = (PID[0] * err_vel[i]) + (PID[1] * err_pos[i]) + (PID[2] * (err_vel[i] - prev_err_vel[i]));
 
     // Update velocity, applying firmware velocity limits
-    step_vel[i] = MIN(MAX_SPD, MAX(-MAX_SPD, new_vel));
+    step_vel[i] = MIN(MAX_SPD, MAX(-MAX_SPD, step_vel[i] + vel_adjust));
   
     // If step_vel is too small, we risk div by zero
     if (ABS(step_vel[i]) < MIN_SPD) {
@@ -196,7 +196,7 @@ void motion::write() {
     hal::stepDn(i);
     steps_since_last_print++;
     if (state::intent.mask[i] & MASK_OPEN_LOOP_CONTROL) {
-      state::actual.pos[i] += (dir) ? 1 : -1;
+      state::actual.pos[i] += (step_vel[i] > 0) ? 1 : -1;
     }
     //dbg[2*i+1] = '.';
   }
