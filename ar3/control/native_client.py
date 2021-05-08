@@ -27,6 +27,8 @@ class Comms():
 
     def recv_ser(self):
         while True:
+            if self.sock.in_waiting == 0:
+                return None
             self.sock.read_until(bytes([0x79])) #magic sync byte
             sz = self.sock.read(1)
             if len(sz) != 1:
@@ -42,12 +44,22 @@ class Comms():
                 return None
             return self.sock.read(sz)
 
+    async def recv_forever(self, cb):
+        print("Starting recv_forever")
+        while True:
+            data = self.recv_ser()
+            if data is not None:
+                await cb(data)
+            else:
+                await asyncio.sleep(0)
+
+
     def send(self, req):
         if self.ser:
             self.sock.write(bytes([0x79, len(req)]))
             self.sock.write(req)
             self.sock.flush()
-            return self.recv_ser()
+            return None
         else:
             socket.send(req)
             return socket.recv()
@@ -84,9 +96,22 @@ class WebServer(SimpleHTTPRequestHandler):
 async def handle_socket(ws, path):
   global state, NUM_J
   print("WS conn", str(ws))
-  while True:
-    # NOTE: Expected units are in "steps", "steps/second" etc.
-    data = await ws.recv()
+  # Note: async read not threadsafe
+  async def send_resp(resp):
+    try:
+        mpv = struct.unpack(state.struct_fmt, resp)
+    except Exception as e:
+        print("Error unpacking response of size %d:" % len(resp), e)
+    state.mask = mpv[0:NUM_J]
+    state.pos = mpv[NUM_J:2*NUM_J]
+    state.vel = mpv[2*NUM_J:]
+    #print(state.mask,state.pos,state.vel)
+    await ws.send("|".join([",".join([str(s) for s in v]) for v in [state.mask, state.pos, state.vel]]))
+  await asyncio.gather(conn.recv_forever(send_resp), ws_to_conn(ws))
+
+async def ws_to_conn(ws):
+  print("Starting ws_to_conn")
+  async for data in ws:
     mpv = data.split("|")
     state.mask = [int(v) for v in mpv[0].split(",")]
     state.pos = [int(v) for v in mpv[1].split(",")]
@@ -95,23 +120,9 @@ async def handle_socket(ws, path):
     # print(req.hex(),"--->")
     if args.loopback:
       await asyncio.sleep(0.1)
-      resp = req
+      # TODO send resp
     else:
-      resp = conn.send(req)
-    # print(resp.hex()) # print(state.mask,state.pos,state.vel,"-->",end='')
-
-    if resp is None:
-        print("WARN: empty response")
-    else:
-        try:
-            mpv = struct.unpack(state.struct_fmt, resp)
-        except Exception as e:
-            print("Error unpacking response of size %d:" % len(resp), e)
-        state.mask = mpv[0:NUM_J]
-        state.pos = mpv[NUM_J:2*NUM_J]
-        state.vel = mpv[2*NUM_J:]
-        #print(state.mask,state.pos,state.vel)
-    await ws.send("|".join([",".join([str(s) for s in v]) for v in [state.mask, state.pos, state.vel]]))
+      conn.send(req)
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
@@ -132,6 +143,7 @@ if __name__ == "__main__":
   # Websocket for streaming comms from web client
   WS_SERVER_ADDR = ("0.0.0.0", 8001)
   wssrv = websockets.serve(handle_socket, WS_SERVER_ADDR[0], WS_SERVER_ADDR[1])
+
   asyncio.get_event_loop().run_until_complete(wssrv)
   print("Starting websocket server", str(WS_SERVER_ADDR))
   asyncio.get_event_loop().run_forever()

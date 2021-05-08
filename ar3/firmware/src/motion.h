@@ -7,7 +7,7 @@ void init();
 void write();
 void read();
 void zero();
-void update();
+bool update();
 void intent_changed();
 void print_state();
 

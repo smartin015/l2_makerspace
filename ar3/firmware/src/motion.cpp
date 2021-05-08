@@ -29,19 +29,24 @@ bool limit_triggered[NUM_J];
 float step_vel[NUM_J];
 uint32_t ticks_per_step[NUM_J];
 uint32_t ticks[NUM_J];
-int ticks_since_last_update = 0;
+uint32_t ticks_since_last_print = 0;
+uint32_t steps_since_last_print = 0; // Cumulative, all joints
 
 #define VELOCITY_UPDATE_PD_MILLIS 100
 #define VELOCITY_MAX_UPDATE_PD_MILLIS 200
 
-#define MAX_ACCEL float(1)
-#define MAX_VEL float(10000)
-#define MIN_VEL float(10)
+#define MAX_ACCEL float(20) // NOTE: must be at least as large as MIN_SPD
+#define MAX_SPD float(10000)
+#define MIN_SPD float(10)
 
+const float PID[3] = {0.1, 0.1, 0.1};
 
 uint64_t last_velocity_update = 0;
-int prev_vel_pos[NUM_J];
-float delta_vel[NUM_J];
+float prev_vel[NUM_J];
+float prev_err_vel[NUM_J];
+int prev_pos[NUM_J];
+float err_vel[NUM_J];
+int err_pos[NUM_J];
 bool active[NUM_J];
 
 void motion::init() {
@@ -50,71 +55,85 @@ void motion::init() {
     step_vel[i] = 0;
     ticks_per_step[i] = 0;
     ticks[i] = 0;
-    prev_vel_pos[i] = 0;
+    prev_pos[i] = 0;
+    prev_vel[i] = 0;
+    prev_err_vel[i] = 0;
     active[i] = false;
-    delta_vel[i] = 0;
+    err_vel[i] = 0;
+    err_pos[i] = 0;
   }
 }
 
 void motion::print_state() {
   // LOG_DEBUG("%d %s", int(now), dbg);
   // NOTE: arduino doesn't include floating point printf by default; scale & cast floats
-  LOG_DEBUG("J0 dtick %d on %d\twant m%02x p%d v%d\tgot m%02x p%d v%d --> %d stepvel %lu ticks/step\n", 
-      ticks_since_last_update,
+  LOG_DEBUG("J0 dtick %lu\tdstep %lu\ton %d\twant m%02x p%d v%d\tgot m%02x p%d v%d --> stepvel %d ticks/step %lu\n", 
+      ticks_since_last_print,
+      steps_since_last_print,
       active[0],
-      state::intent.mask[0], state::intent.pos[0], int(state::intent.vel[0]*100),
-      state::actual.mask[0], state::actual.pos[0], int(state::actual.vel[0]*100),
-      int(step_vel[0]*100), ticks_per_step[0]);
+      state::intent.mask[0], state::intent.pos[0], int(state::intent.vel[0])*100,
+      state::actual.mask[0], state::actual.pos[0], int(state::actual.vel[0])*100,
+      int(step_vel[0])*100, ticks_per_step[0]);
+  ticks_since_last_print = 0;
+  steps_since_last_print = 0;
 }
 
 // Velocities are implemented by slowly adjusting 
 // the stepping period for each joint based on the target
 // velocity and (currently hardcoded) acceleration profile given for each motor
-void motion::update() {
+bool motion::update() {
   uint64_t now = millis();
   int dt = now - last_velocity_update;
   if (dt < VELOCITY_UPDATE_PD_MILLIS) {
-    return;
+    return false;
   }
   last_velocity_update = now;
   if (dt > VELOCITY_MAX_UPDATE_PD_MILLIS) {
     LOG_ERROR("too long between calls to update(); skipping");
-    ticks_since_last_update = 0;
-    return; // Avoid edge case in delta processing causing jumps in calculated pos/vel
+    return false; // Avoid edge case in delta processing causing jumps in calculated pos/vel
   }
 
+  // Prevent motor steps while we recalculate ticks per step
+  hal::disableInterrupts();
+   
+  // WARNING: Teensy3.5 has an FPU with hardware support for 32-bit only.
   for (int i = 0; i < NUM_J; i++) {
-    // WARNING: Teensy3.5 has an FPU with hardware support for 32-bit only.
-    state::actual.vel[i] = 1000 * float(ABS(state::actual.pos[i] - prev_vel_pos[i])) / dt;
-    prev_vel_pos[i] = state::actual.pos[i];
+    // Update kinematic state
+    state::actual.vel[i] = (1000 * float(state::actual.pos[i] - prev_pos[i])) / dt;
+    prev_pos[i] = state::actual.pos[i];
+    prev_vel[i] = state::actual.vel[i];
     
-    // Don't calculate stepping if we're already at intent or cannot move
-    active[i] = (state::intent.pos[i] - state::actual.pos[i] != 0) && (state::intent.vel[i] != 0);
+    prev_err_vel[i] = err_vel[i];
+    err_vel[i] = state::intent.vel[i] - state::actual.vel[i];
+    err_pos[i] = state::intent.pos[i] - state::actual.pos[i];
+
+    // Don't calculate stepping if we're already at intent
+    active[i] = (err_vel[i] != 0) || (err_pos[i] != 0);
     if (!active[i]) {
       continue;
     }
     
-    if (state::actual.vel[i] == 0) {
-      // Shortcut on zero velocity - initial nudge to start moving
-      step_vel[i] = MIN_VEL;
-    } else {
-      // TODO PID loop tuning
-      delta_vel[i] = (state::intent.vel[i] - state::actual.vel[i]);
+    // This is PID adjustment targeting velocity - in this case, P=velocity, I=position, D=acceleration
+    // Note that we have targets both for position and velocity, but not for acceleration - that's where
+    // we use a real value.
+    float vel_adjust = (PID[0] * err_vel[i]) + (PID[1] * err_pos[i]) + (PID[2] * (err_vel[i] - prev_err_vel[i]));
 
-      // Apply acceleration limit
-      delta_vel[i] = MIN(MAX_ACCEL, MIN(-MAX_ACCEL, delta_vel[i]));
-
-      // Update velocity, applying firmware velocity limits
-      step_vel[i] = MIN(MAX_VEL, MAX(MIN_VEL, step_vel[i] + delta_vel[i]));
-    }
+    // Update velocity, applying firmware velocity limits
+    step_vel[i] = MIN(MAX_SPD, MAX(-MAX_SPD, step_vel[i] + vel_adjust));
   
+    // If step_vel is too small, we risk div by zero
+    if (ABS(step_vel[i]) < MIN_SPD) {
+      step_vel[i] = (step_vel[i] > 0) ? MIN_SPD : -MIN_SPD;
+    }
+
     // ticks/step = (ticks/sec) * (sec / step)
-    //            = (ticks/update * updates/sec) * (1 / step_vel)
-    //            = (ticks_since_last_update) * (1000 / dt) * (1 / step_vel)
-    ticks_per_step[i] = (1000 * ticks_since_last_update) / (step_vel[i] * dt);
+    //            = (ticks/sec) * (1 / step_speed)
+    ticks_per_step[i] = uint32_t(float(MOTION_WRITE_HZ) / abs(step_vel[i]));
+    hal::stepDir(i, (step_vel[i] > 0) ? HIGH : LOW);    
   }
 
-  ticks_since_last_update = 0;
+  hal::enableInterrupts();
+  return true;
 }
 
 bool limits_intended = false;
@@ -139,7 +158,12 @@ void motion::intent_changed() {
   }
 }
 
+// Note: this is likely called inside a timer interrupt
+// so care must be taken to keep overall cycles light.
+// Avoid logging and other debugging calls
 void motion::write() {
+  ticks_since_last_print++;
+
   // Continue moving to target
   // Calculate ramp settings
   for (int i = 0; i < NUM_J; i++) {
@@ -149,12 +173,10 @@ void motion::write() {
     }
 
     // Don't move if we're driving further into a limit
-    int delta = state::intent.pos[i] - state::actual.pos[i];
-    uint8_t dir = (delta > 0);
+    uint8_t dir = (state::intent.pos[i] - state::actual.pos[i]) > 0;
     //dbg[2*i] = (dir) ? '+' : '-';
     if (!hal::readLimit(i) && !dir) {
       if (!(state::actual.mask[i] & MASK_LIMIT_TRIGGERED)) {
-        LOG_DEBUG("Driving into limit %d; skipping move\n", i);
         state::actual.mask[i] |= MASK_LIMIT_TRIGGERED;
       }
       continue;
@@ -171,14 +193,13 @@ void motion::write() {
     }
 
     ticks[i] = 0;
-    hal::stepDir(i, dir);    
     hal::stepDn(i);
+    steps_since_last_print++;
     if (state::intent.mask[i] & MASK_OPEN_LOOP_CONTROL) {
-      state::actual.pos[i] += (dir) ? 1 : -1;
+      state::actual.pos[i] += (step_vel[i] > 0) ? 1 : -1;
     }
     //dbg[2*i+1] = '.';
   }
-  ticks_since_last_update++;
 
   // Sleep for all steps rather than stepping in sequence 
   // in order to save cycles.
