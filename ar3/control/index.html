@@ -157,7 +157,15 @@ function millis() {
 let lastSendState = 0;
 function sendState() {
   if (ws.readyState === ws.OPEN) {
-    ws.send([state.tmask.join(","), state.tpos.join(","), state.tvel.join(",")].join("|"));
+    let buf = new ArrayBuffer(state.num_j * 5);
+    let view = new DataView(buf);
+    for (let i = 0; i < state.num_j; i++) {
+      view.setInt8(i, state.tmask[i]);
+      view.setInt16(state.num_j + 2*i, state.tpos[i]);
+      view.setInt16(3*state.num_j + 2*i, state.tvel[i]);
+    }
+    console.log(buf);
+    ws.send(buf);
     lastSendState = millis();
   }
 }
@@ -175,35 +183,33 @@ function tick() {
 }
 
 function handleMessage(event) {
-  let now = millis();
-  if (now - state.last_event_log > EVENT_LOG_PD) {
-    console.log(event.data);
-    state.last_event_log = now;
-  }
-  mpv = event.data.split("|");
-  m = mpv[0].split(",");
-  p = mpv[1].split(",");
-  v = mpv[2].split(",");
+  event.data.arrayBuffer().then((buf) => {
+    let view = new DataView(buf);
+    let now = millis();
+    if (now - state.last_event_log > EVENT_LOG_PD) {
+      console.log(buf);
+      state.last_event_log = now;
+    }
 
-  let posdata = [];
-  for (let i = 0; i < state.num_j; i++) {
-    state.mask[i]=m[i];
-    ui.mask[i].innerText = state.mask[i];
+    let posdata = [];
+    for (let i = 0; i < state.num_j; i++) {
+      state.mask[i]= view.getInt8(i);
+      state.pos[i] = view.getInt16(state.num_j + 2*i);
+      state.vel[i] = view.getInt16(3*state.num_j + 2*i);
 
-    state.pos[i]=p[i];
-    state.vel[i]=v[i];
-    let pos_norm = state.pos[i] * (2*3.14159)/STEPS_PER_REV[i];
-    posdata[i] = pos_norm;
-    ui.posval[i].innerText = pos_norm.toFixed(2);
+      ui.mask[i].innerText = state.mask[i].toString(2).padStart(8, '0'); 
 
-    let vel_norm = state.vel[i] * (2*3.14159)/STEPS_PER_REV[i];
-    ui.velgraph.original_data[i].shift();
-    ui.velgraph.original_data[i].push(vel_norm);
-    ui.velval[i].innerText = vel_norm.toFixed(2);
-  }
-  ui.posgraph.add_data(posdata);
-  
-  tick();
+      let pos_norm = state.pos[i] * (2*3.14159)/STEPS_PER_REV[i];
+      posdata[i] = pos_norm;
+      ui.posval[i].innerText = pos_norm.toFixed(2);
+
+      let vel_norm = state.vel[i] * (2*3.14159)/STEPS_PER_REV[i];
+      ui.velgraph.original_data[i].shift();
+      ui.velgraph.original_data[i].push(vel_norm);
+      ui.velval[i].innerText = vel_norm.toFixed(2);
+    }
+    ui.posgraph.add_data(posdata);
+  });
 }
 
 function startWebsocket() {

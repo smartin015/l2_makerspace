@@ -1,5 +1,10 @@
 #include "state.h"
 
+inline void int2buf(uint8_t* buf, int16_t i) {
+  buf[0] = i & 0xff;
+  buf[1] = (i >> 8) & 0xff;
+}
+
 inline int16_t buf2int(uint8_t* buf) {
   return buf[0] + (buf[1] << 8);
 }
@@ -8,10 +13,8 @@ namespace state {
   void serialize(uint8_t* buf, state_t* state) {
     for (int i = 0; i < NUM_J; i++) {
       buf[i] = state->mask[i];
-      buf[NUM_J + 2*i] = state->pos[i] & 0xff;
-      buf[NUM_J + 2*i + 1] = (state->pos[i] >> 8) & 0xff;
-      buf[3*NUM_J + 2*i] = int16_t(state->vel[i]) & 0xff;
-      buf[3*NUM_J + 2*i + 1] = (int16_t(state->vel[i]) >> 8) & 0xff;
+      int2buf(buf + NUM_J + 2*i, state->pos[i]);
+      int2buf(buf + 3*NUM_J + 2*i, int16_t(state->vel[i]));
     }
   }
 

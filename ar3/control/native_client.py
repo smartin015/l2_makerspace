@@ -44,12 +44,12 @@ class Comms():
                 return None
             return self.sock.read(sz)
 
-    async def recv_forever(self, cb):
+    async def recv_forever(self, ws):
         print("Starting recv_forever")
         while True:
             data = self.recv_ser()
             if data is not None:
-                await cb(data)
+                await ws.send(data)
             else:
                 await asyncio.sleep(0)
 
@@ -65,18 +65,6 @@ class Comms():
             return socket.recv()
 
 conn = None
-
-class State():
-    def __init__(self):
-        global NUM_J
-        # = indicates native order, standard size (native size may add padding)
-        self.struct_fmt = '=' + 'B'*NUM_J + 'h'*NUM_J + 'h'*NUM_J
-        print("Expected packet format:", self.struct_fmt)
-        self.mask = [0]*NUM_J
-        self.pos = [0]*NUM_J
-        self.vel = [0]*NUM_J
-
-state = None
 
 def sigterm_handler(_signo, _stack_frame):
     sys.exit(0)
@@ -94,36 +82,20 @@ class WebServer(SimpleHTTPRequestHandler):
             return SimpleHTTPRequestHandler.do_GET(self)
 
 async def handle_socket(ws, path):
-  global state, NUM_J
+  global NUM_J
   print("WS conn", str(ws))
-  # Note: async read not threadsafe
-  async def send_resp(resp):
-    try:
-        mpv = struct.unpack(state.struct_fmt, resp)
-    except Exception as e:
-        print("Error unpacking response of size %d:" % len(resp), e)
-    state.mask = mpv[0:NUM_J]
-    state.pos = mpv[NUM_J:2*NUM_J]
-    state.vel = mpv[2*NUM_J:]
-    #print(state.mask,state.pos,state.vel)
-    await ws.send("|".join([",".join([str(s) for s in v]) for v in [state.mask, state.pos, state.vel]]))
   if args.loopback:
-      await ws_to_conn(ws, send_resp)
+      await ws_to_conn(ws)
   else:
-      await asyncio.gather(conn.recv_forever(send_resp), ws_to_conn(ws))
+      await asyncio.gather(conn.recv_forever(ws), ws_to_conn(ws))
 
-async def ws_to_conn(ws, cb = None):
+async def ws_to_conn(ws):
   print("Starting ws_to_conn")
-  async for data in ws:
-    mpv = data.split("|")
-    state.mask = [int(v) for v in mpv[0].split(",")]
-    state.pos = [int(v) for v in mpv[1].split(",")]
-    state.vel = [int(v) for v in mpv[2].split(",")]
-    req = struct.pack(state.struct_fmt, *(state.mask + state.pos + state.vel))
+  async for req in ws:
     # print(req.hex(),"--->")
     if args.loopback:
       await asyncio.sleep(0.1)
-      await cb(req)
+      await ws.send(req)
     else:
       conn.send(req)
 
@@ -134,7 +106,6 @@ if __name__ == "__main__":
   parser.add_argument('--dest', default="tcp://0.0.0.0:5555", help="Destination (ZMQ socket or serial dev path)")
   args = parser.parse_args(sys.argv[1:])
   NUM_J = args.j
-  state = State()
 
   if not args.loopback:
       conn = Comms(args.dest)
