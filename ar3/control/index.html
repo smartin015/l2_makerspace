@@ -16,6 +16,9 @@
   body.connected {
     background-color: white;
   }
+  canvas#posCanvas {
+    vertical-align: inherit;
+  }
   .content {
     width: 1200px;
     margin: 2vh;
@@ -29,7 +32,6 @@
   label.is-checked > span.mdl-checkbox__label {
     color: red;
     font-weight: bold;
-    animation: blinker 1s linear infinite;
   }
 
   @keyframes blinker {
@@ -86,8 +88,8 @@
           <td class="velval">#</td>
         </tr>
       </tbody>
-      <canvas id="posCanvas" width="200" height="200" style="width: 100%">[No canvas support]</canvas>
-      <canvas id="velCanvas" width="500" height="150" style="width: 100%">[No canvas support]</canvas>
+      <canvas id="posCanvas" width="400" height="400">[No canvas support]</canvas>
+      <canvas id="velCanvas" width="500" height="400" style="width: 100%">[No canvas support]</canvas>
     </table>
     <div id="lastUpdate"></div>
   </div>
@@ -167,7 +169,6 @@ function tick() {
   }
 
   // Clear (NOT reset) the canvas
-  RGraph.clear(ui.posgraph.canvas);
   RGraph.clear(ui.velgraph.canvas);
   ui.posgraph.draw();
   ui.velgraph.draw();
@@ -183,6 +184,8 @@ function handleMessage(event) {
   m = mpv[0].split(",");
   p = mpv[1].split(",");
   v = mpv[2].split(",");
+
+  let posdata = [];
   for (let i = 0; i < state.num_j; i++) {
     state.mask[i]=m[i];
     ui.mask[i].innerText = state.mask[i];
@@ -190,8 +193,7 @@ function handleMessage(event) {
     state.pos[i]=p[i];
     state.vel[i]=v[i];
     let pos_norm = state.pos[i] * (2*3.14159)/STEPS_PER_REV[i];
-    ui.posgraph.original_data[i].shift();
-    ui.posgraph.original_data[i].push(pos_norm);
+    posdata[i] = pos_norm;
     ui.posval[i].innerText = pos_norm.toFixed(2);
 
     let vel_norm = state.vel[i] * (2*3.14159)/STEPS_PER_REV[i];
@@ -199,6 +201,7 @@ function handleMessage(event) {
     ui.velgraph.original_data[i].push(vel_norm);
     ui.velval[i].innerText = vel_norm.toFixed(2);
   }
+  ui.posgraph.add_data(posdata);
   
   tick();
 }
@@ -248,7 +251,7 @@ function init(num_j) {
     posslider: document.getElementsByClassName("posslider"),
     postgt: document.getElementsByClassName("postgt"),
     posval: document.getElementsByClassName("posval"),
-    posgraph: PolarChart(document.getElementById("posCanvas").getContext("2d"), 100, 100, 100, NUM_J, 30, INCLUSIVE_COLORS),
+    posgraph: new PolarChart(document.getElementById("posCanvas").getContext("2d"), 200, 200, 200, state.num_j, 80, INCLUSIVE_COLORS),
     
     velslider: document.getElementsByClassName("velslider"),
     veltgt: document.getElementsByClassName("veltgt"),

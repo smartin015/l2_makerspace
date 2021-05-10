@@ -107,9 +107,12 @@ async def handle_socket(ws, path):
     state.vel = mpv[2*NUM_J:]
     #print(state.mask,state.pos,state.vel)
     await ws.send("|".join([",".join([str(s) for s in v]) for v in [state.mask, state.pos, state.vel]]))
-  await asyncio.gather(conn.recv_forever(send_resp), ws_to_conn(ws))
+  if args.loopback:
+      await ws_to_conn(ws, send_resp)
+  else:
+      await asyncio.gather(conn.recv_forever(send_resp), ws_to_conn(ws))
 
-async def ws_to_conn(ws):
+async def ws_to_conn(ws, cb = None):
   print("Starting ws_to_conn")
   async for data in ws:
     mpv = data.split("|")
@@ -120,7 +123,7 @@ async def ws_to_conn(ws):
     # print(req.hex(),"--->")
     if args.loopback:
       await asyncio.sleep(0.1)
-      # TODO send resp
+      await cb(req)
     else:
       conn.send(req)
 
@@ -132,7 +135,9 @@ if __name__ == "__main__":
   args = parser.parse_args(sys.argv[1:])
   NUM_J = args.j
   state = State()
-  conn = Comms(args.dest)
+
+  if not args.loopback:
+      conn = Comms(args.dest)
 
   # Webserver for html page
   WEB_SERVER_ADDR = ("0.0.0.0", 8000)

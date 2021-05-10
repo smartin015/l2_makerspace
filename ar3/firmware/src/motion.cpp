@@ -32,15 +32,6 @@ uint32_t ticks[NUM_J];
 uint32_t ticks_since_last_print = 0;
 uint32_t steps_since_last_print = 0; // Cumulative, all joints
 
-#define VELOCITY_UPDATE_PD_MILLIS 100
-#define VELOCITY_MAX_UPDATE_PD_MILLIS 200
-
-#define MAX_ACCEL float(20) // NOTE: must be at least as large as MIN_SPD
-#define MAX_SPD float(10000)
-#define MIN_SPD float(10)
-
-const float PID[3] = {0.1, 0.1, 0.1};
-
 uint64_t last_velocity_update = 0;
 float prev_vel[NUM_J];
 float prev_err_vel[NUM_J];
@@ -84,11 +75,11 @@ void motion::print_state() {
 bool motion::update() {
   uint64_t now = millis();
   int dt = now - last_velocity_update;
-  if (dt < VELOCITY_UPDATE_PD_MILLIS) {
+  if (dt < state::settings.velocity_update_pd_millis) {
     return false;
   }
   last_velocity_update = now;
-  if (dt > VELOCITY_MAX_UPDATE_PD_MILLIS) {
+  if (dt > 2 * state::settings.velocity_update_pd_millis) {
     LOG_ERROR("too long between calls to update(); skipping");
     return false; // Avoid edge case in delta processing causing jumps in calculated pos/vel
   }
@@ -116,14 +107,14 @@ bool motion::update() {
     // This is PID adjustment targeting velocity - in this case, P=velocity, I=position, D=acceleration
     // Note that we have targets both for position and velocity, but not for acceleration - that's where
     // we use a real value.
-    float vel_adjust = (PID[0] * err_vel[i]) + (PID[1] * err_pos[i]) + (PID[2] * (err_vel[i] - prev_err_vel[i]));
+    float vel_adjust = (state::settings.pid[0] * err_vel[i]) + (state::settings.pid[1] * err_pos[i]) + (state::settings.pid[2] * (err_vel[i] - prev_err_vel[i]));
 
     // Update velocity, applying firmware velocity limits
-    step_vel[i] = MIN(MAX_SPD, MAX(-MAX_SPD, step_vel[i] + vel_adjust));
+    step_vel[i] = MIN(state::settings.max_spd, MAX(-state::settings.max_spd, step_vel[i] + vel_adjust));
   
     // If step_vel is too small, we risk div by zero
-    if (ABS(step_vel[i]) < MIN_SPD) {
-      step_vel[i] = (step_vel[i] > 0) ? MIN_SPD : -MIN_SPD;
+    if (ABS(step_vel[i]) < state::settings.initial_spd) {
+      step_vel[i] = (step_vel[i] > 0) ? state::settings.initial_spd : -state::settings.initial_spd;
     }
 
     // ticks/step = (ticks/sec) * (sec / step)

@@ -33,9 +33,11 @@ void loop() {
   // NOTE: Casting directly to struct requires both the same endianness and same interpetation of floating point
   // nubmers. https://stackoverflow.com/questions/13775893/converting-struct-to-byte-and-back-to-struct
   int sz = comms::read(buf, sizeof(buf));
-  if (sz > 0) {
+  if (sz == sizeof(state::intent)) {
     state::deserialize(&state::intent, buf);
     motion::intent_changed();
+  } else if (sz == sizeof(state::settings)) {
+    state::apply_settings(&state::settings, buf);
   }
   
   motion::read();

@@ -27,11 +27,21 @@ struct state_t {
   float vel[NUM_J];
 };
 
+struct settings_t {
+  float pid[3] = {0.1, 0.1, 0.1}; // Tuning for motion
+  int velocity_update_pd_millis = 100;
+  float max_accel = 20; // NOTE: must be at least as large as state::settings.initial_spd
+  float max_spd = 10000;
+  float initial_spd = 10;
+};
+
 extern state_t intent;
 extern state_t actual;
+extern settings_t settings;
 
 void serialize(uint8_t* buf, state_t* state);
 void deserialize(state_t* state, uint8_t* buf);
+void apply_settings(settings_t* settings, uint8_t* buf);
 
 } //namespace state
 

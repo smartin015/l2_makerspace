@@ -52,16 +52,16 @@ class PolarChart {
     }
   }
 
-  render() {
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  draw() {
+    this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
 
-    ctx.strokeStyle = "#ccc";
-    ctx.lineWidth = 0.8;
+    this.ctx.strokeStyle = "#ccc";
+    this.ctx.lineWidth = 0.8;
     this.draw_bg();
 
-    ctx.linewidth = 1.0;
+    this.ctx.linewidth = 1.0;
     for (let i = 0; i < this.num_j; i++) {
-      ctx.strokeStyle = this.colors[i] || "#000";
+      this.ctx.strokeStyle = this.colors[i] || "#000";
       this.draw_joint(i);
     }
   }
