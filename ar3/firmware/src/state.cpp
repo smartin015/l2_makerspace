@@ -1,4 +1,5 @@
 #include "state.h"
+#include "log.h"
 
 inline void int2buf(uint8_t* buf, int16_t i) {
   buf[0] = i & 0xff;
@@ -28,13 +29,24 @@ namespace state {
   }
 
   void apply_settings(settings_t* s, uint8_t* buf) {
-    s->pid[0] = buf2int(buf); // Tuning for motion
-    s->pid[1] = buf2int(buf+2);
-    s->pid[2] = buf2int(buf+4);
+    s->pid[0] = float(buf2int(buf)) / 1000; // Tuning for motion
+    s->pid[1] = float(buf2int(buf+2)) / 1000;
+    s->pid[2] = float(buf2int(buf+4)) / 1000;
     s->velocity_update_pd_millis = buf2int(buf+6);
-    s->max_accel = buf2int(buf+8);
-    s->max_spd = buf2int(buf+10);
-    s->initial_spd = buf2int(buf+12);
+    s->max_accel = float(buf2int(buf+8)) / 1000;
+    s->max_spd = float(buf2int(buf+10));
+    s->initial_spd = float(buf2int(buf+12)) / 1000;
+  }
+
+  void print_settings(const settings_t* s) {
+    LOG_INFO("VEL_UP_MS%d (P%f I%f D%f MAX_A%f MAX_S%f INIT_S%f)", 
+        s->velocity_update_pd_millis,  
+        s->pid[0], 
+        s->pid[1], 
+        s->pid[2], 
+        s->max_accel,
+        s->max_spd,
+        s->initial_spd);
   }
 
   state_t intent;

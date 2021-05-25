@@ -18,6 +18,8 @@ void setup() {
   LOG_INFO("Configuring main timing loop for %d hz", MOTION_WRITE_HZ);
   hal::startMainTimer(MOTION_WRITE_HZ, &motion::write);
 
+  state::print_settings(&state::settings);
+
   LOG_INFO("Setup complete");
 }
 
@@ -33,11 +35,14 @@ void loop() {
   // NOTE: Casting directly to struct requires both the same endianness and same interpetation of floating point
   // nubmers. https://stackoverflow.com/questions/13775893/converting-struct-to-byte-and-back-to-struct
   int sz = comms::read(buf, sizeof(buf));
-  if (sz == sizeof(state::intent)) {
+  if (sz == MOTION_MSG_SZ) {
     state::deserialize(&state::intent, buf);
     motion::intent_changed();
-  } else if (sz == sizeof(state::settings)) {
+  } else if (sz == SETTINGS_MSG_SZ) {
     state::apply_settings(&state::settings, buf);
+    state::print_settings(&state::settings);
+  } else if (sz != 0) {
+    LOG_ERROR("sz %d", sz);
   }
   
   motion::read();

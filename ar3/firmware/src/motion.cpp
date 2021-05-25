@@ -36,8 +36,8 @@ uint64_t last_velocity_update = 0;
 float prev_vel[NUM_J];
 float prev_err_vel[NUM_J];
 int prev_pos[NUM_J];
-float err_vel[NUM_J];
 int err_pos[NUM_J];
+float err_vel[NUM_J];
 bool active[NUM_J];
 
 void motion::init() {
@@ -58,7 +58,7 @@ void motion::init() {
 void motion::print_state() {
   // LOG_DEBUG("%d %s", int(now), dbg);
   // NOTE: arduino doesn't include floating point printf by default; scale & cast floats
-  LOG_DEBUG("J0 dtick %lu\tdstep %lu\ton %d\twant m%02x p%d v%d\tgot m%02x p%d v%d --> stepvel %d ticks/step %lu\n", 
+  LOG_DEBUG("dt %d\tds %d\ton %d\twant m%02x p%d v%d\tgot m%02x p%d v%d --> stepvel %d ticks/step %d", 
       ticks_since_last_print,
       steps_since_last_print,
       active[0],
@@ -119,7 +119,7 @@ bool motion::update() {
 
     // ticks/step = (ticks/sec) * (sec / step)
     //            = (ticks/sec) * (1 / step_speed)
-    ticks_per_step[i] = uint32_t(float(MOTION_WRITE_HZ) / abs(step_vel[i]));
+    ticks_per_step[i] = uint32_t(float(MOTION_WRITE_HZ) / ABS(step_vel[i]));
     hal::stepDir(i, (step_vel[i] > 0) ? HIGH : LOW);    
   }
 

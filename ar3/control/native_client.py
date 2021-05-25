@@ -5,64 +5,76 @@ import threading
 import argparse
 import websockets
 import asyncio
+from random import random
 from collections import defaultdict
 from http.server import HTTPServer, SimpleHTTPRequestHandler
+
+try:
+    import zmq
+except:
+    pass # ZMQ not needed as a dependency on the robot itself
 
 NUM_J = None # Overridden by args
 
 class Comms():
-    def __init__(self, dest):
-        self.ser = dest.startswith('/dev')
-        if self.ser:
+    def __init__(self, dest, pull=None):
+        self.sock = None
+        if dest.startswith('/dev'):
             print("Opening serial connection:", dest)
             import serial
             self.sock = serial.Serial(port=dest, baudrate=115200, timeout=0.1)
         else: # Network
             #  Socket to talk to server
-            print("Opening ZMQ REQ socket:", dest)
-            import zmq
-            self.context = zmq.Context()
-            self.sock = context.socket(zmq.REQ)
-            self.sock.connect(ZMQ_SOCK_ADDR)
-
-    def recv_ser(self):
-        while True:
-            if self.sock.in_waiting == 0:
-                return None
-            self.sock.read_until(bytes([0x79])) #magic sync byte
-            sz = self.sock.read(1)
-            if len(sz) != 1:
-                print("ERR serial could not read size")
-                return None
-            sz = int(sz[0])
-            if sz == 0x79: # Print status messages to console
-                print('[FW]', self.sock.read_until(bytes([0])).decode('utf-8').rstrip('\x00\n\r'))
-                continue
-
-            if sz != 5*NUM_J: # 2 shorts, 1 bool per joint
-                print("ERR serial data read size: want %d got %d", 5*NUM_J, int(sz))
-                return None
-            return self.sock.read(sz)
+            self.ctx = zmq.Context()
+            print("Connecting to fw comms PUSH socket:", dest)
+            self.push = self.ctx.socket(zmq.PUSH)
+            self.push.connect(dest)
+            print("Connecting to fw comms PULL socket:", pull)
+            self.pull = self.ctx.socket(zmq.PULL)
+            self.pull.connect(pull)
 
     async def recv_forever(self, ws):
         print("Starting recv_forever")
-        while True:
-            data = self.recv_ser()
-            if data is not None:
+        if self.pull is not None:
+            while True:
+                try:
+                    data = self.pull.recv(zmq.NOBLOCK)
+                except zmq.error.Again:
+                    await asyncio.sleep(0)
+                    continue
                 await ws.send(data)
-            else:
-                await asyncio.sleep(0)
+        else:
+            while True:
+                if self.sock.in_waiting == 0:
+                    await asyncio.sleep(0)
+                    continue
+                self.sock.read_until(bytes([0x79])) #magic sync byte
+                sz = self.sock.read(1)
+                if len(sz) != 1:
+                    print("ERR serial could not read size")
+                    await asyncio.sleep(0)
+                    continue
+                sz = int(sz[0])
+                if sz == 0x79: # Print status messages to console
+                    s = '[FW]', self.sock.read_until(bytes([0])).decode('utf-8').rstrip('\x00\n\r')
+                    print(s)
+                    await ws.send(s)
+                    continue
 
+                if sz != 5*NUM_J: # 2 shorts, 1 bool per joint
+                    print("ERR serial data read size: want %d got %d", 5*NUM_J, int(sz))
+                    await asyncio.sleep(0)
+                    continue
+                
+                await ws.send(self.sock.read(sz))
 
     def send(self, req):
-        if self.ser:
+        if self.sock is not None:
             self.sock.write(bytes([0x79, len(req)]))
             self.sock.write(req)
             self.sock.flush()
-            return None
         else:
-            socket.send(req)
-            return socket.recv()
+            self.push.send(req)
 
 conn = None
 
@@ -87,15 +99,17 @@ async def handle_socket(ws, path):
   if args.loopback:
       await ws_to_conn(ws)
   else:
-      await asyncio.gather(conn.recv_forever(ws), ws_to_conn(ws))
+      await asyncio.gather(ws_to_conn(ws), conn.recv_forever(ws))
 
 async def ws_to_conn(ws):
   print("Starting ws_to_conn")
   async for req in ws:
-    # print(req.hex(),"--->")
+    #print(req.hex(),"--->")
     if args.loopback:
       await asyncio.sleep(0.1)
       await ws.send(req)
+      if random() < 0.05:
+        await ws.send('[FW] test loopback message')
     else:
       conn.send(req)
 
@@ -103,12 +117,13 @@ if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument('--loopback', action='store_true', default=False, help="Transmit to self, for testing")
   parser.add_argument('-j', default=6, type=int, help="Number of joints in robot (affects packet size & controls display")
-  parser.add_argument('--dest', default="tcp://0.0.0.0:5555", help="Destination (ZMQ socket or serial dev path)")
+  parser.add_argument('--dest', default="tcp://0.0.0.0:5559", help="Destination (ZMQ socket or serial dev path)")
+  parser.add_argument('--pull', default="tcp://0.0.0.0:5558", help="PULL socket destination (ignored when --dest is serial")
   args = parser.parse_args(sys.argv[1:])
   NUM_J = args.j
 
   if not args.loopback:
-      conn = Comms(args.dest)
+      conn = Comms(args.dest, args.pull)
 
   # Webserver for html page
   WEB_SERVER_ADDR = ("0.0.0.0", 8000)

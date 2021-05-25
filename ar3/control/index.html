@@ -43,7 +43,7 @@
 </head>
 <body>
 <div class="mdl-card mdl-shadow--2dp content">
-  <div class="mdl-card__title" style="border-bottom: 1px gray solid;"><h2 class="mdl-card__title-text" id="status"></h2></div>
+  <div class="mdl-card__title" style="border-bottom: 1px gray solid;"><h4 class="mdl-card__title-text" id="status"></h4></div>
   <div class="mdl-card__supporting-text">
      <label class = "mdl-checkbox mdl-js-checkbox" for = "joint_enable">
         <input type = "checkbox" id = "joint_enable" 
@@ -91,6 +91,23 @@
       <canvas id="posCanvas" width="400" height="400">[No canvas support]</canvas>
       <canvas id="velCanvas" width="500" height="400" style="width: 100%">[No canvas support]</canvas>
     </table>
+    <form id="fw_settings">
+			<div class="mdl-textfield mdl-js-textfield">
+				<input class="mdl-textfield__input" type="text" id="pid_p">
+				<label class="mdl-textfield__label" for="pid_p">P</label>
+			</div>
+			<div class="mdl-textfield mdl-js-textfield">
+				<input class="mdl-textfield__input" type="text" id="pid_i">
+				<label class="mdl-textfield__label" for="pid_i">I</label>
+			</div>
+			<div class="mdl-textfield mdl-js-textfield">
+				<input class="mdl-textfield__input" type="text" id="pid_d">
+				<label class="mdl-textfield__label" for="pid_d">D</label>
+			</div>
+			<button class="mdl-button mdl-js-button mdl-button--raised" type="submit">
+  			Send Settings
+			</button>
+    </form>
     <div id="lastUpdate"></div>
   </div>
 </div>
@@ -107,7 +124,7 @@ const STEP = 32768;
 const STEPS_PER_REV = [STEP,STEP,STEP,STEP,STEP,STEP];
 const GRAPH_DOMAIN_SEC = 20;
 const SEND_STATE_PD_MILLIS = 100;
-const EVENT_LOG_PD = 2000;
+const EVENT_LOG_PD = 10000;
 
 // https://medium.com/cafe-pixo/inclusive-color-palettes-for-the-web-bbfe8cf2410e
 const INCLUSIVE_COLORS = ['#E1DAAE', '#FF934F', '#CC2D35', '#058ED9', '#848FA2', '#2D3142'];
@@ -164,7 +181,6 @@ function sendState() {
       view.setInt16(state.num_j + 2*i, state.tpos[i]);
       view.setInt16(3*state.num_j + 2*i, state.tvel[i]);
     }
-    console.log(buf);
     ws.send(buf);
     lastSendState = millis();
   }
@@ -183,6 +199,11 @@ function tick() {
 }
 
 function handleMessage(event) {
+  if (typeof(event.data) === "string") {
+    console.log(event.data);
+    return;
+  }
+
   event.data.arrayBuffer().then((buf) => {
     let view = new DataView(buf);
     let now = millis();
@@ -210,6 +231,34 @@ function handleMessage(event) {
     }
     ui.posgraph.add_data(posdata);
   });
+}
+
+function pushSettings(event) {
+	event.preventDefault();
+	let data = {};
+	for (let i = 0; i < event.target.length; i++) {
+		if (event.target[i].id === "") {
+			continue;
+		}
+		data[event.target[i].id] = event.target[i].value;
+	}
+
+	let buf = new ArrayBuffer(14); // TODO const size
+	let view = new DataView(buf);
+	view.setInt16(0, Math.round(parseFloat(data.pid_p) * 1000), true);
+	view.setInt16(2, Math.round(parseFloat(data.pid_i) * 1000), true);
+	view.setInt16(4, Math.round(parseFloat(data.pid_d) * 1000), true);
+
+	// TODO allow setting
+	view.setInt16(6, 100, true); // velocity_update_pd_millis
+	view.setInt16(8, 10*1000, true); // max_accel
+	view.setInt16(10, 10000, true); // max_spd
+	view.setInt16(12, 10*1000, true); // initial_spd
+ 	
+	console.log(data);
+	console.log("Sending state:");
+	console.log(buf);
+	ws.send(buf); 
 }
 
 function startWebsocket() {
@@ -286,6 +335,8 @@ function init(num_j) {
   document.getElementById("joint_enable").onchange = (event) => setMaskAllJoints(MASK_ENABLED, event.target.checked);
   document.getElementById("open_loop").onchange = (event) => setMaskAllJoints(MASK_OPEN_LOOP_CONTROL, event.target.checked);
   
+	document.getElementById("fw_settings").onsubmit = (event) => pushSettings(event);
+
   startWebsocket();
   setInterval(tick, 100);
 }

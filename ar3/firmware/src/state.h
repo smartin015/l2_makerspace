@@ -19,6 +19,9 @@
 // When this flag is active, do not read encoders for position.
 #define MASK_OPEN_LOOP_CONTROL (0b1 << 2)
 
+#define MOTION_MSG_SZ 30
+#define SETTINGS_MSG_SZ 14
+
 namespace state {
 
 struct state_t {
@@ -42,6 +45,7 @@ extern settings_t settings;
 void serialize(uint8_t* buf, state_t* state);
 void deserialize(state_t* state, uint8_t* buf);
 void apply_settings(settings_t* settings, uint8_t* buf);
+void print_settings(const settings_t* settings);
 
 } //namespace state
 

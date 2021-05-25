@@ -5,26 +5,29 @@
 #include <unistd.h>
 #include <zmq.hpp>
 
-#define ZMQ_ADDR "tcp://0.0.0.0:5555"
+#define ZMQ_PULL_ADDR "tcp://0.0.0.0:5559"
+#define ZMQ_PUSH_ADDR "tcp://0.0.0.0:5558"
 
 zmq::context_t context (1);
-zmq::socket_t socket (context, ZMQ_REP);
+zmq::socket_t push (context, ZMQ_PUSH);
+zmq::socket_t pull (context, ZMQ_PULL);
 
 namespace comms {
 
 void init() {
-  socket.bind(ZMQ_ADDR);  
-  LOG_DEBUG("Controller ZMQ REP socket initialized: %s", ZMQ_ADDR); 
+  int linger = 0;
+  LOG_DEBUG("Init comms PUSH socket: %s", ZMQ_PUSH_ADDR); 
+  zmq_setsockopt(push, ZMQ_LINGER, &linger, sizeof(linger));
+  push.bind(ZMQ_PUSH_ADDR);  
+  LOG_DEBUG("Init comms PULL socket: %s", ZMQ_PULL_ADDR); 
+  zmq_setsockopt(pull, ZMQ_LINGER, &linger, sizeof(linger));
+  pull.bind(ZMQ_PULL_ADDR);
 }
 
 int read(uint8_t* buf, int buflen) {
   zmq::message_t request;
-  if (socket.recv(&request, ZMQ_DONTWAIT)) {
+  if (pull.recv(request, zmq::recv_flags::dontwait)) {
     memcpy(buf, request.data(), request.size());
-    //for (int i = 0; i < request.size(); i++) {
-    //  printf("%02x", buf[i]);
-    //}
-    //printf("\n");
     return request.size();
   } else {
     return 0;
@@ -34,7 +37,7 @@ int read(uint8_t* buf, int buflen) {
 void write(uint8_t* buf, int buflen) {
   zmq::message_t reply(buflen);
   memcpy(reply.data(), buf, buflen);
-  socket.send(reply);
+  push.send(reply, zmq::send_flags::dontwait);
 }
 
 } // namespace comms

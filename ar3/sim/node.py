@@ -199,7 +199,6 @@ class AR3(Node):
     def handle_raw_steps(self, steps):
         # When simulating firmware, we get raw step counts over ZMQ - these are 
         # referenced relative from simulation start pos
-        self.get_logger().info("Firmware sim conn active", throttle_duration_sec=5)
         limits_updated = False
         for (i, s) in enumerate(struct.unpack('i'*self.num_joints, steps)):
             angle = (2*3.14159) * s / STEPS_PER_REV[i]
@@ -215,6 +214,8 @@ class AR3(Node):
               self.get_logger().info("Limit switch %d state change - %d <- %d -> %d" % (i, MOTOR_LIMITS[i][0], angle, MOTOR_LIMITS[i][1]))
             self.limits[i] = inside_limits
 
+        limstr
+        self.get_logger().info("Firmware sim limits: %s" % str(MOTOR_LIMITS), throttle_duration_sec=5)
         if limits_updated:
             self.lim_socket.send(struct.pack('b'*self.num_joints, *self.limits))
             self.get_logger().info("Sent limit update to firmware sim %s" % self.limits)

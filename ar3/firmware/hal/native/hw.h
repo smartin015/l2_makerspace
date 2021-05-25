@@ -10,7 +10,7 @@ namespace hw {
   bool get_cur_cal(int idx);
   int get_steps(int idx);
 
-  bool move_steps(int idx, int delta);
+  void move_steps(int idx, int delta);
   
   void sync(); 
   void init();

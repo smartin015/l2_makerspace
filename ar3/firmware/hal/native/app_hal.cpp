@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <cstdlib>
+#include <thread>
 
 int cur_dir[NUM_J];
 bool prev_step_pin[NUM_J];
@@ -21,7 +22,7 @@ void signal_callback_handler(int signum) {
 
 namespace hal {
 
-void initJoint(int i) {
+void init() {
   // Nothing to do here; no hardware to initialize
 }
 
@@ -37,6 +38,7 @@ void stepDn(int i) {
 void stepUp(int i) {
   prev_step_pin[i] = true;
 }
+void stepEnabled(int i, bool en) {}
 
 bool readLimit(int i) {
   hw::sync();
@@ -51,6 +53,23 @@ void writeEnc(int idx, int value) {
   step_offs[idx] = value - hw::get_steps(idx);
   LOG_DEBUG("Wrote %d to encoder %d", value, idx);
 }
+
+void disableInterrupts() {}
+void enableInterrupts() {}
+
+
+void runSteps(int hz, void(*cb)()) {
+  int micro_pd = 1000000 / hz;
+  while (true) {
+    usleep(micro_pd); // NOTE: not actually a guarantee, likely to be consistently longer
+    cb();
+  }
+}
+
+std::thread t;
+void startMainTimer(int hz, void(*cb)()) {
+  t = std::thread(runSteps, hz, cb);
+};
 
 } // namespace hal
 
