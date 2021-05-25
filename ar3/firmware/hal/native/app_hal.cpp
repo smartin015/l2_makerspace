@@ -72,7 +72,7 @@ void runSteps(int hz, void(*cb)()) {
       last_tick += tick_pd;
       cb();
     }
-    // usleep(micro_pd); // NOTE: not actually a guarantee, likely to be consistently longer
+    usleep(micro_pd); // NOTE: not actually a guarantee, likely to be consistently longer
   }
 }
 
