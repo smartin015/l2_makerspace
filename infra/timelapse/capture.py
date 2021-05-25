@@ -17,6 +17,9 @@ def do_capture(args):
         if frame is None:
             print('Camera not found')
             break
+        elif frame[1].size == 0:
+            print('WARNING: empty frame')
+            continue
         else:
             if args.display:
                 cv2.imshow("Display", frame[1])

@@ -50,6 +50,9 @@ void loop() {
   if (motion::update()) {
     // LOG_INFO("SI0 %x %d %d SA0 %x %d %d", state::intent.mask[0], state::intent.pos[0], state::intent.vel[0], state::actual.mask[0], state::actual.pos[0], state::actual.vel[0]);
     state::serialize(buf, &state::actual);
-    comms::write(buf, 2*(NUM_J*sizeof(int16_t)) + (NUM_J*sizeof(uint8_t)));
+    comms::write(buf, MOTION_MSG_SZ);
+
+    // Additionally, log the PID contributions
+    motion::print_pid_stats();
   }
 }

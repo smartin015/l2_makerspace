@@ -57,12 +57,22 @@ void writeEnc(int idx, int value) {
 void disableInterrupts() {}
 void enableInterrupts() {}
 
-
 void runSteps(int hz, void(*cb)()) {
   int micro_pd = 1000000 / hz;
+  std::chrono::microseconds tick_pd = std::chrono::microseconds(micro_pd);
+  std::chrono::steady_clock::time_point now;
+  std::chrono::steady_clock::time_point last_tick = std::chrono::steady_clock::now();
   while (true) {
-    usleep(micro_pd); // NOTE: not actually a guarantee, likely to be consistently longer
-    cb();
+    now = std::chrono::steady_clock::now();
+    if (last_tick + tick_pd > now) {
+      continue;
+    }
+    // It's likely we need to catch up in calls, given that we're not running on an RTOS
+    while (last_tick < now) {
+      last_tick += tick_pd;
+      cb();
+    }
+    // usleep(micro_pd); // NOTE: not actually a guarantee, likely to be consistently longer
   }
 }
 

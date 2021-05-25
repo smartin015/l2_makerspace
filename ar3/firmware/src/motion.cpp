@@ -38,6 +38,7 @@ float prev_err_vel[NUM_J];
 int prev_pos[NUM_J];
 int err_pos[NUM_J];
 float err_vel[NUM_J];
+float pid_updates[NUM_J][3];
 bool active[NUM_J];
 
 void motion::init() {
@@ -52,6 +53,9 @@ void motion::init() {
     active[i] = false;
     err_vel[i] = 0;
     err_pos[i] = 0;
+    for (int j = 0; j < 3; j++) {
+      pid_updates[i][j] = 0;
+    }
   }
 }
 
@@ -62,11 +66,17 @@ void motion::print_state() {
       ticks_since_last_print,
       steps_since_last_print,
       active[0],
-      state::intent.mask[0], state::intent.pos[0], int(state::intent.vel[0])*100,
-      state::actual.mask[0], state::actual.pos[0], int(state::actual.vel[0])*100,
-      int(step_vel[0])*100, ticks_per_step[0]);
+      state::intent.mask[0], state::intent.pos[0], int(state::intent.vel[0]*100),
+      state::actual.mask[0], state::actual.pos[0], int(state::actual.vel[0]*100),
+      int(step_vel[0]*100), ticks_per_step[0]);
   ticks_since_last_print = 0;
   steps_since_last_print = 0;
+}
+
+void motion::print_pid_stats() {
+  LOG_DEBUG("P %d\tI %d\tD %d\t -> %d + %d + %d",
+    int(state::settings.pid[0]*100), int(state::settings.pid[1]*100), int(state::settings.pid[2]*100),
+    int(pid_updates[0][0]*100), int(pid_updates[0][1]*100), int(pid_updates[0][2]*100));
 }
 
 // Velocities are implemented by slowly adjusting 
@@ -107,8 +117,11 @@ bool motion::update() {
     // This is PID adjustment targeting velocity - in this case, P=velocity, I=position, D=acceleration
     // Note that we have targets both for position and velocity, but not for acceleration - that's where
     // we use a real value.
-    float vel_adjust = (state::settings.pid[0] * err_vel[i]) + (state::settings.pid[1] * err_pos[i]) + (state::settings.pid[2] * (err_vel[i] - prev_err_vel[i]));
-
+    pid_updates[i][0] = state::settings.pid[0] * err_vel[i];
+    pid_updates[i][1] = state::settings.pid[1] * err_pos[i];
+    pid_updates[i][2] = state::settings.pid[2] * (err_vel[i] - prev_err_vel[i]);
+    float vel_adjust = (pid_updates[i][0] + pid_updates[i][1] + pid_updates[i][2]);
+      
     // Update velocity, applying firmware velocity limits
     step_vel[i] = MIN(state::settings.max_spd, MAX(-state::settings.max_spd, step_vel[i] + vel_adjust));
   
@@ -155,31 +168,38 @@ void motion::intent_changed() {
 void motion::write() {
   ticks_since_last_print++;
 
+  // Check limits less frequently than stepping
+  // TODO make configurable
+  if (ticks_since_last_print % 200 == 0) {
+    for (int i = 0; i < NUM_J; i++) {
+      if (!active[i]) {
+        continue;
+      }
+      // Don't move if we're driving further into a limit
+      uint8_t dir = (state::intent.pos[i] - state::actual.pos[i]) > 0;
+      //dbg[2*i] = (dir) ? '+' : '-';
+      if (!hal::readLimit(i) && !dir) {
+        if (!(state::actual.mask[i] & MASK_LIMIT_TRIGGERED)) {
+          state::actual.mask[i] |= MASK_LIMIT_TRIGGERED;
+        }
+        recalc_limit_intent();
+      } else if (state::actual.mask[i] & MASK_LIMIT_TRIGGERED) {
+        // Update actual limit state and per-joint limit state
+        state::actual.mask[i] &= ~MASK_LIMIT_TRIGGERED;
+        recalc_limit_intent();
+      }
+    }
+  }
+
   // Continue moving to target
   // Calculate ramp settings
   for (int i = 0; i < NUM_J; i++) {
     if (!active[i] || !limits_intended) {
-      //dbg[2*i+1] = 'x';
       continue;
-    }
-
-    // Don't move if we're driving further into a limit
-    uint8_t dir = (state::intent.pos[i] - state::actual.pos[i]) > 0;
-    //dbg[2*i] = (dir) ? '+' : '-';
-    if (!hal::readLimit(i) && !dir) {
-      if (!(state::actual.mask[i] & MASK_LIMIT_TRIGGERED)) {
-        state::actual.mask[i] |= MASK_LIMIT_TRIGGERED;
-      }
-      continue;
-    } else {
-      // Update actual limit state and per-joint limit state
-      state::actual.mask[i] &= ~MASK_LIMIT_TRIGGERED;
-      recalc_limit_intent();
     }
 
     // at least USEC_PER_TICK passes between every counter tick
-    ticks[i]++;
-    if (ticks[i] < ticks_per_step[i]) {
+    if ((++ticks[i]) < ticks_per_step[i]) {
       continue;
     }
 
@@ -189,7 +209,6 @@ void motion::write() {
     if (state::intent.mask[i] & MASK_OPEN_LOOP_CONTROL) {
       state::actual.pos[i] += (step_vel[i] > 0) ? 1 : -1;
     }
-    //dbg[2*i+1] = '.';
   }
 
   // Sleep for all steps rather than stepping in sequence 

@@ -19,17 +19,17 @@
 // When this flag is active, do not read encoders for position.
 #define MASK_OPEN_LOOP_CONTROL (0b1 << 2)
 
-#define MOTION_MSG_SZ 30
-#define SETTINGS_MSG_SZ 14
 
 namespace state {
 
+#define MOTION_MSG_SZ (2*(NUM_J*sizeof(int16_t)) + (NUM_J*sizeof(uint8_t)))
 struct state_t {
   uint8_t mask[NUM_J];
   int16_t pos[NUM_J];
   float vel[NUM_J];
 };
 
+#define SETTINGS_MSG_SZ (7*sizeof(int16_t))
 struct settings_t {
   float pid[3] = {0.1, 0.1, 0.1}; // Tuning for motion
   int velocity_update_pd_millis = 100;

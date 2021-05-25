@@ -10,6 +10,7 @@ void zero();
 bool update();
 void intent_changed();
 void print_state();
+void print_pid_stats();
 
 } // namespace motion
 

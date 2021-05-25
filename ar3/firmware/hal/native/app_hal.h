@@ -4,7 +4,8 @@
 #include <unistd.h>
 #include "hw.h"
 
-#define delayMicroseconds(sec) usleep(sec)
+// No need to delay in native environment (non-realtime OS, makes us miss our tick freq deadline)
+#define delayMicroseconds(sec)
 
 inline uint32_t millis() {
   return hw::millis();
