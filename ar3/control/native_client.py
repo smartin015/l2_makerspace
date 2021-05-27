@@ -61,12 +61,10 @@ class Comms():
                     await ws.send(s)
                     continue
 
-                if sz != 5*NUM_J: # 2 shorts, 1 bool per joint
-                    print("ERR serial data read size: want %d got %d", 5*NUM_J, int(sz))
-                    await asyncio.sleep(0)
-                    continue
+                else:
+                    # Note: we don't do any length checking - this is the responsibility of the web interface
+                    await ws.send(self.sock.read(sz))
                 
-                await ws.send(self.sock.read(sz))
 
     def send(self, req):
         if self.sock is not None:

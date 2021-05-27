@@ -22,10 +22,10 @@
 
 namespace state {
 
-#define MOTION_MSG_SZ (2*(NUM_J*sizeof(int16_t)) + (NUM_J*sizeof(uint8_t)))
+#define MOTION_MSG_SZ (NUM_J * ((sizeof(uint8_t)) + sizeof(uint16_t) + sizeof(uint32_t)))
 struct state_t {
   uint8_t mask[NUM_J];
-  int16_t pos[NUM_J];
+  int32_t pos[NUM_J];
   float vel[NUM_J];
 };
 

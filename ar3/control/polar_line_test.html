@@ -13,7 +13,9 @@
     let chart = new PolarChart(ctx, 100, 100, 100, 1, 30, ["#FF0000"]);
     
     function fakeData() {
-      chart.add_data([new Date().getTime() / 1000]);
+      let v = new Date().getTime() / 1000;
+      chart.add_data([v]);
+      chart.set_targets([v+1]);
       chart.draw();
     }
     setInterval(fakeData, 50);

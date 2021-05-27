@@ -7,11 +7,13 @@ class PolarChart {
     this.ctx = ctx;
     this.x = x;
     this.y = y;
-    this.r = r;
+    this.r = r * 0.96;
+    this.tr = r * 0.02;
     this.num_j = num_j;
     this.num_samp = num_samp;
     this.nticks = 30;
     this.data = [...Array(num_j)].map(e => Array(num_samp));
+    this.targets = Array(num_j);
   }
 
   draw_bg() {
@@ -43,6 +45,13 @@ class PolarChart {
       this.ctx.lineTo(this.x + j*dr*Math.cos(v), this.y + j*dr*Math.sin(v));
     }
     this.ctx.stroke();
+
+    // Draw target bubble
+    let tx = this.x + this.r*Math.cos(this.targets[i]);
+    let ty = this.y + this.r*Math.sin(this.targets[i]);
+    this.ctx.beginPath();
+    this.ctx.arc(tx, ty, this.tr, 0, 2*Math.PI);
+    this.ctx.fill();
   }
 
   add_data(jointvals) {
@@ -50,6 +59,13 @@ class PolarChart {
       this.data[i].shift();
       this.data[i].push(jointvals[i]);
     }
+  }
+
+  set_targets(jointvals) {
+    for (let i = 0; i < this.num_j; i++) {
+      this.targets[i] = jointvals[i];
+    }
+
   }
 
   draw() {
@@ -62,6 +78,7 @@ class PolarChart {
     this.ctx.linewidth = 1.0;
     for (let i = 0; i < this.num_j; i++) {
       this.ctx.strokeStyle = this.colors[i] || "#000";
+      this.ctx.fillStyle = this.ctx.strokeStyle;
       this.draw_joint(i);
     }
   }

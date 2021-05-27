@@ -174,12 +174,12 @@ function millis() {
 let lastSendState = 0;
 function sendState() {
   if (ws.readyState === ws.OPEN) {
-    let buf = new ArrayBuffer(state.num_j * 5);
+    let buf = new ArrayBuffer(state.num_j * 7);
     let view = new DataView(buf);
     for (let i = 0; i < state.num_j; i++) {
-      view.setInt8(i, state.tmask[i]);
-      view.setInt16(state.num_j + 2*i, state.tpos[i]);
-      view.setInt16(3*state.num_j + 2*i, state.tvel[i]);
+      view.setInt8(i, state.tmask[i], true);
+      view.setInt32(state.num_j + 4*i, state.tpos[i], true);
+      view.setInt16(5*state.num_j + 2*i, state.tvel[i], true);
     }
     ws.send(buf);
     lastSendState = millis();
@@ -212,11 +212,16 @@ function handleMessage(event) {
       state.last_event_log = now;
     }
 
+    if (buf.byteLength < 7*state.num_j) {
+      console.error(`ERR state buffer size: want ${7*state.num_j} got ${buf.byteLength}`);
+      return;
+    }
+
     let posdata = [];
     for (let i = 0; i < state.num_j; i++) {
-      state.mask[i]= view.getInt8(i);
-      state.pos[i] = view.getInt16(state.num_j + 2*i);
-      state.vel[i] = view.getInt16(3*state.num_j + 2*i);
+      state.mask[i]= view.getInt8(i, true);
+      state.pos[i] = view.getInt32(state.num_j + 4*i, true);
+      state.vel[i] = view.getInt16(5*state.num_j + 2*i, true);
 
       ui.mask[i].innerText = state.mask[i].toString(2).padStart(8, '0'); 
 
@@ -249,7 +254,7 @@ function pushSettings(event) {
 	view.setInt16(2, Math.round(parseFloat(data.pid_i) * 1000), true);
 	view.setInt16(4, Math.round(parseFloat(data.pid_d) * 1000), true);
 
-	// TODO allow setting
+	// TODO allow setting in UI
 	view.setInt16(6, 100, true); // velocity_update_pd_millis
 	view.setInt16(8, 10*1000, true); // max_accel
 	view.setInt16(10, 10000, true); // max_spd
@@ -289,6 +294,7 @@ function init(num_j) {
     vel: Array(num_j).fill(0),
     mask: Array(num_j).fill(0),
     tpos: Array(num_j).fill(0),
+    tpos_norm: Array(num_j).fill(0),
     tvel: Array(num_j).fill(0),
     tmask: Array(num_j).fill(0),
     last_event_log: millis(),
@@ -322,7 +328,9 @@ function init(num_j) {
     }
 
     ui.posslider[i].oninput = (e) => {
-      state.tpos[i] = Math.round(e.target.value / (2*3.14159) * STEPS_PER_REV[i]);
+      state.tpos_norm[i] = e.target.value
+      state.tpos[i] = Math.round(state.tpos_norm[i] / (2*3.14159) * STEPS_PER_REV[i]);
+      ui.posgraph.set_targets(state.tpos_norm);
       ui.postgt[i].innerText = parseFloat(e.target.value).toFixed(2);
     }
     ui.velslider[i].oninput = (e) => {
