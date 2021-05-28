@@ -9,15 +9,12 @@ from xbox360controller import Xbox360Controller
 FEED = 400
 PI=3.14159
 
-sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-dest = ("192.168.1.250", 20000)
-
 def on_button_pressed(button):
-    print('Button {0} was pressed'.format(button.name))
+    print('TODO button {0} was pressed'.format(button.name))
 
 
 def on_button_released(button):
-    print('Button {0} was released'.format(button.name))
+    print('TODO button {0} was released'.format(button.name))
 
 
 def wheel_speed(vx, vy, theta):
@@ -52,21 +49,22 @@ def test_directions():
     import sys
     sys.exit(0)
 
+def main():
+    sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+    dest = ("192.168.1.250", 20000)
+    try:
+        with Xbox360Controller(0, axis_threshold=0.2) as controller:
+            controller.button_a.when_pressed = on_button_pressed
+            controller.button_a.when_released = on_button_released
+            while True:
+              time.sleep(0.1)
+              gcode = wheel_gcode(controller.axis_l.x, controller.axis_l.y, controller.axis_r.x, controller.axis_r.y)
+              if gcode is not None:
+                sock.sendto(gcode.encode("utf-8"), dest)
+                print(gcode)
 
-try:
-    with Xbox360Controller(0, axis_threshold=0.2) as controller:
-        # Button A events
-        controller.button_a.when_pressed = on_button_pressed
-        controller.button_a.when_released = on_button_released
+    except KeyboardInterrupt:
+        pass
 
-        while True:
-          time.sleep(0.1)
-          gcode = wheel_gcode(controller.axis_l.x, controller.axis_l.y, controller.axis_r.x, controller.axis_r.y)
-          if gcode is not None:
-            sock.sendto(gcode.encode("utf-8"), dest)
-            print(gcode)
-
-except KeyboardInterrupt:
-    pass
-
-
+if __name__ == "__main__":
+    main()
