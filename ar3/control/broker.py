@@ -118,7 +118,10 @@ if __name__ == "__main__":
   parser.add_argument('-j', default=6, type=int, help="Number of joints in robot (affects packet size & controls display")
   parser.add_argument('--dest', default="tcp://0.0.0.0:5559", help="Destination (ZMQ socket or serial dev path)")
   parser.add_argument('--pull', default="tcp://0.0.0.0:5558", help="PULL socket destination (ignored when --dest is serial")
+  parser.add_argument('--websocket_port', default=8001, help="Port for websocket control")
+  parser.add_argument('--http_port', default=8000, help="Port for HTTP server")
   parser.add_argument('--web_dir', default="www", help="Web dir (relative to .py script)")
+
   args = parser.parse_args(sys.argv[1:])
   NUM_J = args.j
 
@@ -130,13 +133,13 @@ if __name__ == "__main__":
   os.chdir(web_dir)
 
   # Webserver for html page
-  WEB_SERVER_ADDR = ("0.0.0.0", 8000)
+  WEB_SERVER_ADDR = ("0.0.0.0", args.http_port)
   srv = HTTPServer(WEB_SERVER_ADDR, WebServer)
   threading.Thread(target=srv.serve_forever, daemon=True).start()
   print("Started web server", str(WEB_SERVER_ADDR))
 
   # Websocket for streaming comms from web client
-  WS_SERVER_ADDR = ("0.0.0.0", 8001)
+  WS_SERVER_ADDR = ("0.0.0.0", args.websocket_port)
   wssrv = websockets.serve(handle_socket, WS_SERVER_ADDR[0], WS_SERVER_ADDR[1])
 
   asyncio.get_event_loop().run_until_complete(wssrv)
