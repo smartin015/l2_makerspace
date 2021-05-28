@@ -19,14 +19,40 @@
   canvas#posCanvas {
     vertical-align: inherit;
   }
-  .content {
+  .outer {
     width: 1200px;
     margin: 2vh;
     margin-left: auto;
     margin-right: auto;
   }
+  .content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .options {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    border: 1px grey solid;
+    margin: 5px;
+    padding: 5px;
+  }
+  .canvasContainer {
+    display: flex;
+    flex-direction:row;
+    justify-content: center;
+  }
+  .linearCanvas {
+    display: inline-flex;
+    flex-direction: column;
+  }
   table {
     width: 100%;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   label.is-checked > span.mdl-checkbox__label {
@@ -42,34 +68,56 @@
 </style>
 </head>
 <body>
-<div class="mdl-card mdl-shadow--2dp content">
+<div class="mdl-card mdl-shadow--2dp outer">
   <div class="mdl-card__title" style="border-bottom: 1px gray solid;"><h4 class="mdl-card__title-text" id="status"></h4></div>
-  <div class="mdl-card__supporting-text">
-     <label class = "mdl-checkbox mdl-js-checkbox" for = "joint_enable">
-        <input type = "checkbox" id = "joint_enable" 
-           class = "mdl-checkbox__input">
-	<span class = "mdl-checkbox__label">enable joints</span>
-     </label>
-     <label class = "mdl-checkbox mdl-js-checkbox" for = "open_loop">
-        <input type = "checkbox" id = "open_loop" 
-           class = "mdl-checkbox__input">
-        <span class = "mdl-checkbox__label">open loop</span>
-     </label>
-     <label class = "mdl-checkbox mdl-js-checkbox" for = "limit_override">
-        <input type = "checkbox" id = "limit_override" 
-           class = "mdl-checkbox__input">
-        <span class = "mdl-checkbox__label">limit override</span>
-     </label>
+  <div class="mdl-card__supporting-text content">
+    <div class="options">
+       <label class = "mdl-checkbox mdl-js-checkbox" for = "joint_enable">
+          <input type = "checkbox" id = "joint_enable" 
+             class = "mdl-checkbox__input">
+    <span class = "mdl-checkbox__label">enable joints</span>
+       </label>
+       <label class = "mdl-checkbox mdl-js-checkbox" for = "open_loop">
+          <input type = "checkbox" id = "open_loop" 
+             class = "mdl-checkbox__input">
+          <span class = "mdl-checkbox__label">open loop</span>
+       </label>
+       <label class = "mdl-checkbox mdl-js-checkbox" for = "limit_override">
+          <input type = "checkbox" id = "limit_override" 
+             class = "mdl-checkbox__input">
+          <span class = "mdl-checkbox__label">limit override</span>
+       </label>
+      </div>
+
+      <div class="canvasContainer">
+        <canvas id="posCanvas" width="400" height="400">[No canvas support]</canvas>
+        <div class="linearCanvas">
+          <canvas id="velCanvas" width="500" height="200" style="width: 100%">[No canvas support]</canvas>
+          <canvas id="accCanvas" width="500" height="200" style="width: 100%">[No canvas support]</canvas>
+        </div>
+      </div>
+
+      <div class="linearCanvasSettings">
+        <form id="linear_canvas_settings">
+          <div class="mdl-textfield mdl-js-textfield">
+            <input class="mdl-textfield__input" type="text" id="pid_d">
+            <label class="mdl-textfield__label" for="pid_d">meters per rev</label>
+          </div>
+          <button class="mdl-button mdl-js-button mdl-button--raised" type="submit">
+            Update units
+          </button>
+        </form>
+      </div>
 
     <table class="mdl-data-table mdl-js-data-table" style="background-color: transparent !important;">
       <thead>
         <tr>
           <th>Mask</th>
           <th class="mdl-data-table__cell--non-numeric">Position</th>
-          <th>Target</th>
+          <th>Target (rad)</th>
           <th>Value</th>
           <th class="mdl-data-table__cell--non-numeric">Velocity</th>
-          <th>Target</th>
+          <th>Target (rad/s)</th>
           <th>Value</th>
         </tr>
       </thead>
@@ -88,8 +136,6 @@
           <td class="velval">#</td>
         </tr>
       </tbody>
-      <canvas id="posCanvas" width="400" height="400">[No canvas support]</canvas>
-      <canvas id="velCanvas" width="500" height="400" style="width: 100%">[No canvas support]</canvas>
     </table>
     <form id="fw_settings">
 			<div class="mdl-textfield mdl-js-textfield">
@@ -129,14 +175,20 @@ const EVENT_LOG_PD = 10000;
 // https://medium.com/cafe-pixo/inclusive-color-palettes-for-the-web-bbfe8cf2410e
 const INCLUSIVE_COLORS = ['#E1DAAE', '#FF934F', '#CC2D35', '#058ED9', '#848FA2', '#2D3142'];
 
-function initGraph(id, yMin, yMax) {
+function initGraph(id, yMin, yMax, title, units) {
   // https://www.rgraph.net/canvas/howto-scrolling.html
   return new RGraph.Line({
       id,
       data: [...Array(state.num_j)].map(e => Array(GRAPH_DOMAIN_SEC * 1000 / SEND_STATE_PD_MILLIS)),
       options: {
+          title: title,
+          titleSize: 12,
+          yaxisTitle: units,
           yaxisScaleMax: yMax,
           yaxisScaleMin: yMin,
+          yaxisPosition: "right",
+          yaxisLabelsCount: 6, // Note: actually 7 - zero-centered charts apparently get an extra "0" label for free.
+          yaxisScaleDecimals: 1,
           tickmarksStyle: null,
           linewidth: 1,
           shadow: null,
@@ -194,8 +246,10 @@ function tick() {
 
   // Clear (NOT reset) the canvas
   RGraph.clear(ui.velgraph.canvas);
+  RGraph.clear(ui.accgraph.canvas);
   ui.posgraph.draw();
   ui.velgraph.draw();
+  ui.accgraph.draw();
 }
 
 function handleMessage(event) {
@@ -225,17 +279,33 @@ function handleMessage(event) {
 
       ui.mask[i].innerText = state.mask[i].toString(2).padStart(8, '0'); 
 
-      let pos_norm = state.pos[i] * (2*3.14159)/STEPS_PER_REV[i];
+      let pos_norm = state.pos[i] * (2*Math.PI)/STEPS_PER_REV[i];
       posdata[i] = pos_norm;
       ui.posval[i].innerText = pos_norm.toFixed(2);
 
-      let vel_norm = state.vel[i] * (2*3.14159)/STEPS_PER_REV[i];
+      let vel_norm = state.vel[i] * (2*Math.PI)/STEPS_PER_REV[i];
       ui.velgraph.original_data[i].shift();
-      ui.velgraph.original_data[i].push(vel_norm);
+      ui.velgraph.original_data[i].push((state.m_per_rev || 1) * vel_norm / (2*Math.PI));
       ui.velval[i].innerText = vel_norm.toFixed(2);
+
+      ui.accgraph.original_data[i].shift();
+      let vgl = ui.velgraph.original_data[i].length;
+      let accel = ui.velgraph.original_data[i][vgl-1] - ui.velgraph.original_data[i][vgl-2];
+      ui.accgraph.original_data[i].push(accel);
     }
     ui.posgraph.add_data(posdata);
   });
+}
+
+function setUnits(event) {
+  event.preventDefault();
+  console.log(event);
+  state.m_per_rev = parseFloat(event.target[0].value);
+
+  let scale = 1.5*state.m_per_rev/(2*Math.PI);
+  ui.velgraph = initGraph("velCanvas", -scale, scale, "Velocity", "m/s");
+  ui.accgraph = initGraph("accCanvas", -scale, scale, "Acceleration", "m/s^2");
+  console.log(`Set units to ${state.m_per_rev} m/rev`);
 }
 
 function pushSettings(event) {
@@ -256,14 +326,12 @@ function pushSettings(event) {
 
 	// TODO allow setting in UI
 	view.setInt16(6, 100, true); // velocity_update_pd_millis
-	view.setInt16(8, 10*1000, true); // max_accel
-	view.setInt16(10, 10000, true); // max_spd
+	view.setInt16(8, 40*1000, true); // max_accel
+	view.setInt16(10, 5000, true); // max_spd
 	view.setInt16(12, 10*1000, true); // initial_spd
  	
-	console.log(data);
-	console.log("Sending state:");
-	console.log(buf);
 	ws.send(buf); 
+  console.log("settings update sent");
 }
 
 function startWebsocket() {
@@ -290,6 +358,7 @@ function init(num_j) {
 
   state = {
     num_j,
+    m_per_rev: null,
     pos: Array(num_j).fill(0),
     vel: Array(num_j).fill(0),
     mask: Array(num_j).fill(0),
@@ -317,7 +386,8 @@ function init(num_j) {
     velslider: document.getElementsByClassName("velslider"),
     veltgt: document.getElementsByClassName("veltgt"),
     velval: document.getElementsByClassName("velval"),
-    velgraph: initGraph("velCanvas", -1.5, 1.5),
+    velgraph: initGraph("velCanvas", -1.5, 1.5, "Velocity", "rad/s"),
+    accgraph: initGraph("accCanvas", -1.5, 1.5, "Acceleration", "rad/s^2"),
   };
 
 
@@ -344,6 +414,8 @@ function init(num_j) {
   document.getElementById("open_loop").onchange = (event) => setMaskAllJoints(MASK_OPEN_LOOP_CONTROL, event.target.checked);
   
 	document.getElementById("fw_settings").onsubmit = (event) => pushSettings(event);
+  document.getElementById("linear_canvas_settings").onsubmit = (event) => setUnits(event);
+
 
   startWebsocket();
   setInterval(tick, 100);

@@ -19,6 +19,8 @@
 // When this flag is active, do not read encoders for position.
 #define MASK_OPEN_LOOP_CONTROL (0b1 << 2)
 
+#define DEFAULT_MAX_ACCEL 40
+#define DEFAULT_INITIAL_SPD 10
 
 namespace state {
 
@@ -31,11 +33,11 @@ struct state_t {
 
 #define SETTINGS_MSG_SZ (7*sizeof(int16_t))
 struct settings_t {
-  float pid[3] = {0.1, 0.1, 0.1}; // Tuning for motion
+  float pid[3] = {0.35, 0.5, 0.4}; // Tuning for motion
   int velocity_update_pd_millis = 100;
-  float max_accel = 20; // NOTE: must be at least as large as state::settings.initial_spd
-  float max_spd = 10000;
-  float initial_spd = 10;
+  float max_accel = DEFAULT_MAX_ACCEL; // NOTE: must be at least as large as state::settings.initial_spd
+  float max_spd = 5000;
+  float initial_spd = DEFAULT_INITIAL_SPD;
 };
 
 extern state_t intent;

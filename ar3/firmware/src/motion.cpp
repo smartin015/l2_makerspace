@@ -18,6 +18,12 @@
 #define MIN(a,b) ((a<b) ? a : b)
 #define MAX(a,b) ((a<b) ? b : a)
 
+// To safeguard against e.g. integer overflow causing the robot to lose control,
+// any computed P, I, or D contributions beyond this limit trigger an emergency
+// deceleration of the robot that can only be reset by cycling power to the robot.
+// It is assumed that the robot can be power cycled in a safe manner.
+#define HARD_MAX_PID_CONTRIBUTION 100000
+
 // Set this wide enough that the step pin interrupt
 // can be triggered on the stepper driver - see driver 
 // manual for acceptable limits.
@@ -25,6 +31,7 @@
 #define STEP_PIN_WRITE_USEC 5
 
 // char dbg[2*NUM_J] = "";
+bool emergency_decel_triggered;
 bool limit_triggered[NUM_J];
 float step_vel[NUM_J];
 uint32_t ticks_per_step[NUM_J];
@@ -43,6 +50,7 @@ bool active[NUM_J];
 
 void motion::init() {
   for (int i = 0; i < NUM_J; i++) {
+    emergency_decel_triggered = false;
     limit_triggered[i] = false;
     step_vel[i] = 0;
     ticks_per_step[i] = 0;
@@ -79,6 +87,40 @@ void motion::print_pid_stats() {
     int(pid_updates[0][0]*100), int(pid_updates[0][1]*100), int(pid_updates[0][2]*100));
 }
 
+// We have a separate motion function for deceleration (with some duplication of logic vs e.g. motion::update()) to ensure 
+// changes to motion execution do not affect the safe stopping of the robot.
+bool emergency_decel(int dt) {
+  hal::disableInterrupts();
+  for (int i = 0; i < NUM_J; i++) {
+    if (!active[i]) {
+      continue;
+    }
+
+    // Decelerate maximally in the direction that gets us towards zero speed.
+    float max_accel = MAX(DEFAULT_MAX_ACCEL, state::settings.max_accel); // Don't assume max_accel setting is big enough (or even positive)
+    float vel_adjust = ((step_vel[i] > 0) ? -1 : 1) * float(max_accel) * 1000 / dt;
+    if (ABS(vel_adjust) > ABS(step_vel[i])) {
+      step_vel[i] = 0;
+    } else {
+      step_vel[i] += vel_adjust;
+    }
+
+    // Deactivate steppers when low speed reached
+    float initial_spd = MAX(DEFAULT_INITIAL_SPD, state::settings.initial_spd); // Don't assume initial_spd setting is nonzero / non-negative
+    if (ABS(step_vel[i]) < initial_spd) {
+      active[i] = false;
+      continue;
+    }
+
+    // ticks/step = (ticks/sec) * (sec / step)
+    //            = (ticks/sec) * (1 / step_speed)
+    ticks_per_step[i] = uint32_t(float(MOTION_WRITE_HZ) / ABS(step_vel[i]));
+    hal::stepDir(i, (step_vel[i] > 0) ? HIGH : LOW);    
+  }
+  hal::enableInterrupts();
+  return true;
+}
+
 // Velocities are implemented by slowly adjusting 
 // the stepping period for each joint based on the target
 // velocity and (currently hardcoded) acceleration profile given for each motor
@@ -89,6 +131,11 @@ bool motion::update() {
     return false;
   }
   last_velocity_update = now;
+
+  if (emergency_decel_triggered) {
+    return emergency_decel(dt);
+  }
+
   if (dt > 2 * state::settings.velocity_update_pd_millis) {
     LOG_ERROR("too long between calls to update(); skipping");
     return false; // Avoid edge case in delta processing causing jumps in calculated pos/vel
@@ -120,9 +167,21 @@ bool motion::update() {
     pid_updates[i][0] = state::settings.pid[0] * err_vel[i];
     pid_updates[i][1] = state::settings.pid[1] * err_pos[i];
     pid_updates[i][2] = state::settings.pid[2] * (err_vel[i] - prev_err_vel[i]);
+    if (pid_updates[i][0] > HARD_MAX_PID_CONTRIBUTION ||
+        pid_updates[i][1] > HARD_MAX_PID_CONTRIBUTION ||
+        pid_updates[i][2] > HARD_MAX_PID_CONTRIBUTION) {
+      emergency_decel_triggered = true;
+      LOG_ERROR("PID UPDATE %d %d %d CONTAINS AT LEAST 1 TERM ABOVE HARD LIMIT %d - EMERGENCY DECELERATION ENABLED", 
+          int(pid_updates[i][0]), int(pid_updates[i][1]), int(pid_updates[i][2]), HARD_MAX_PID_CONTRIBUTION);
+      return false;
+    }
+
     float vel_adjust = (pid_updates[i][0] + pid_updates[i][1] + pid_updates[i][2]);
+
+    // Acceleration is limited
+    vel_adjust = MIN(float(state::settings.max_accel) * 1000 / dt, MAX(-float(state::settings.max_accel) * 1000 / dt, vel_adjust));
       
-    // Update velocity, applying firmware velocity limits
+    // Update velocity, applying velocity limits
     step_vel[i] = MIN(state::settings.max_spd, MAX(-state::settings.max_spd, step_vel[i] + vel_adjust));
   
     // If step_vel is too small, we risk div by zero
