@@ -1,3 +1,4 @@
+import os
 import signal
 import sys
 import struct
@@ -117,11 +118,16 @@ if __name__ == "__main__":
   parser.add_argument('-j', default=6, type=int, help="Number of joints in robot (affects packet size & controls display")
   parser.add_argument('--dest', default="tcp://0.0.0.0:5559", help="Destination (ZMQ socket or serial dev path)")
   parser.add_argument('--pull', default="tcp://0.0.0.0:5558", help="PULL socket destination (ignored when --dest is serial")
+  parser.add_argument('--web_dir', default="www", help="Web dir (relative to .py script)")
   args = parser.parse_args(sys.argv[1:])
   NUM_J = args.j
 
   if not args.loopback:
       conn = Comms(args.dest, args.pull)
+
+  web_dir = os.path.join(os.path.dirname(__file__), args.web_dir)
+  print("Serving files from", web_dir)
+  os.chdir(web_dir)
 
   # Webserver for html page
   WEB_SERVER_ADDR = ("0.0.0.0", 8000)

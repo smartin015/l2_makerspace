@@ -37,30 +37,30 @@ services:
   web_interface3:
     build: ./control/
     image: l2ar3control:latest
-    command: python3 /www/native_client.py -j 3
-    working_dir: /www
+    command: python3 /volume/broker.py -j 3
+    working_dir: /volume
     environment:
       - "PYTHONUNBUFFERED=1"
     # networks: 
     #  - ar3
     network_mode: host
     volumes:
-      - "./control/www:/www"
+      - "./control/:/volume"
     #ports:
     #  - "8000:8000" # Web server
     #  - "8001:8001" # Websocket server
   web_interface:
     build: ./control/
     image: l2ar3control:latest
-    command: python3 /www/native_client.py
-    working_dir: /www
+    command: python3 /volume/broker.py
+    working_dir: /volume
     environment:
       - "PYTHONUNBUFFERED=1"
     # networks: 
     #  - ar3
     network_mode: host
     volumes:
-      - "./control:/www"
+      - "./control/:/volume"
     #ports:
     #  - "8000:8000" # Web server
     #  - "8001:8001" # Websocket server
