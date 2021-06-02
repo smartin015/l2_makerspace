@@ -74,18 +74,25 @@ void writeEnc(int i, int value) {
 }
 
 void (*isr_cb)();
+#ifdef AR3
+#include <avr/io.h>
+#include <avr/interrupt.h>
+IntervalTimer teensyTimer;
+#else
 ISR(TIMER1_COMPA_vect) {
   isr_cb();
 }
+#endif // AR3
 
 void startMainTimer(int hz, void (*cb)()) {
   // TODO version for teensy35
-#ifdef AR3
-  LOG_ERROR("startMainTimer not implemented for AR3");
-#else 
   disableInterrupts();
-
   isr_cb = cb;
+
+#ifdef AR3
+  // Teensy timer setup is handled via library
+  teensyTimer.begin(isr_cb, 1000000 / hz);
+#else 
 
   // Reset timer flags
   TCCR1A = 0;
@@ -101,9 +108,8 @@ void startMainTimer(int hz, void (*cb)()) {
   TCCR1B |= (1 << WGM12);   // CTC (clear timer on compare) mode, compare OCR1A
   TCCR1B |= (1 << CS10);    // No prescale, but enable
   TIMSK1 |= (1 << OCIE1A);  // enable timer compare interrupt
-
+#endif // AR3
   enableInterrupts();
-#endif
 }
 
 void disableInterrupts() {
