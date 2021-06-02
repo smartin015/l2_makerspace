@@ -1,5 +1,6 @@
 #include "app_hal.h"
 #include <Encoder.h>
+#include "log.h"
 
 // Pins for step, step direction, and calibration (limit)
 // This is device specific.
@@ -79,7 +80,11 @@ ISR(TIMER1_COMPA_vect) {
 
 void startMainTimer(int hz, void (*cb)()) {
   // TODO version for teensy35
-  noInterrupts();
+#ifdef AR3
+  LOG_ERROR("startMainTimer not implemented for AR3");
+#else 
+  disableInterrupts();
+
   isr_cb = cb;
 
   // Reset timer flags
@@ -88,12 +93,17 @@ void startMainTimer(int hz, void (*cb)()) {
   TCNT1  = 0;
 
   // freq = clock / (prescaler * (OCR1A + 1)) -> OCR1A = clock / (freq * prescaler) - 1
-  OCR1A = F_CPU / (hz * PRESCALE) - 1;
+  int freq = F_CPU / (hz * PRESCALE) - 1;
+  if (freq < (2 << sizeof(OCR1A))) {
+    LOG_ERROR("Calculated frequency %d larger than OCR1A (%d bytes)", freq, sizeof(OCR1A));
+  }
+  OCR1A = freq;
   TCCR1B |= (1 << WGM12);   // CTC (clear timer on compare) mode, compare OCR1A
   TCCR1B |= (1 << CS10);    // No prescale, but enable
   TIMSK1 |= (1 << OCIE1A);  // enable timer compare interrupt
 
-  interrupts();
+  enableInterrupts();
+#endif
 }
 
 void disableInterrupts() {

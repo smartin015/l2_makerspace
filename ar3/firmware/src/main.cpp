@@ -15,9 +15,10 @@ void setup() {
   motion::init();
   hal::init();
 
-  LOG_INFO("Configuring main timing loop for %d hz", MOTION_WRITE_HZ);
+  LOG_INFO("Configuring main timing loop for %d hz (0x%x)", MOTION_WRITE_HZ, &motion::write);
   hal::startMainTimer(MOTION_WRITE_HZ, &motion::write);
 
+  LOG_INFO("Printing firmware settings:");
   state::print_settings(&state::settings);
 
   LOG_INFO("Setup complete");

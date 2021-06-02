@@ -31,6 +31,7 @@
 #define STEP_PIN_WRITE_USEC 5
 
 // char dbg[2*NUM_J] = "";
+bool should_check_limits;
 bool emergency_decel_triggered;
 bool limit_triggered[NUM_J];
 float step_vel[NUM_J];
@@ -38,6 +39,7 @@ uint32_t ticks_per_step[NUM_J];
 uint32_t ticks[NUM_J];
 uint32_t ticks_since_last_print = 0;
 uint32_t steps_since_last_print = 0; // Cumulative, all joints
+uint32_t msgs_received_since_last_print = 0;
 
 uint64_t last_velocity_update = 0;
 float prev_vel[NUM_J];
@@ -70,7 +72,8 @@ void motion::init() {
 void motion::print_state() {
   // LOG_DEBUG("%d %s", int(now), dbg);
   // NOTE: arduino doesn't include floating point printf by default; scale & cast floats
-  LOG_DEBUG("dt %d\tds %d\ton %d\twant m%02x p%d v%d\tgot m%02x p%d v%d --> stepvel %d ticks/step %d", 
+  LOG_DEBUG("rx %u, dt %u\tds %u\ton %d\twant m%02x p%d v%d\tgot m%02x p%d v%d --> stepvel %d ticks/step %d", 
+      msgs_received_since_last_print,
       ticks_since_last_print,
       steps_since_last_print,
       active[0],
@@ -79,6 +82,7 @@ void motion::print_state() {
       int(step_vel[0]*100), ticks_per_step[0]);
   ticks_since_last_print = 0;
   steps_since_last_print = 0;
+  msgs_received_since_last_print = 0;
 }
 
 void motion::print_pid_stats() {
@@ -121,12 +125,49 @@ bool emergency_decel(int dt) {
   return true;
 }
 
+bool limits_intended = false;
+void recalc_limit_intent() {
+  // Limits are not at intent if any joint is triggered that does not have
+  // the intent mask also set. Otherwise, they are at intent.
+  limits_intended = true;
+  for (int i = 0; i < NUM_J; i++) {
+    if ((state::actual.mask[i] & MASK_LIMIT_TRIGGERED)  && !(state::intent.mask[i] & MASK_LIMIT_TRIGGERED)) {
+      limits_intended = false;
+    }
+  }
+}
+
 // Velocities are implemented by slowly adjusting 
 // the stepping period for each joint based on the target
 // velocity and (currently hardcoded) acceleration profile given for each motor
 bool motion::update() {
   uint64_t now = millis();
   int dt = now - last_velocity_update;
+
+  if (should_check_limits) {
+    // Not exactly part of motion planning - run this here instead of in write()
+    // to keep the interrupt lightweight
+    for (int i = 0; i < NUM_J; i++) {
+      if (!active[i]) {
+        continue;
+      }
+      // Don't move if we're driving further into a limit
+      uint8_t dir = (state::intent.pos[i] - state::actual.pos[i]) > 0;
+      //dbg[2*i] = (dir) ? '+' : '-';
+      if (!hal::readLimit(i) && !dir) {
+        if (!(state::actual.mask[i] & MASK_LIMIT_TRIGGERED)) {
+          state::actual.mask[i] |= MASK_LIMIT_TRIGGERED;
+        }
+        recalc_limit_intent();
+      } else if (state::actual.mask[i] & MASK_LIMIT_TRIGGERED) {
+        // Update actual limit state and per-joint limit state
+        state::actual.mask[i] &= ~MASK_LIMIT_TRIGGERED;
+        recalc_limit_intent();
+      }
+    }
+  }
+
+
   if (dt < state::settings.velocity_update_pd_millis) {
     return false;
   }
@@ -199,19 +240,8 @@ bool motion::update() {
   return true;
 }
 
-bool limits_intended = false;
-void recalc_limit_intent() {
-  // Limits are not at intent if any joint is triggered that does not have
-  // the intent mask also set. Otherwise, they are at intent.
-  limits_intended = true;
-  for (int i = 0; i < NUM_J; i++) {
-    if ((state::actual.mask[i] & MASK_LIMIT_TRIGGERED)  && !(state::intent.mask[i] & MASK_LIMIT_TRIGGERED)) {
-      limits_intended = false;
-    }
-  }
-}
-
 void motion::intent_changed() {
+  msgs_received_since_last_print++;
   recalc_limit_intent();
 
   for (int i = 0; i < NUM_J; i++) {
@@ -230,43 +260,25 @@ void motion::write() {
   // Check limits less frequently than stepping
   // TODO make configurable
   if (ticks_since_last_print % 200 == 0) {
-    for (int i = 0; i < NUM_J; i++) {
-      if (!active[i]) {
-        continue;
-      }
-      // Don't move if we're driving further into a limit
-      uint8_t dir = (state::intent.pos[i] - state::actual.pos[i]) > 0;
-      //dbg[2*i] = (dir) ? '+' : '-';
-      if (!hal::readLimit(i) && !dir) {
-        if (!(state::actual.mask[i] & MASK_LIMIT_TRIGGERED)) {
-          state::actual.mask[i] |= MASK_LIMIT_TRIGGERED;
-        }
-        recalc_limit_intent();
-      } else if (state::actual.mask[i] & MASK_LIMIT_TRIGGERED) {
-        // Update actual limit state and per-joint limit state
-        state::actual.mask[i] &= ~MASK_LIMIT_TRIGGERED;
-        recalc_limit_intent();
-      }
-    }
+    should_check_limits = true;
   }
 
   // Continue moving to target
   // Calculate ramp settings
-  for (int i = 0; i < NUM_J; i++) {
+  for (uint8_t i = 0; i < NUM_J; i++) {
     if (!active[i] || !limits_intended) {
       continue;
     }
 
-    // at least USEC_PER_TICK passes between every counter tick
-    if ((++ticks[i]) < ticks_per_step[i]) {
-      continue;
-    }
-
-    ticks[i] = 0;
-    hal::stepDn(i);
-    steps_since_last_print++;
-    if (state::intent.mask[i] & MASK_OPEN_LOOP_CONTROL) {
-      state::actual.pos[i] += (step_vel[i] > 0) ? 1 : -1;
+    if (ticks[i] == 0) {
+      ticks[i] = ticks_per_step[i];
+      hal::stepDn(i);
+      steps_since_last_print++;
+      if (state::intent.mask[i] & MASK_OPEN_LOOP_CONTROL) {
+        state::actual.pos[i] += (step_vel[i] > 0) ? 1 : -1;
+      }
+    } else {
+      ticks[i]--;
     }
   }
 

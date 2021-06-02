@@ -6,6 +6,8 @@ uint8_t serbuf[BUFLEN];
 int16_t idx = -1;
 int16_t readlen = 0;
 
+#define PACKET_START_BYTE 0x02
+
 void comms::init() {
   Serial.begin(115200);
   Serial.setTimeout(500);
@@ -15,7 +17,7 @@ int comms::read(uint8_t* buf, int buflen) {
   char c;
   while (Serial.available()) {
     c = Serial.read();
-    if (c == 0x79) {
+    if (c == PACKET_START_BYTE) {
       // Magic byte, next byte is length
       idx=0;
       readlen=0;
@@ -43,7 +45,7 @@ int comms::read(uint8_t* buf, int buflen) {
 }
 
 void comms::write(uint8_t* buf, int buflen) {
-  Serial.write(0x79);
+  Serial.write(PACKET_START_BYTE);
   Serial.write(buflen);
   Serial.write(buf, buflen);
 }
@@ -54,8 +56,8 @@ void comms::printf(char* format, ...) {
   va_start(argptr, format);
   vsnprintf(pfbuf, sizeof(pfbuf), format, argptr);
   va_end(argptr);
-  Serial.write(0x79);
-  Serial.write(0x79);
+  Serial.write(PACKET_START_BYTE);
+  Serial.write(PACKET_START_BYTE);
   Serial.write(pfbuf, sizeof(pfbuf));
 }
 

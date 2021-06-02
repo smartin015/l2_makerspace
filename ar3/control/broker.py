@@ -15,11 +15,15 @@ try:
 except:
     pass # ZMQ not needed as a dependency on the robot itself
 
+PACKET_START_BYTE = 0x02 # Matches ../firmware/hal/micro/comms.cpp
 NUM_J = None # Overridden by args
 
 class Comms():
     def __init__(self, dest, pull=None):
         self.sock = None
+        self.push = None
+        self.pull = None
+        self.q = asyncio.Queue()
         if dest.startswith('/dev'):
             print("Opening serial connection:", dest)
             import serial
@@ -34,42 +38,44 @@ class Comms():
             self.pull = self.ctx.socket(zmq.PULL)
             self.pull.connect(pull)
 
-    async def recv_forever(self, ws):
-        print("Starting recv_forever")
+    def read_forever(self):
+        print("Starting comms read loop")
         if self.pull is not None:
             while True:
                 try:
-                    data = self.pull.recv(zmq.NOBLOCK)
+                    data = self.pull.recv()
                 except zmq.error.Again:
-                    await asyncio.sleep(0)
                     continue
-                await ws.send(data)
+                self.q.put_nowait(data)
         else:
             while True:
-                if self.sock.in_waiting == 0:
-                    await asyncio.sleep(0)
+                stuff = self.sock.read_until(bytes([PACKET_START_BYTE]))
+                if stuff == b'':
+                    print("No serial data")
                     continue
-                self.sock.read_until(bytes([0x79])) #magic sync byte
                 sz = self.sock.read(1)
                 if len(sz) != 1:
-                    print("ERR serial could not read size")
-                    await asyncio.sleep(0)
+                    print("ERR serial could not read size after sync byte; runup:", stuff[-10:])
                     continue
                 sz = int(sz[0])
-                if sz == 0x79: # Print status messages to console
-                    s = '[FW]', self.sock.read_until(bytes([0])).decode('utf-8').rstrip('\x00\n\r')
+                if sz == PACKET_START_BYTE: # Print status messages to console
+                    s = '[FW] ' + self.sock.read_until(bytes([0])).decode('utf-8').rstrip('\x00\n\r')
                     print(s)
-                    await ws.send(s)
+                    self.q.put_nowait(s)
                     continue
-
                 else:
                     # Note: we don't do any length checking - this is the responsibility of the web interface
-                    await ws.send(self.sock.read(sz))
+                    self.q.put_nowait(self.sock.read(sz))
                 
+
+    async def recv_forever(self, ws):
+        while True:
+            msg = await self.q.get()
+            await ws.send(msg)
 
     def send(self, req):
         if self.sock is not None:
-            self.sock.write(bytes([0x79, len(req)]))
+            self.sock.write(bytes([PACKET_START_BYTE, len(req)]))
             self.sock.write(req)
             self.sock.flush()
         else:
@@ -125,9 +131,6 @@ if __name__ == "__main__":
   args = parser.parse_args(sys.argv[1:])
   NUM_J = args.j
 
-  if not args.loopback:
-      conn = Comms(args.dest, args.pull)
-
   web_dir = os.path.join(os.path.dirname(__file__), args.web_dir)
   print("Serving files from", web_dir)
   os.chdir(web_dir)
@@ -141,6 +144,10 @@ if __name__ == "__main__":
   # Websocket for streaming comms from web client
   WS_SERVER_ADDR = ("0.0.0.0", args.websocket_port)
   wssrv = websockets.serve(handle_socket, WS_SERVER_ADDR[0], WS_SERVER_ADDR[1])
+
+  if not args.loopback:
+      conn = Comms(args.dest, args.pull)
+      threading.Thread(target=conn.read_forever, daemon=True).start()
 
   asyncio.get_event_loop().run_until_complete(wssrv)
   print("Starting websocket server", str(WS_SERVER_ADDR))
