@@ -17,8 +17,9 @@ def do_capture(args):
         if frame is None:
             print('Camera not found')
             break
-        elif frame[1].size == 0:
-            print('WARNING: empty frame')
+        if frame[1] is None or frame[1].size == 0:
+            print('WARNING: empty frame - restarting video capture')
+            capture = cv2.VideoCapture(args.url)
             continue
         else:
             if args.display:
