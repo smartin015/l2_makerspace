@@ -17,9 +17,11 @@ except:
 
 PACKET_START_BYTE = 0x02 # Matches ../firmware/hal/micro/comms.cpp
 NUM_J = None # Overridden by args
+MAX_BUFFERED_MESSAGES = 10
 
-class Comms():
-    def __init__(self, dest, pull=None):
+class Broker():
+    def __init__(self, dest, pull=None, motion=None):
+        self.motion = motion
         self.sock = None
         self.push = None
         self.pull = None
@@ -58,13 +60,18 @@ class Comms():
                     print("ERR serial could not read size after sync byte; runup:", stuff[-10:])
                     continue
                 sz = int(sz[0])
+
+                # Bound the queue size, but without throwing QueueFull exceptions as the usual implementation goes
+                while self.q.qsize() > MAX_BUFFERED_MESSAGES:
+                    self.q.get_nowait()
+
                 if sz == PACKET_START_BYTE: # Print status messages to console
                     s = '[FW] ' + self.sock.read_until(bytes([0])).decode('utf-8').rstrip('\x00\n\r')
                     print(s)
                     self.q.put_nowait(s)
                     continue
                 else:
-                    # Note: we don't do any length checking - this is the responsibility of the web interface
+                    # Note: we don't do any length checking - this is the responsibility of the consumer
                     self.q.put_nowait(self.sock.read(sz))
                 
 
@@ -120,6 +127,7 @@ async def ws_to_conn(ws):
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
+  parser.add_argument('--motion', default="passthrough", help="Type of motion control to use")
   parser.add_argument('--loopback', action='store_true', default=False, help="Transmit to self, for testing")
   parser.add_argument('-j', default=6, type=int, help="Number of joints in robot (affects packet size & controls display")
   parser.add_argument('--dest', default="tcp://0.0.0.0:5559", help="Destination (ZMQ socket or serial dev path)")
@@ -146,7 +154,7 @@ if __name__ == "__main__":
   wssrv = websockets.serve(handle_socket, WS_SERVER_ADDR[0], WS_SERVER_ADDR[1])
 
   if not args.loopback:
-      conn = Comms(args.dest, args.pull)
+      conn = Broker(args.dest, args.pull, args.motion)
       threading.Thread(target=conn.read_forever, daemon=True).start()
 
   asyncio.get_event_loop().run_until_complete(wssrv)
