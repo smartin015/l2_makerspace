@@ -10,6 +10,7 @@ import socketserver
 from threading import Condition, Thread
 from http import server
 from socket import gethostname
+from cv2 import imencode
 
 PAGE="""<html><head><title>%s Status</title></head>
 <body><center><img src="stream.mjpg" width="640" height="480"></center></body>
@@ -24,6 +25,9 @@ class StreamingOutput(object):
     def write(self, buf):
         # New frame, copy the existing buffer's content and notify all
         # clients it's available
+        done, buf = cv2.imencode(".jpg", buf)
+        if not done:
+            return
         self.buffer.truncate()
         with self.condition:
             self.frame = self.buffer.getvalue()
