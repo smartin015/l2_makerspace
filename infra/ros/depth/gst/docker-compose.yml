@@ -1,0 +1,11 @@
+version: "3.9"
+services:
+  main:
+    image: l2gst
+    build: .
+    tty: true
+    stdin_open: true
+    command: /bin/bash
+    volumes:
+      - ".:/volume"
+    working_dir: /volume
