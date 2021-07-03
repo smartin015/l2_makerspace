@@ -37,11 +37,16 @@ function attachLoaded(scene, camera, controls, renderer, geometry) {
     //scene.add(rcs);
     //scene.add(tcs);
 
-    const pgeom = findSurfacePoints(10, 10, 10, mesh);
+    var clearance_radius = clearanceRadius(null);
+    var num_rad = 10;
+    var num_h = 10;
+    const pgeom = findSurfacePoints(num_rad, num_h, 10, mesh);
     console.log(pgeom.attributes.position);
     const pm = new THREE.PointsMaterial( {color: 0x0000ff} );
     scene.add(new THREE.Points(pgeom, pm));
 
+    const segments = floodFillSegments(clearance_radius, num_rad, num_h, pgeom);
+    console.log(segments);
 
     var animate = function () {
         requestAnimationFrame(animate);

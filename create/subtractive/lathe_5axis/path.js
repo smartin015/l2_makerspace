@@ -8,13 +8,18 @@ class Mat {
     return this.m[uv[0]][uv[1]];
   }
   set(uv, v) {
-    this.m[uv[0]][uv[1]] = v;
+    try {
+      this.m[uv[0]][uv[1]] = v;
+    } catch (e) {
+      throw `Failed to set matrix ${uv} to ${v}: ${e}`;
+    }
   }
 }
 
 function uvProjectCylinder(target_geometry, num_rad, num_h) {
   // Unwrap a cylindrical view of target points into a dense UV matrix (indices map to discretized theta, height)
   let pts = target_geometry.attributes.position;
+  console.log(pts);
   if (num_rad*num_h != pts.length / 3) {
     throw `Target geometry has ${pts.length/3} vertices, expected ${num_rad}*${num_h}=${num_rad*num_h} for UV unwrap`;
   }
@@ -22,20 +27,23 @@ function uvProjectCylinder(target_geometry, num_rad, num_h) {
   // Get V bounds - note that U bounds are implied [0,2*pi)
   let min_y = 999999;
   let max_y = -999999;
-  for (int i = 0; i < pts.length; i += 3) {
-    min_y = Math.min(min_y, pts[i+1]);
-    max_y = Math.max(max_y, pts[i+1]);
+  for (let i = 0; i+2 < pts.count; i += 3) {
+    min_y = Math.min(min_y, pts.array[i+1]);
+    max_y = Math.max(max_y, pts.array[i+1]);
   }
   let du = 2*Math.PI/num_rad;
   let dv = (max_y-min_y)/num_h;
 
+  console.log(`min_y ${min_y} max_y ${max_y}`);
+
   let uv = new Mat(num_rad, num_h);
-  for (int i = 0; i < pts.length; i += 3) {
+  for (let i = 0; i < pts.count; i += 3) {
     // Get UV coordinates from projection
-    let u = Math.round(Math.atan2(pts[i], pts[i+2]) / du);
-    let v = Math.round(pts[i+1]/dv - min_y);
+    console.log(pts.array[i], pts.array[i+1], pts.array[i+2]);
+    let u = Math.round(Math.PI + Math.atan2(pts.array[i], pts.array[i+2]) / du);
+    let v = Math.round(pts.array[i+1]/dv - min_y);
     // Cell value is the radial distance from the Y axis
-    uv.set([u,v], Math.sqrt(pts[i]*pts[i] + pts[i+2]*pts[i+2]));
+    uv.set([u,v], Math.sqrt(pts.array[i]*pts.array[i] + pts.array[i+2]*pts.array[i+2]));
   }
   return uv;
 }
@@ -47,6 +55,7 @@ function sortWithIndices(uv) {
   for (let u of uv) {
     for (let v of uv) {
       test_with_index.push([uv.at([u, v]), [u, v]]);
+    }
   }
   test_with_index.sort(function(left, right) {
     return left[0] < right[0] ? -1 : 1;
@@ -58,6 +67,10 @@ function sortWithIndices(uv) {
   return indexes
 }
 
+function clearanceRadius(stock_geometry) {
+  return 20; // TODO max stock_geometry radius plus some extra
+}
+
 function cylinderCutPath(name, clearance_radius, num_rad, num_h, stepdown, target_geometry) {
   // Generates and returns GCode to cut a cylindrical "lathe" path 
   // around a part.
@@ -65,6 +78,29 @@ function cylinderCutPath(name, clearance_radius, num_rad, num_h, stepdown, targe
   let result = "; Begin ";
   
   let done = false;
+
+  let segments = floodFillSegments(clearance_radius, num_rad, num_h, target_geometry)
+
+  // At this point, we have a list of cuttable segments including valid starting positions above the lowest
+  // point in that segment, and the maximum height of that segment that is uncut.
+  console.log(segments);
+
+  // Add the "facing" pass to get us to total_max_height so we can cut with impunity.
+  result += `\n; TODO facing pass down to ${total_max_height} radius`;
+
+  for (let i = 0; i < segments.length; i++) {
+    let seg = segments[i];
+    let cur_height = seg[1];
+    // TODO start at seg[0] and work outwards, hitting all points where visited == i
+    // and uv.at(seg[0]) <= cur_height
+    // then subtract cur_height by stepdown and repeat
+    result += `\n; TODO cut segment at UV ${seg[0]} from height ${seg[1]}`;
+  }
+
+  return result;
+}
+
+function floodFillSegments(clearance_radius, num_rad, num_h, target_geometry) {
   let rad = clearance_radius; // Start out outside the bounds of the material
   let uv = uvProjectCylinder(target_geometry, num_rad, num_h);
   sorted_idxs = sortWithIndices(uv)
@@ -75,7 +111,8 @@ function cylinderCutPath(name, clearance_radius, num_rad, num_h, stepdown, targe
   let visited = new Mat(num_rad, num_h);
   let cur_max_height = 0;
   let total_max_height = 0; // Max of cur_max_height values
-  // Modified flood-fill - eat 
+  // Modified flood-fill - eat volume segments from deepest point outwards to find contiguous areas
+  // that we can mill in one go.
   while (sort_i < sorted_idxs.length) {
     // Check all target points to see if we're inside
     if (candidates.length == 0) {
@@ -102,28 +139,5 @@ function cylinderCutPath(name, clearance_radius, num_rad, num_h, stepdown, targe
       }
     }
   }
-  
-  // At this point, we have a list of cuttable segments including valid starting positions above the lowest
-  // point in that segment, and the maximum height of that segment that is uncut.
-  console.log(segments);
-
-
-  // Add the "facing" pass to get us to total_max_height so we can cut with impunity.
-  result += `\n; TODO facing pass down to ${total_max_height} radius`;
-
-  for (let i = 0; i < segments.length; i++) {
-    let seg = segments[i];
-    let cur_height = seg[1];
-    // TODO start at seg[0] and work outwards, hitting all points where visited == i
-    // and uv.at(seg[0]) <= cur_height
-    // then subtract cur_height by stepdown and repeat
-    result += `\n; TODO cut segment at UV ${seg[0]} from height ${seg[1]}`;
-  }
-
-  return result;
-}
-
-
-function renderPath(gcode) {
-
+  return segments; 
 }
