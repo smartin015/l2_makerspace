@@ -36,6 +36,7 @@ bool emergency_decel_triggered;
 bool limit_triggered[NUM_J];
 float step_vel[NUM_J];
 uint32_t ticks_per_step[NUM_J];
+uint32_t ticks_per_step_smoothed[NUM_J]; // interpolate between ticks_per_step values to prevent judder
 uint32_t ticks[NUM_J];
 uint32_t ticks_since_last_print = 0;
 uint32_t steps_since_last_print = 0; // Cumulative, all joints
@@ -70,13 +71,12 @@ void motion::init() {
 }
 
 void motion::print_state() {
-  // LOG_DEBUG("%d %s", int(now), dbg);
   // NOTE: arduino doesn't include floating point printf by default; scale & cast floats
-  LOG_DEBUG("rx %u, dt %u\tds %u\ton %d\twant m%02x p%d v%d\tgot m%02x p%d v%d --> stepvel %d ticks/step %d", 
+  LOG_DEBUG("rx %u, dt %u\tds %u\tactive %s\twant m%02x p%d v%d\tgot m%02x p%d v%d --> stepvel %d ticks/step %d", 
       msgs_received_since_last_print,
       ticks_since_last_print,
       steps_since_last_print,
-      active[0],
+      (active[0]) ? "Y" : "N",
       state::intent.mask[0], state::intent.pos[0], int(state::intent.vel[0]*100),
       state::actual.mask[0], state::actual.pos[0], int(state::actual.vel[0]*100),
       int(step_vel[0]*100), ticks_per_step[0]);
@@ -197,7 +197,12 @@ bool motion::update() {
     err_pos[i] = state::intent.pos[i] - state::actual.pos[i];
 
     // Don't calculate stepping if we're already at intent
-    active[i] = (err_vel[i] != 0) || (err_pos[i] != 0);
+    active[i] = (ABS(err_vel[i]) > VEL_DEAD_ZONE) || (ABS(err_pos[i]) > POS_DEAD_ZONE);
+    for (int i = 0; i < NUM_J; i++) {
+    	bool en = state::intent.mask[i] & MASK_ENABLED; 
+	// We *can* be enabled, but we may not *need* to be enabled.
+	hal::stepEnabled(i, en && active[i]);
+    }
     if (!active[i]) {
       continue;
     }
@@ -245,8 +250,9 @@ void motion::intent_changed() {
   recalc_limit_intent();
 
   for (int i = 0; i < NUM_J; i++) {
-    bool en = state::intent.mask[i] & MASK_ENABLED;
-    hal::stepEnabled(i, en);
+    bool en = state::intent.mask[i] & MASK_ENABLED; 
+    // We *can* be enabled, but we may not *need* to be enabled.
+    hal::stepEnabled(i, en && active[i]);
     state::actual.mask[i] = (state::actual.mask[i] & ~MASK_ENABLED) | (en ? MASK_ENABLED : 0);
   }
 }
@@ -258,9 +264,21 @@ void motion::write() {
   ticks_since_last_print++;
 
   // Check limits less frequently than stepping
-  // TODO make configurable
-  if (ticks_since_last_print % 200 == 0) {
+  if (ticks_since_last_print % LIMIT_CHECK_TICK_PD == 0) {
     should_check_limits = true;
+  }
+
+  // Apply some smoothing between current stepping and intent
+  if (ticks_since_last_print % STEP_INTERPOLATION_TICK_PD == 0) {
+    // Interpolation is done in the frequency domain, not the time domain, for linear speed response
+    for (uint8_t i = 0; i < NUM_J; i++) {
+      uint32_t uhz_real = (1000000 / ticks_per_step[i]);
+      uint32_t uhz_smooth = (1000000 / ticks_per_step_smoothed[i]);
+      uint32_t uhz_new = (uhz_real + (uhz_smooth*15))/16; // Moving average
+      if (uhz_new != 0) {
+	      ticks_per_step_smoothed[i] = (1000000 / uhz_new);
+      }
+    }
   }
 
   // Continue moving to target

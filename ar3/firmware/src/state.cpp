@@ -52,12 +52,12 @@ namespace state {
   void print_settings(const settings_t* s) {
     LOG_INFO("VEL_UP_MS%d (P%d I%d D%d MAX_A%d MAX_S%d INIT_S%d)", 
         s->velocity_update_pd_millis,  
-        int(s->pid[0]*100), 
-        int(s->pid[1]*100), 
-        int(s->pid[2]*100), 
-        int(s->max_accel*100),
-        int(s->max_spd*100),
-        int(s->initial_spd*100));
+        int32_t(s->pid[0]*100), 
+        int32_t(s->pid[1]*100), 
+        int32_t(s->pid[2]*100), 
+        int32_t(s->max_accel*100),
+        int32_t(s->max_spd*100),
+        int32_t(s->initial_spd*100));
   }
 
   state_t intent;
