@@ -1,3 +1,12 @@
+# Setup on Jetson Nano
+
+```
+sudo apt -y install nvidia-jetpack
+```
+
+
+# Basic streaming
+
 ```
 # Test basic compressed web streaming
 ./test_stream.sh
@@ -27,7 +36,14 @@ gst-launch-1.0 videotestsrc ! gstplugin_py int-prop=100 float-prop=0.2 bool-prop
 
 
 # Realsense data access via Aivero RGBD toolkit
-Installation instructions at https://gitlab.com/aivero/legacy/public/aivero-rgbd-toolkit
+Original installation instructions at https://gitlab.com/aivero/legacy/public/aivero-rgbd-toolkit.
+
+Download https://drive.google.com/u/0/uc?id=1VoBx2SES10AWMiHBqR-gwFW8vX-beZvc&export=download
+```
+sudo mkdir -p  /opt/aivero && sudo chown $USER:USER /opt/aivero
+tar -C / -xvf aivero_rgbd_toolkit_master.tar.gz
+```
+
 
 Note: serial number can be fetched via `rs-enumerate-devices | less`
 
