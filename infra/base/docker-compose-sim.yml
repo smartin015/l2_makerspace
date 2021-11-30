@@ -1,0 +1,6 @@
+version: '2'
+
+services:
+  post-sim: 
+    image: l2base-post-sim
+    build: ./post-sim
