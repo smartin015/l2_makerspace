@@ -1,3 +1,6 @@
+<<<<<<< HEAD
+```
+=======
 # Requirements & Setup
 
 These scripts **MUST** be set up within an installation of the NVIDIA jetson nano image - jetson nanos running Ubuntu
@@ -92,5 +95,20 @@ gst-launch-1.0 videotestsrc ! gstplugin_py int-prop=100 float-prop=0.2 bool-prop
 `rvlencode` converts to run-variable-length encoding
 
 
+# Realsense data access via Aivero RGBD toolkit
+Installation instructions at https://gitlab.com/aivero/legacy/public/aivero-rgbd-toolkit
+
+Note: serial number can be fetched via `rs-enumerate-devices | less`
+
+```
+source /opt/aivero/rgbd_toolkit_armv8/aivero_environment.sh 
+
+export SERIAL=819612071634
+gst-launch-1.0 realsensesrc serial=$SERIAL timestamp-mode=clock_all enable-color=true  ! \
+  rgbddemux name=demux \
+  demux.src_depth ! queue ! colorizer near-cut=300 far-cut=700 ! videoconvert ! glimagesink \
+  demux.src_color ! queue ! videoconvert ! glimagesink
+
+```
 
 

@@ -22,6 +22,11 @@
 #define DEFAULT_MAX_ACCEL 40
 #define DEFAULT_INITIAL_SPD 10
 
+// Number of stepper steps we're allowed to be off by before we shut off the motor drivers
+// and call it close enough. Higher values make for less precision, but also less jitter/noisiness at rest
+#define VEL_DEAD_ZONE 10
+#define POS_DEAD_ZONE 10
+
 namespace state {
 
 #define MOTION_MSG_SZ (NUM_J * ((sizeof(uint8_t)) + sizeof(uint16_t) + sizeof(uint32_t)))

@@ -1,6 +1,8 @@
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
 
+#define LIMIT_CHECK_TICK_PD 200
+
 namespace motion {
 
 void init();
