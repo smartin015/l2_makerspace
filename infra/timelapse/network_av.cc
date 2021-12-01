@@ -23,7 +23,7 @@ typedef enum {
  PIPELINE_TYPE_AUTO_VIDEO,
 } PipelineType;
 
-GstElement* setupPipeline(PipelineType p) {
+GstElement* setupPipeline(const PipelineType& p, const std::string& serial) {
   // NOTE: there may be further efficiencies here, but trying these breaks the pipeline in dumb ways:
   //  - use nvvidconv instead of videoconvert
   //  - use nvv4l2h264enc instead of omxh264enc
@@ -33,7 +33,7 @@ GstElement* setupPipeline(PipelineType p) {
     case PIPELINE_TYPE_REALSENSE_RGB:
       std::cerr << "Creating Realsense RGB pipeline" << std::endl;
 			pipespec = ( // "realsensesrc serial=819112070701 timestamp-mode=clock_all enable-color=true ! rgbddemux name=demux demux.src_color ! videoconvert ! omxh264enc ! hlssink2 playlist-root=http://192.168.1.8:8080 location=/tmp/ramdisk/segment_%05d.ts playlist-location=/tmp/ramdisk/playlist.m3u8 target-duration=5 max-files=5",
-			    "realsensesrc serial=819112070701 timestamp-mode=clock_all enable-color=true "
+			    "realsensesrc serial=" + serial + " timestamp-mode=clock_all enable-color=true "
 			   "! rgbddemux name=demux demux.src_color ! queue ! videoconvert ! omxh264enc ! video/x-h264, stream-format=(string)byte-stream "
 			   "! h264parse ! mpegtsmux ! hlssink playlist-root=http://" + HOSTNAME + ":8080 location=/tmp/ramdisk/segment_%05d.ts"
 	      );
@@ -96,6 +96,7 @@ class callback : public virtual mqtt::callback,
   PipelineType pipelineType_;
   std::string statusTopic_;
   bool running_;
+  std::string serial_;
 
   void sendStatus(const std::string& str) {
     auto msg = mqtt::make_message(statusTopic_, str);
@@ -161,7 +162,7 @@ class callback : public virtual mqtt::callback,
         return;
       }
       sendStatus("starting");
-      pipeline_ = setupPipeline(pipelineType_);
+      pipeline_ = setupPipeline(pipelineType_, serial_);
       ret = gst_element_set_state(pipeline_, GST_STATE_PLAYING);
       if (ret == GST_STATE_CHANGE_ASYNC) {
         ret = gst_element_get_state(pipeline_, NULL, NULL, GST_CLOCK_TIME_NONE);
@@ -191,8 +192,8 @@ class callback : public virtual mqtt::callback,
   void delivery_complete(mqtt::delivery_token_ptr token) override {}
 
 public:
-  callback(mqtt::async_client& cli, mqtt::connect_options& connOpts, PipelineType ptype)
-        : nretry_(0), cli_(cli), connOpts_(connOpts), subListener_("Subscription"), pipelineType_(ptype), running_(false) {
+  callback(mqtt::async_client& cli, mqtt::connect_options& connOpts, PipelineType ptype, std::string serial)
+        : nretry_(0), cli_(cli), connOpts_(connOpts), subListener_("Subscription"), pipelineType_(ptype), serial_(serial), running_(false) {
     statusTopic_ = STATUS_TOPIC_BASE + HOSTNAME;
   }
 };
@@ -213,7 +214,8 @@ void printHelp(char* argv0) {
   std::cerr << "Workshop network streaming daemon" << std::endl 
 	  << "Connects to MQTT and listens on " << TOPIC << " for " << START_RECORDING_CMD << " and " << STOP_RECORDING_CMD << "." << std::endl
 	  << "Sends status messages to " << STATUS_TOPIC_BASE << "#" << std::endl << std::endl
-	  << "Usage: " << argv0 << " -p [rgb/mic/webcam]" << std::endl << std::endl;
+	  << "Usage: " << argv0 << " -p [rgb/mic/webcam]" << std::endl 
+	  << "Optional: -s [realsense serial number]" << std::endl << std::endl;
 }
 
 int main (int argc, char *argv[]) {
@@ -236,7 +238,8 @@ int main (int argc, char *argv[]) {
 
   // Retrieve the options:
   PipelineType ptype = PIPELINE_TYPE_UNKNOWN;
-  while ( (opt = getopt(argc, argv, "p:h")) != -1 ) {  // for each option...
+  std::string serial;
+  while ( (opt = getopt(argc, argv, "p:s:h")) != -1 ) {  // for each option...
     switch (opt) {
       case 'p':
 	if (optarg != NULL) {
@@ -245,6 +248,9 @@ int main (int argc, char *argv[]) {
           std::cerr << "Warning: no value given for -p argument" << std::endl;
 	}
         break;
+      case 's':
+	serial = optarg;
+	break;
       case 'h':
         printHelp(argv[0]);
 	return 0;
@@ -265,7 +271,7 @@ int main (int argc, char *argv[]) {
   mqtt::async_client client(ADDRESS, HOSTNAME);
   mqtt::connect_options connOpts;
   connOpts.set_clean_session(true);    
-  callback cb(client, connOpts, ptype);
+  callback cb(client, connOpts, ptype, serial);
   client.set_callback(cb);
   client.connect(connOpts, nullptr, cb);
   while (std::tolower(std::cin.get()) != 'q') {}

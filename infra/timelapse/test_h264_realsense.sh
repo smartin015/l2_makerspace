@@ -1,5 +1,5 @@
 #!/bin/bash
-export SERIAL=819112070701
+export SERIAL=819612071634 # 819112070701
 
 echo "Sourcing environment"
 . /opt/aivero/rgbd_toolkit_armv8/aivero_environment.sh
