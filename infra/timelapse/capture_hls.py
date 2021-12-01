@@ -1,19 +1,24 @@
 import threading
 import time
 from urllib.request import urlopen
-from urllib.error import URLError
+from urllib.error import URLError, HTTPError
 
 def parseurl(url: str, outfile: str, already_parsed: list):
   try:
     response = [r.strip() for r in urlopen(url).read().decode("utf-8").split("\n")]
   except URLError: # No response
     return already_parsed
+  except HTTPError:
+    return already_parsed
   parsed = [r for r in response if not r.startswith('#') and r != '']
   for line in parsed:
     if line in already_parsed:
       continue
     with open(outfile, 'ab') as f:
-      f.write(urlopen(line).read())
+      try:
+        f.write(urlopen(line).read())
+      except HTTPError:
+        continue
     print(line, "DONE")
   return parsed
 
