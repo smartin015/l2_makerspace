@@ -13,9 +13,12 @@ sudo apt-get install libgstreamer1.0-dev \
   libgstreamer-plugins-good1.0-dev \
   libgstreamer-plugins-bad1.0-dev
 
+# Python 3.8 required for http.server specific serving directory in run.sh
+sudo apt -y install python3.8
+
 # Make a ramdisk to reduce USB traffic to the SSD
 mkdir -p /tmp/ramdisk && chmod 777 /tmp/ramdisk
-sudo mount -t tmpfs -o size=64m myramdisk /tmp/ramdisk
+sudo mount -t tmpfs -o size=128m myramdisk /tmp/ramdisk
 
 # Install paho-mqtt C++ libraries
 sudo apt-get install build-essential gcc make cmake cmake-gui cmake-curses-gui git doxygen graphviz libssl-dev
