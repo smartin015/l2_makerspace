@@ -95,6 +95,7 @@ class callback : public virtual mqtt::callback,
   GstElement* pipeline_;
   PipelineType pipelineType_;
   std::string statusTopic_;
+  bool running_;
 
   void sendStatus(const std::string& str) {
     auto msg = mqtt::make_message(statusTopic_, str);
@@ -155,7 +156,7 @@ class callback : public virtual mqtt::callback,
     std::cerr << "MQTT " << msg->get_topic() << " >> " << msg->to_string() << std::endl;
     GstStateChangeReturn ret;
     if (msg->to_string() == START_RECORDING_CMD) {
-      if (pipeline_ != NULL) {
+      if (running_) {
         sendStatus("already_started");
         return;
       }
@@ -167,15 +168,19 @@ class callback : public virtual mqtt::callback,
       }
       if (ret == GST_STATE_CHANGE_SUCCESS) {
 	sendStatus("started");
+	running_ = true;
       } else {
 	sendStatus("error " + std::to_string(ret));
         std::cerr << "action error, state change result " << ret << std::endl;
       }
     } else if (msg->to_string() == STOP_RECORDING_CMD) {
-      sendStatus("stopping");
-      gst_element_set_state(pipeline_, GST_STATE_NULL);
-      gst_object_unref(pipeline_);
+      if (running_) {
+	sendStatus("stopping");
+	gst_element_set_state(pipeline_, GST_STATE_NULL);
+        gst_object_unref(pipeline_);
+      }
       sendStatus("stopped");
+      running_ = false;
     } else {
       sendStatus("error invalid_command");
       return;
@@ -187,7 +192,7 @@ class callback : public virtual mqtt::callback,
 
 public:
   callback(mqtt::async_client& cli, mqtt::connect_options& connOpts, PipelineType ptype)
-        : nretry_(0), cli_(cli), connOpts_(connOpts), subListener_("Subscription"), pipelineType_(ptype) {
+        : nretry_(0), cli_(cli), connOpts_(connOpts), subListener_("Subscription"), pipelineType_(ptype), running_(false) {
     statusTopic_ = STATUS_TOPIC_BASE + HOSTNAME;
   }
 };
