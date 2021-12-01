@@ -6,6 +6,16 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+// Much of MQTT work inspired by https://github.com/debihiga/mqtt_paho_cpp_subscriber/blob/master/main.cpp
+const std::string ADDRESS("mqtt:1883");
+std::string HOSTNAME; // Filled in main()
+const std::string TOPIC("/av/command");
+const std::string STATUS_TOPIC_BASE("/av/status/"); // hostname appended
+const std::string START_RECORDING_CMD = "start_recording";
+const std::string STOP_RECORDING_CMD = "stop_recording";
+const int QOS = 1;
+const int N_RETRY_ATTEMPTS = 3;
+
 typedef enum {
  PIPELINE_TYPE_UNKNOWN = 0,
  PIPELINE_TYPE_REALSENSE_RGB,
@@ -18,35 +28,31 @@ GstElement* setupPipeline(PipelineType p) {
   //  - use nvvidconv instead of videoconvert
   //  - use nvv4l2h264enc instead of omxh264enc
   //  - use hlssink2 instead of mpegtsmux ! hlssink
+  std::string pipespec;
   switch (p) {
     case PIPELINE_TYPE_REALSENSE_RGB:
       std::cerr << "Creating Realsense RGB pipeline" << std::endl;
-      return gst_parse_launch(
-			  // "realsensesrc serial=819112070701 timestamp-mode=clock_all enable-color=true ! rgbddemux name=demux demux.src_color ! videoconvert ! omxh264enc ! hlssink2 playlist-root=http://192.168.1.8:8080 location=/tmp/ramdisk/segment_%05d.ts playlist-location=/tmp/ramdisk/playlist.m3u8 target-duration=5 max-files=5",
+			pipespec = ( // "realsensesrc serial=819112070701 timestamp-mode=clock_all enable-color=true ! rgbddemux name=demux demux.src_color ! videoconvert ! omxh264enc ! hlssink2 playlist-root=http://192.168.1.8:8080 location=/tmp/ramdisk/segment_%05d.ts playlist-location=/tmp/ramdisk/playlist.m3u8 target-duration=5 max-files=5",
 			    "realsensesrc serial=819112070701 timestamp-mode=clock_all enable-color=true "
 			   "! rgbddemux name=demux demux.src_color ! queue ! videoconvert ! omxh264enc ! video/x-h264, stream-format=(string)byte-stream "
-			   "! h264parse ! mpegtsmux ! hlssink playlist-root=http://192.168.1.8:8080 location=/tmp/ramdisk/segment_%05d.ts",
-	      NULL);
+			   "! h264parse ! mpegtsmux ! hlssink playlist-root=http://" + HOSTNAME + ":8080 location=/tmp/ramdisk/segment_%05d.ts"
+	      );
+      break;
     case PIPELINE_TYPE_ALSA_HW2:
       std::cerr << "Creating ALSA HW:2 pipeline" << std::endl;
       // # See https://thiblahute.github.io/GStreamer-doc/alsa-1.0/alsasrc.html?gi-language=c
-      return gst_parse_launch("gst-launch-1.0 alsasrc device=hw:2 ! audioconvert ! avenc_aac "
-                      "! hlssink2 playlist-root=http://192.168.1.8:8080 location=/tmp/ramdisk/segment_%05d.ts "
-                      "target-duration=5 max-files=5", NULL);
+      pipespec = ("alsasrc device=hw:2 ! audioconvert ! avenc_aac "
+                      "! hlssink2 playlist-root=http://" + HOSTNAME + ":8080 location=/tmp/ramdisk/segment_%05d.ts "
+                      "target-duration=5 max-files=5");
+      break;
     default:
       std::cerr << "Pipeline type " << p << " not implemented" << std::endl;
+      return NULL;
   }
+  std::cerr << pipespec << std::endl << std::endl;
+  return gst_parse_launch(pipespec.c_str(), NULL);
 }
 
-// Much of MQTT work inspired by https://github.com/debihiga/mqtt_paho_cpp_subscriber/blob/master/main.cpp
-const std::string ADDRESS("mqtt:1883");
-std::string HOSTNAME; // Filled in main()
-const std::string TOPIC("/av/command");
-const std::string STATUS_TOPIC_BASE("/av/status/"); // hostname appended
-const std::string START_RECORDING_CMD = "start_recording";
-const std::string STOP_RECORDING_CMD = "stop_recording";
-const int QOS = 1;
-const int N_RETRY_ATTEMPTS = 3;
 
 class action_listener : public virtual mqtt::iaction_listener
 {
@@ -149,6 +155,10 @@ class callback : public virtual mqtt::callback,
     std::cerr << "MQTT " << msg->get_topic() << " >> " << msg->to_string() << std::endl;
     GstStateChangeReturn ret;
     if (msg->to_string() == START_RECORDING_CMD) {
+      if (pipeline_ != NULL) {
+        sendStatus("already_started");
+        return;
+      }
       sendStatus("starting");
       pipeline_ = setupPipeline(pipelineType_);
       ret = gst_element_set_state(pipeline_, GST_STATE_PLAYING);

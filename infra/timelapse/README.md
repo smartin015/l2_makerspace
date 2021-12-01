@@ -1,6 +1,18 @@
 # C++ example application working!
 
 ```
+
+# Install gstreamer
+# see also https://docs.nvidia.com/jetson/l4t/index.html#page/Tegra%20Linux%20Driver%20Package%20Development%20Guide/accelerated_gstreamer.html#wwpID0E0R40HA
+sudo apt-get install gstreamer1.0-tools gstreamer1.0-alsa \
+  gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
+  gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly \
+  gstreamer1.0-libav
+sudo apt-get install libgstreamer1.0-dev \
+  libgstreamer-plugins-base1.0-dev \
+  libgstreamer-plugins-good1.0-dev \
+  libgstreamer-plugins-bad1.0-dev
+
 # Make a ramdisk to reduce USB traffic to the SSD
 mkdir -p /tmp/ramdisk && chmod 777 /tmp/ramdisk
 sudo mount -t tmpfs -o size=64m myramdisk /tmp/ramdisk
