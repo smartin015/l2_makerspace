@@ -15,11 +15,27 @@ mountpoint --quiet $RAMDISK 2> /dev/null && {
 
 HTTP_CMD="python3.8 -m http.server -d $RAMDISK $PORT"
 ps -alfe | grep "$HTTP_CMD" | grep -qv grep && {
-  echo "HTTP server already started"	
-} || {
-  echo "HTTP server not started; starting daemon"
-  $HTTP_CMD &
+  echo "HTTP server already started"
+  PIDLINE=$(ps axf | grep "http.server" | grep -v grep)
+  echo $PIDLINE
+  read -p "Kill this process and start a new one? " -n 1 -r
+  echo    # (optional) move to a new line
+  if [[ $REPLY =~ ^[Yy]$ ]]
+  then
+    KILLCMD=$(echo "$PIDLINE" | awk '{print "kill -9 " $1}')
+    echo $KILLCMD | sh
+    echo "Kill't"
+  else
+    echo "Goodbye"
+    exit 1
+  fi
 }
+
+echo "Starting HTTP server in background"
+$HTTP_CMD &
+HTTP_PID=$!
+echo "PID $HTTP_PID"
+
 
 if [ -f "$RGBD_TOOLKIT_ENV" ]; then
   echo "Sourcing gstreamer RGBD toolkit for realsense cameras"
@@ -38,3 +54,10 @@ else
   echo "ERR: Could not detect any supported devices for streaming!"
 fi
 
+echo "Shutting down HTTP daemon (pid $HTTP_PID)"
+kill $HTTP_PID
+
+echo "Unmounting ramfs"
+sudo umount $RAMDISK
+
+echo "Done"

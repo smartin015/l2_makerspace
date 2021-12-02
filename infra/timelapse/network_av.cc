@@ -282,7 +282,7 @@ int main (int argc, char *argv[]) {
   callback cb(client, connOpts, ptype, serial, outdir);
   client.set_callback(cb);
   client.connect(connOpts, nullptr, cb);
-  while (std::tolower(std::cin.get()) != 'q') {}
+  std::cin.get();
   std::cerr << "Disconnecting..." << std::flush;
   client.disconnect()->wait();
   std::cerr << "OK" << std::endl;
