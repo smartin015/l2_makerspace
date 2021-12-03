@@ -13,7 +13,7 @@ mountpoint --quiet $RAMDISK 2> /dev/null && {
   sudo mount -t tmpfs -o size=128m network_av $RAMDISK
 }
 
-HTTP_CMD="python3.8 -m http.server -d $RAMDISK $PORT"
+HTTP_CMD="python3.7 -m http.server -d $RAMDISK $PORT"
 ps -alfe | grep "$HTTP_CMD" | grep -qv grep && {
   echo "HTTP server already started"
   PIDLINE=$(ps axf | grep "http.server" | grep -v grep)
@@ -49,7 +49,10 @@ if [ -f "$RGBD_TOOLKIT_ENV" ]; then
 elif lsusb | grep "Yeti Stereo Microphone"; then
   echo "Starting network_av in microphone mode..."
   # TODO detect proper HW number and use it here
-  ./network_av -s mic -d $DEVICE_ID -o $RAMDISK/
+  ./network_av -p mic -o $RAMDISK/
+elif raspistill -d -t 0; then
+  echo "Starting network_av in raspi camera mode..."
+  ./network_av -p webcam -o $RAMDISK/
 else 
   echo "ERR: Could not detect any supported devices for streaming!"
 fi

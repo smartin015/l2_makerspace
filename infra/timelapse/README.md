@@ -16,6 +16,13 @@ sudo apt-get install libgstreamer1.0-dev \
 # Python 3.8 required for http.server specific serving directory in run.sh
 sudo apt -y install python3.8
 
+# To have rpicamsrc gstreamer element:
+git clone https://github.com/thaytan/gst-rpicamsrc.git
+cd gst-rpicamsrc/
+./autogen.sh 
+make
+sudo make install
+
 # Make a ramdisk to reduce USB traffic to the SSD
 mkdir -p /tmp/ramdisk && chmod 777 /tmp/ramdisk
 sudo mount -t tmpfs -o size=128m myramdisk /tmp/ramdisk

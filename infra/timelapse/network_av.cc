@@ -48,6 +48,13 @@ GstElement* setupPipeline(const PipelineType& p, const std::string& serial, cons
                       "! hlssink2 playlist-root=http://" + HOSTNAME + ":8080 location=" + outdir + "segment_%05d.ts "
                       "target-duration=5 max-files=5");
       break;
+    case PIPELINE_TYPE_AUTO_VIDEO:
+      std::cerr << "Creating v4l2video pipeline" << std::endl;
+      pipespec = ("rpicamsrc num-buffers=-1 preview=false ! video/x-raw,width=1280,height=720 "
+			   "! omxh264enc ! video/x-h264, stream-format=(string)byte-stream "
+			   "! h264parse ! mpegtsmux "
+			   "! hlssink playlist-root=http://" + HOSTNAME + ":8080 playlist-location=" + outdir + "playlist.m3u8 location=" + outdir + "segment_%05d.ts ");
+      break;
     default:
       std::cerr << "Pipeline type " << p << " not implemented" << std::endl;
       return NULL;
@@ -143,6 +150,8 @@ class callback : public virtual mqtt::callback,
     sendStatus("ready");
     std::cerr << "MQTT subscribe: '" << TOPIC << "'" << std::endl;
     cli_.subscribe(TOPIC, QOS, nullptr, subListener_);
+    std::cerr << "MQTT subscribe: '" << TOPIC << "/" << HOSTNAME << "'" << std::endl;
+    cli_.subscribe(TOPIC + "/" + HOSTNAME, QOS, nullptr, subListener_);
   }
 
   // Callback for when the connection is lost.
