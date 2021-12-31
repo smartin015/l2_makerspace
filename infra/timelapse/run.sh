@@ -13,7 +13,7 @@ mountpoint --quiet $RAMDISK 2> /dev/null && {
   sudo mount -t tmpfs -o size=128m network_av $RAMDISK
 }
 
-HTTP_CMD="python3.7 -m http.server -d $RAMDISK $PORT"
+HTTP_CMD="python3 -m http.server -d $RAMDISK $PORT"
 ps -alfe | grep "$HTTP_CMD" | grep -qv grep && {
   echo "HTTP server already started"
   PIDLINE=$(ps axf | grep "http.server" | grep -v grep)
