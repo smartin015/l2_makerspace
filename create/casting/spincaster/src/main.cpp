@@ -6,6 +6,7 @@
 #include "WiFi.h"
 #include <Wire.h>
 #include <Button2.h>
+#include <analogWrite.h>
 
 #ifndef TFT_DISPOFF
 #define TFT_DISPOFF 0x28
@@ -20,6 +21,7 @@ TFT_eSPI tft = TFT_eSPI(135, 240); // Invoke custom library
 #define BUZZER_PIN 25
 #define BUZZER_CHANNEL 0
 #define MOTOR_PIN 26
+#define MOTOR_CHANNEL 1
 #define INDUCTION_PIN 33
 
 typedef enum {
@@ -182,6 +184,8 @@ void showState(state_t s) {
   }
 }
 
+
+uint64_t spinStart = 0;
 state_t calcState(state_t cur) {
   switch (cur) {
     case STATE_INIT:
@@ -192,10 +196,12 @@ state_t calcState(state_t cur) {
       return cur;
     case STATE_DISARMED:
       if (button[BUTTON_ARM].isPressed()) {
-        if (button[BUTTON_LID].isPressed()) {
-          return STATE_ARMED;
-        } else {
+        if (!button[BUTTON_LID].isPressed()) {
           return STATE_LID_OPEN;
+        } else if (button[BUTTON_SPIN].isPressed()) {
+          return STATE_SPIN_LATCHED;
+        } else {
+          return STATE_ARMED;
         }
       } else if (button[BUTTON_NUDGE].isPressed()) { 
         return STATE_NUDGE;
@@ -231,6 +237,9 @@ state_t calcState(state_t cur) {
         return STATE_LID_OPEN;
       } else if (button[BUTTON_SPIN].isPressed()) {
         buzzSpinStart = true;
+        if (!spinStart) {
+          spinStart = millis();
+        }
         return STATE_SPINNING;
       } else if (button[BUTTON_INDUCTION_OFF].isPressed()) {
         return STATE_ARMED;
@@ -242,6 +251,7 @@ state_t calcState(state_t cur) {
       return cur; // Maintain current state
     case STATE_SPINNING:
       if (!button[BUTTON_ARM].isPressed() || !button[BUTTON_SPIN].isPressed() || !button[BUTTON_LID].isPressed()) {
+        spinStart = 0;
         return STATE_SPINDOWN;
       }
       return cur;
@@ -276,6 +286,8 @@ void setup()
     pinMode(MOTOR_PIN, OUTPUT);
     pinMode(INDUCTION_PIN, OUTPUT);
     digitalWrite(INDUCTION_PIN, LOW);
+    ledcSetup(MOTOR_CHANNEL, 5000, 8);
+    ledcWrite(MOTOR_CHANNEL, 0);
     for (int i = 0; i < NUM_BUTTONS; i++) {
       button[i].begin(BUTTON_PINS[i], INPUT_PULLUP, /* isCapacitive */ false, /* activeLow */ (i != BUTTON_LID && i != BUTTON_SPIN));
 
@@ -312,7 +324,7 @@ void setup()
     state = STATE_INIT;
 }
 
-auto cur = LOW;
+auto curInd = LOW;
 void inductionLoop(uint64_t now, state_t state) {
   auto next = LOW;
   switch (state) {
@@ -326,9 +338,36 @@ void inductionLoop(uint64_t now, state_t state) {
       next = LOW;
       break;
   }
-  if (next != cur) {
+  if (next != curInd) {
     digitalWrite(INDUCTION_PIN, next);
-    cur = next;
+    curInd = next;
+  }
+}
+
+int curMot = 0;
+bool motorLoop(uint64_t now) {
+  auto next = 0;
+  if (state == STATE_NUDGE) {
+    next = (((now / 10) % 100) == 0 ? 255 : 0);
+    //next = 128;
+  }
+  if (state == STATE_SPINNING) {
+    if (now < spinStart + 5000) {
+      next = 255;
+    } else {
+      state = STATE_SPINDOWN;
+    }
+  }
+  if (next != curMot) {
+    if (next) {
+      //ledcAttachPin(MOTOR_PIN, MOTOR_CHANNEL);
+      //ledcWrite(MOTOR_CHANNEL, next);
+      digitalWrite(MOTOR_PIN, HIGH);
+    } else {
+      //ledcDetachPin(MOTOR_PIN);
+      digitalWrite(MOTOR_PIN, LOW);
+    }
+    curMot = next;
   }
 }
 
@@ -346,5 +385,6 @@ void loop()
     }
     buzzerLoop(now, state);
     inductionLoop(now, state);
+    motorLoop(now); // mutates state when spindown time
 }
 
